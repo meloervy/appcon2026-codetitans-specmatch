@@ -50,8 +50,8 @@ class GeminiService
         $apiKey = config('services.gemini.api_key', env('GEMINI_API_KEY'));
 
         if (! empty($apiKey)) {
+            // 1. Utilize official Laravel AI SDK Agent with Google Gemini
             try {
-                // 1. Utilize official Laravel AI SDK Agent with Google Gemini
                 if (class_exists(SpecMatchExtractionAgent::class)) {
                     $agent = new SpecMatchExtractionAgent;
                     $response = $agent->prompt($rawInput);
@@ -71,8 +71,12 @@ class GeminiService
                         return $decoded;
                     }
                 }
+            } catch (\Throwable $agentError) {
+                Log::warning('SpecMatchExtractionAgent failed, trying Gemini REST failover: '.$agentError->getMessage());
+            }
 
-                // 2. Direct Gemini REST endpoint fallback
+            // 2. Direct Gemini REST endpoint fallback
+            try {
                 $extracted = $this->callGeminiApi($rawInput, $apiKey);
 
                 MatchRequest::create([
@@ -83,8 +87,8 @@ class GeminiService
                 ]);
 
                 return $extracted;
-            } catch (\Throwable $e) {
-                Log::warning('Gemini extraction failed: '.$e->getMessage());
+            } catch (\Throwable $restError) {
+                Log::warning('Gemini REST API extraction failed: '.$restError->getMessage());
             }
         }
 
@@ -101,59 +105,95 @@ class GeminiService
         return $fallback;
     }
 
+    /**
+     * Get the standardized ITAM system instruction for Gemini AI models.
+     */
+    public static function getSystemInstruction(): string
+    {
+        return <<<'INSTRUCTIONS'
+You are SpecMatch AI, an expert Enterprise IT Asset Management (ITAM) and Hardware Recommendation Engine adhering strictly to ISO 19770-1 ITAM standards and corporate asset optimization principles.
+
+### CORE PURPOSE & OBJECTIVE:
+Translate employee role profiles, software workloads, daily tasks, and mobility patterns into precise, deterministic hardware constraint parameters for internal inventory allocation. Optimize for maximum employee productivity while avoiding redundant CapEx procurement waste.
+
+### WORKLOAD TAXONOMY & CLASSIFICATION RULES:
+1. CPU TIERS (`min_cpu_tier`):
+   - 'entry': Basic office productivity, web portals, email, documentation, lightweight ERP (Intel Core i3, AMD Ryzen 3).
+   - 'mid': Data querying, SQL/Tableau dashboards, financial modeling, moderate multitasking (Intel Core i5, AMD Ryzen 5, base Apple Silicon M1-M3).
+   - 'high': Intensive compilation, Docker microservices, 4K timeline editing, motion graphics, Figma design systems (Intel Core i7/i9, AMD Ryzen 7/9, Apple M3 Pro/Max).
+   - 'workstation': Local LLM/deep learning training, 3D VFX rendering, CAD/CAM simulations (Intel Xeon, AMD Threadripper).
+
+2. RAM REQUIREMENTS (`min_ram_gb`):
+   - 8GB: General office productivity, basic cloud apps.
+   - 16GB: Standard engineering baseline, analytics, UI/UX prototyping.
+   - 32GB: Intensive development, Docker containers, multi-layer 4K video editing.
+   - 64GB - 128GB: Local machine learning inference/training, 3D simulations.
+
+3. STORAGE CAPACITY (`min_storage_gb`):
+   - 256GB (light), 512GB (standard dev/analyst), 1024GB (media/containers), 2048GB (heavy video/AI datasets).
+
+4. GRAPHICS ACCELERATION (`requires_gpu` & `min_gpu_tier`):
+   - Set requires_gpu: true ONLY when hardware acceleration (CUDA tensor cores, 3D viewport, 4K video rendering) is directly needed.
+   - min_gpu_tier: 'none', 'integrated', 'dedicated-entry' (GTX 1650/RTX 3050), 'dedicated-high' (RTX 4070+, RTX 4500/6000 Ada, Apple 30c+).
+
+5. MOBILITY & FORM FACTOR (`portability_required`):
+   - Set true if employee travels between offices, conducts client visits, or works hybrid/remote. False if desk-bound or workstation.
+
+6. OBJECTIVE RATIONALE (`reasoning`):
+   - Concise 1-2 sentence engineering justification citing specific workload triggers and explaining why these hardware thresholds are necessary.
+INSTRUCTIONS;
+    }
+
     private function callGeminiApi(string $rawInput, string $apiKey): array
     {
-        $prompt = <<<EOT
-You are an IT hardware requirement extraction engine. Convert the following employee request into structured hardware requirements:
+        $primaryModel = config('services.gemini.model', env('GEMINI_MODEL', 'gemini-3.8-flash'));
+        $modelsToTry = array_unique([$primaryModel, 'gemini-3.6-flash']);
+        $systemInstruction = self::getSystemInstruction();
 
-Request: "{$rawInput}"
-
-Respond ONLY with a valid JSON object matching this schema exactly, with NO markdown backticks, NO formatting, and NO extra commentary:
-{
-  "min_cpu_tier": "entry | mid | high | workstation",
-  "min_ram_gb": 8 | 16 | 32 | 64,
-  "min_storage_gb": 256 | 512 | 1024 | 2048,
-  "requires_gpu": true | false,
-  "min_gpu_tier": "none | integrated | dedicated-entry | dedicated-high",
-  "portability_required": true | false,
-  "reasoning": "one-sentence plain-language explanation of why these values were chosen"
-}
-EOT;
-
-        $response = Http::timeout(10)->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={$apiKey}", [
-            'contents' => [
-                [
-                    'parts' => [
-                        ['text' => $prompt],
+        foreach ($modelsToTry as $model) {
+            try {
+                $response = Http::timeout(8)->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", [
+                    'system_instruction' => [
+                        'parts' => [
+                            ['text' => $systemInstruction],
+                        ],
                     ],
-                ],
-            ],
-            'generationConfig' => [
-                'temperature' => 0.1,
-                'responseMimeType' => 'application/json',
-            ],
-        ]);
+                    'contents' => [
+                        [
+                            'parts' => [
+                                ['text' => "Convert the following employee workload request into structured hardware requirements:\n\n{$rawInput}\n\nRespond ONLY with valid JSON matching the schema."],
+                            ],
+                        ],
+                    ],
+                    'generationConfig' => [
+                        'temperature' => 0.1,
+                        'responseMimeType' => 'application/json',
+                    ],
+                ]);
 
-        if (! $response->successful()) {
-            throw new \RuntimeException('Gemini API returned status '.$response->status().': '.$response->body());
+                if ($response->successful()) {
+                    $body = $response->json();
+                    $text = $body['candidates'][0]['content']['parts'][0]['text'] ?? null;
+
+                    if ($text) {
+                        $cleanJson = trim(preg_replace('/^```(?:json)?\s*|\s*```$/i', '', trim($text)));
+                        $decoded = json_decode($cleanJson, true);
+
+                        if (is_array($decoded) && isset($decoded['min_cpu_tier'], $decoded['min_ram_gb'])) {
+                            $decoded['model_used'] = $model;
+
+                            return $this->sanitizeRequirements($decoded);
+                        }
+                    }
+                } else {
+                    Log::warning("Gemini model {$model} returned status {$response->status()}: ".$response->body());
+                }
+            } catch (\Throwable $e) {
+                Log::warning("Gemini API call to {$model} failed: ".$e->getMessage());
+            }
         }
 
-        $body = $response->json();
-        $text = $body['candidates'][0]['content']['parts'][0]['text'] ?? null;
-
-        if (! $text) {
-            throw new \RuntimeException('Empty or malformed Gemini response.');
-        }
-
-        // Clean markdown fences if any were returned
-        $cleanJson = trim(preg_replace('/^```(?:json)?\s*|\s*```$/i', '', trim($text)));
-        $decoded = json_decode($cleanJson, true);
-
-        if (! is_array($decoded) || ! isset($decoded['min_cpu_tier'], $decoded['min_ram_gb'])) {
-            throw new \RuntimeException('Invalid JSON structure from Gemini.');
-        }
-
-        return $this->sanitizeRequirements($decoded);
+        throw new \RuntimeException('All configured Gemini models failed or experienced temporary unavailability.');
     }
 
     /**

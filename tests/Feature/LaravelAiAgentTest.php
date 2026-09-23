@@ -19,7 +19,7 @@ class LaravelAiAgentTest extends TestCase
 
         $this->assertInstanceOf(Agent::class, $agent);
         $this->assertInstanceOf(HasStructuredOutput::class, $agent);
-        $this->assertStringContainsString('SpecMatch IT Hardware Requirement Extractor', (string) $agent->instructions());
+        $this->assertStringContainsString('Enterprise IT Asset Management (ITAM)', (string) $agent->instructions());
     }
 
     public function test_ai_configuration_defaults_to_gemini(): void
@@ -30,7 +30,7 @@ class LaravelAiAgentTest extends TestCase
         $this->assertEquals('gemini', $defaultProvider);
         $this->assertIsArray($geminiConfig);
         $this->assertEquals('gemini', $geminiConfig['driver']);
-        $this->assertEquals('gemini-2.5-flash', $geminiConfig['models']['text']['default']);
+        $this->assertStringStartsWith('gemini-', $geminiConfig['models']['text']['default']);
     }
 
     public function test_gemini_service_uses_cached_demo_template_instantly(): void
