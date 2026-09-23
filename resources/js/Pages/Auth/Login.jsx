@@ -253,9 +253,12 @@ export default function Login({ status, canResetPassword }) {
                     Need a staff profile?{' '}
                     <Link
                         href={route('register')}
-                        className="font-bold text-[#026eff] dark:text-sky-400 hover:text-[#0256cc] dark:hover:text-sky-300 hover:underline transition-colors"
+                        className="font-bold text-[#026eff] dark:text-sky-400 hover:text-[#0256cc] dark:hover:text-sky-300 hover:underline transition-colors inline-flex items-center gap-1"
                     >
-                        Create account &rarr;
+                        <span>Create account</span>
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                        </svg>
                     </Link>
                 </div>
             </form>
