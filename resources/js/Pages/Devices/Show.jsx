@@ -14,6 +14,7 @@ export default function DevicesShow({ device }) {
         serial_number: device.serial_number || '',
         barcode: device.barcode || '',
         techspecs_id: device.techspecs_id || '',
+        image_url: device.image_url || '',
         device_type: device.device_type,
         brand: device.brand,
         model: device.model,
@@ -124,10 +125,9 @@ export default function DevicesShow({ device }) {
         }
     };
 
-    // Lifecycle Stage Definition
     const stages = [
         { key: 'acquisition', label: '1. Acquisition', desc: 'Procurement & Staging' },
-        { key: 'deployment', label: '2. Deployment', desc: 'Active Fleet Production' },
+        { key: 'deployment', label: '2. Deployment', desc: 'Active Production' },
         { key: 'maintenance', label: '3. Maintenance', desc: 'Repairs & Servicing' },
         { key: 'retirement', label: '4. Retirement', desc: 'Decommissioned / EOL' },
     ];
@@ -137,21 +137,21 @@ export default function DevicesShow({ device }) {
     return (
         <AuthenticatedLayout
             header={
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div className="flex items-center gap-3">
-                        <span className="font-mono text-xl font-bold bg-slate-100 text-slate-800 px-3.5 py-1.5 rounded-xl border border-slate-200 shadow-xs">
+                        <span className="font-mono text-lg font-bold bg-slate-100 dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 px-3 py-1 rounded-lg border border-slate-200 dark:border-zinc-700 shadow-2xs">
                             {device.asset_tag}
                         </span>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h1 className="text-xl font-bold text-slate-900">{device.brand} {device.model}</h1>
+                                <h1 className="text-lg font-bold text-slate-900 dark:text-zinc-50">{device.brand} {device.model}</h1>
                                 {device.techspecs_id && (
-                                    <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                    <span className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60">
                                         TechSpecs Verified
                                     </span>
                                 )}
                             </div>
-                            <p className="text-xs text-slate-500 capitalize mt-0.5">
+                            <p className="text-[11px] text-slate-500 dark:text-zinc-400 capitalize mt-0.5">
                                 {device.device_type} &bull; {device.location ? `📍 ${device.location}` : 'No Location Set'} &bull; S/N: {device.serial_number || 'N/A'}
                             </p>
                         </div>
@@ -159,14 +159,14 @@ export default function DevicesShow({ device }) {
                     <div className="flex flex-wrap items-center gap-2">
                         <Link
                             href={route('devices.index')}
-                            className="px-3.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition"
+                            className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-750 text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 transition"
                         >
                             &larr; Back
                         </Link>
                         <button
                             type="button"
                             onClick={() => setShowMaintenanceModal(true)}
-                            className="px-3.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-800 hover:bg-amber-100 transition flex items-center gap-1.5"
+                            className="px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-xs font-semibold text-amber-800 dark:text-amber-300 hover:bg-amber-100 transition flex items-center gap-1.5"
                         >
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -176,14 +176,14 @@ export default function DevicesShow({ device }) {
                         <button
                             type="button"
                             onClick={() => setShowLifecycleModal(true)}
-                            className="px-3.5 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition"
+                            className="px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60 text-xs font-semibold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 transition"
                         >
-                            Stage Transition
+                            Transition Stage
                         </button>
                         <button
                             type="button"
                             onClick={() => setIsEditing(!isEditing)}
-                            className="px-3.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+                            className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-750 bg-white dark:bg-zinc-800 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-700 transition"
                         >
                             {isEditing ? 'Cancel Edit' : 'Edit Asset'}
                         </button>
@@ -191,7 +191,7 @@ export default function DevicesShow({ device }) {
                             <button
                                 type="button"
                                 onClick={handleRetire}
-                                className="px-3.5 py-1.5 rounded-lg border border-rose-200 bg-rose-50 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition"
+                                className="px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 text-xs font-semibold text-rose-700 dark:text-rose-300 hover:bg-rose-100 transition"
                             >
                                 Retire
                             </button>
@@ -200,43 +200,45 @@ export default function DevicesShow({ device }) {
                 </div>
             }
         >
-            <Head title={`${device.asset_tag} - ITAM Details`} />
+            <Head title={`${device.asset_tag} - Hardware Details`} />
 
-            <div className="space-y-6">
+            <div className="space-y-5">
                 {/* 1. Visual Lifecycle Stage Progression Stepper */}
-                <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 mb-6 gap-2">
+                <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 p-4 shadow-2xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 dark:border-zinc-800 mb-4 gap-2">
                         <div>
-                            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">IT Asset Lifecycle Management</span>
-                            <h2 className="text-base font-bold text-slate-900 mt-0.5">Current Phase: <span className="text-indigo-600 capitalize">{device.lifecycle_stage}</span></h2>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Asset Lifecycle Phase</span>
+                            <h2 className="text-sm font-bold text-slate-900 dark:text-zinc-100 mt-0.5">
+                                Current Status: <span className="text-indigo-600 dark:text-indigo-400 capitalize">{device.lifecycle_stage}</span>
+                            </h2>
                         </div>
                         <button
                             type="button"
                             onClick={() => setShowLifecycleModal(true)}
-                            className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+                            className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
                         >
-                            Transition Stage &rarr;
+                            Transition Phase &rarr;
                         </button>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
                         {stages.map((stage, idx) => {
                             const isCurrent = stage.key === device.lifecycle_stage;
                             const isPast = currentStageIndex > idx;
                             return (
                                 <div
                                     key={stage.key}
-                                    className={`relative p-4 rounded-xl border transition ${
+                                    className={`relative p-3 rounded-lg border transition ${
                                         isCurrent
-                                            ? 'bg-indigo-50/70 border-indigo-300 ring-2 ring-indigo-500/20'
+                                            ? 'bg-indigo-50/70 dark:bg-indigo-950/40 border-indigo-300 dark:border-indigo-700 ring-1 ring-indigo-500/20'
                                             : isPast
-                                            ? 'bg-emerald-50/40 border-emerald-200'
-                                            : 'bg-slate-50/60 border-slate-200 opacity-60'
+                                            ? 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/50'
+                                            : 'bg-slate-50/50 dark:bg-zinc-800/30 border-slate-200 dark:border-zinc-800 opacity-60'
                                     }`}
                                 >
-                                    <div className="flex items-center justify-between mb-1.5">
-                                        <span className={`text-[11px] font-bold uppercase tracking-wider ${
-                                            isCurrent ? 'text-indigo-700' : isPast ? 'text-emerald-700' : 'text-slate-400'
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className={`text-[10px] font-bold uppercase tracking-wider ${
+                                            isCurrent ? 'text-indigo-700 dark:text-indigo-300' : isPast ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-400 dark:text-zinc-500'
                                         }`}>
                                             Stage {idx + 1}
                                         </span>
@@ -247,204 +249,237 @@ export default function DevicesShow({ device }) {
                                             </span>
                                         )}
                                         {isPast && (
-                                            <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <svg className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                                             </svg>
                                         )}
                                     </div>
-                                    <div className="font-bold text-sm text-slate-900">{stage.label}</div>
-                                    <div className="text-xs text-slate-500 mt-0.5">{stage.desc}</div>
+                                    <div className="font-bold text-xs text-slate-900 dark:text-zinc-100">{stage.label}</div>
+                                    <div className="text-[10px] text-slate-500 dark:text-zinc-400 mt-0.5">{stage.desc}</div>
                                 </div>
                             );
                         })}
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Left Column: ITAM Financials, Hardware Profile, Maintenance Logs, and Audit History */}
-                    <div className="lg:col-span-2 space-y-6">
-                        {/* Continuous Tracking: Financial & Contractual Card */}
-                        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
-                            <h3 className="text-base font-bold text-slate-900 mb-4 flex items-center justify-between">
-                                <span>Financial & Contractual Tracking</span>
-                                <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${
-                                    device.warranty_status === 'Active'
-                                        ? 'bg-emerald-100 text-emerald-800'
-                                        : device.warranty_status === 'Expiring Soon'
-                                        ? 'bg-amber-100 text-amber-800'
-                                        : 'bg-rose-100 text-rose-800'
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                    {/* Left Column: Device Hero & Specs */}
+                    <div className="lg:col-span-2 space-y-5">
+                        {/* Device Hero Card with Image Clip */}
+                        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 p-5 shadow-2xs">
+                            <div className="flex flex-col sm:flex-row items-center gap-5">
+                                <div className="w-32 h-32 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shrink-0 overflow-hidden shadow-2xs relative">
+                                    <img
+                                        src={device.image_clip_url}
+                                        alt={`${device.brand} ${device.model}`}
+                                        className="w-full h-full object-cover object-center"
+                                        onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.src = 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=400&q=80';
+                                        }}
+                                    />
+                                    {device.techspecs_id && (
+                                        <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-xs text-[9px] text-white font-mono font-semibold">
+                                            TechSpecs
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex-1 space-y-1.5 text-center sm:text-left">
+                                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                                        <h2 className="text-lg font-bold text-slate-900 dark:text-zinc-100">{device.brand} {device.model}</h2>
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                                            device.status === 'available' ? 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300' :
+                                            device.status === 'assigned' ? 'bg-slate-100 dark:bg-zinc-800 text-slate-800 dark:text-zinc-200' :
+                                            device.status === 'in_repair' ? 'bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300' :
+                                            'bg-rose-100 dark:bg-rose-950/70 text-rose-800 dark:text-rose-300'
+                                        }`}>
+                                            {device.status.replace('_', ' ')}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-slate-500 dark:text-zinc-400">
+                                        Asset Tag: <span className="font-mono font-bold text-slate-700 dark:text-zinc-200">{device.asset_tag}</span> &bull; 
+                                        Serial: <span className="font-mono">{device.serial_number || 'N/A'}</span> &bull; 
+                                        Location: <span className="font-medium text-slate-700 dark:text-zinc-300">{device.location || 'Pool Stock'}</span>
+                                    </p>
+                                    <div className="pt-2 flex flex-wrap justify-center sm:justify-start gap-1.5 text-[11px]">
+                                        <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-medium">
+                                            {device.cpu} ({device.cpu_tier})
+                                        </span>
+                                        <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-medium">
+                                            {device.ram_gb} GB RAM
+                                        </span>
+                                        <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-medium">
+                                            {device.storage_gb} GB {device.storage_type}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Financial & Contractual Tracking Card */}
+                        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 p-5 shadow-2xs">
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-3 flex items-center justify-between">
+                                <span>Financial & Contractual Metrics</span>
+                                <span className={`text-[10px] px-2 py-0.5 rounded-md font-semibold capitalize ${
+                                    device.warranty_status === 'active'
+                                        ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-800/50'
+                                        : device.warranty_status === 'expiring_soon'
+                                        ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200/50 dark:border-amber-800/50'
+                                        : 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200/50 dark:border-rose-800/50'
                                 }`}>
-                                    Warranty: {device.warranty_status}
+                                    Warranty: {device.warranty_status.replace('_', ' ')}
                                 </span>
                             </h3>
 
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
-                                    <dt className="text-[11px] font-semibold text-slate-400 uppercase">Purchase Cost</dt>
-                                    <dd className="text-lg font-bold text-slate-900 mt-1">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                <div className="p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
+                                    <dt className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 uppercase">Purchase Cost</dt>
+                                    <dd className="text-base font-bold text-slate-900 dark:text-zinc-100 mt-0.5">
                                         ${Number(device.purchase_cost || 1200).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                     </dd>
-                                    <span className="text-[11px] text-slate-400">
-                                        {device.purchase_date ? `Purchased: ${device.purchase_date}` : `Acquired: ${device.year_acquired}`}
+                                    <span className="text-[10px] text-slate-400 dark:text-zinc-500">
+                                        {device.purchase_date ? `Purchased: ${device.purchase_date}` : `Year: ${device.year_acquired}`}
                                     </span>
                                 </div>
 
-                                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
-                                    <dt className="text-[11px] font-semibold text-slate-400 uppercase">Current Book Value</dt>
-                                    <dd className="text-lg font-bold text-emerald-600 mt-1">
+                                <div className="p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
+                                    <dt className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 uppercase">Book Value</dt>
+                                    <dd className="text-base font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
                                         ${Number(device.current_book_value || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                     </dd>
-                                    <span className="text-[11px] text-slate-400">
+                                    <span className="text-[10px] text-slate-400 dark:text-zinc-500">
                                         Depr: {device.depreciation_rate_percent || 20}%/yr
                                     </span>
                                 </div>
 
-                                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
-                                    <dt className="text-[11px] font-semibold text-slate-400 uppercase">Vendor / Supplier</dt>
-                                    <dd className="text-sm font-bold text-slate-900 mt-1 truncate">
-                                        {device.vendor || 'Direct OEM'}
+                                <div className="p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
+                                    <dt className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 uppercase">Vendor</dt>
+                                    <dd className="text-xs font-bold text-slate-900 dark:text-zinc-100 mt-0.5 truncate">
+                                        {device.vendor || 'Direct Purchase'}
                                     </dd>
-                                    <span className="text-[11px] text-slate-400 truncate block">
+                                    <span className="text-[10px] text-slate-400 dark:text-zinc-500 truncate block">
                                         {device.barcode ? `BC: ${device.barcode}` : 'Barcode N/A'}
                                     </span>
                                 </div>
 
-                                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
-                                    <dt className="text-[11px] font-semibold text-slate-400 uppercase">Warranty Expiry</dt>
-                                    <dd className="text-sm font-bold text-slate-900 mt-1">
+                                <div className="p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
+                                    <dt className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 uppercase">Warranty Expiry</dt>
+                                    <dd className="text-xs font-bold text-slate-900 dark:text-zinc-100 mt-0.5">
                                         {device.warranty_expiry || 'Not Recorded'}
                                     </dd>
-                                    <span className="text-[11px] text-slate-400">
+                                    <span className="text-[10px] text-slate-400 dark:text-zinc-500">
                                         {device.days_until_warranty_expiry !== null
                                             ? device.days_until_warranty_expiry > 0
-                                                ? `${device.days_until_warranty_expiry} days remaining`
-                                                : `${Math.abs(device.days_until_warranty_expiry)} days ago`
+                                                ? `${device.days_until_warranty_expiry}d remaining`
+                                                : `${Math.abs(device.days_until_warranty_expiry)}d ago`
                                             : 'No date'}
                                     </span>
                                 </div>
                             </div>
 
                             {device.contract_sla && (
-                                <div className="mt-4 p-3 rounded-xl bg-indigo-50/60 border border-indigo-100 text-xs flex items-center justify-between text-indigo-900">
+                                <div className="mt-3 p-2.5 rounded-lg bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 text-xs flex items-center justify-between text-indigo-900 dark:text-indigo-300">
                                     <div>
-                                        <span className="font-bold text-indigo-700 uppercase tracking-wider text-[10px] mr-2">SLA Coverage</span>
-                                        <span className="font-semibold">{device.contract_sla}</span>
+                                        <span className="font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider text-[9px] mr-2">SLA Coverage</span>
+                                        <span className="font-medium">{device.contract_sla}</span>
                                     </div>
-                                    <span className="text-[11px] text-indigo-600 font-medium">Enterprise Contract</span>
+                                    <span className="text-[10px] text-indigo-600 dark:text-indigo-400">Enterprise SLA</span>
                                 </div>
                             )}
                         </div>
 
-                        {/* Hardware Profile Specs */}
+                        {/* Hardware Specifications Profile */}
                         {isEditing ? (
-                            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
-                                <h3 className="font-bold text-slate-900 mb-4">Edit Asset Details</h3>
-                                <form onSubmit={handleUpdate} className="space-y-4">
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 p-5 shadow-2xs">
+                                <h3 className="font-bold text-sm text-slate-900 dark:text-zinc-100 mb-3">Edit Asset Record</h3>
+                                <form onSubmit={handleUpdate} className="space-y-3 text-xs">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         <div>
-                                            <label className="text-xs font-bold text-slate-600 uppercase">Asset Tag</label>
+                                            <label className="text-[10px] font-bold text-slate-600 dark:text-zinc-400 uppercase">Asset Tag</label>
                                             <input
                                                 type="text"
                                                 value={editData.asset_tag}
                                                 onChange={(e) => setEditData('asset_tag', e.target.value)}
-                                                className="mt-1 w-full text-sm rounded-xl border-slate-200 font-mono"
+                                                className="mt-1 w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 dark:bg-zinc-800 dark:text-zinc-100 font-mono"
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-bold text-slate-600 uppercase">Serial Number</label>
+                                            <label className="text-[10px] font-bold text-slate-600 dark:text-zinc-400 uppercase">Serial Number</label>
                                             <input
                                                 type="text"
                                                 value={editData.serial_number}
                                                 onChange={(e) => setEditData('serial_number', e.target.value)}
-                                                className="mt-1 w-full text-sm rounded-xl border-slate-200 font-mono"
+                                                className="mt-1 w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 dark:bg-zinc-800 dark:text-zinc-100 font-mono"
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-bold text-slate-600 uppercase">Location</label>
+                                            <label className="text-[10px] font-bold text-slate-600 dark:text-zinc-400 uppercase">Image URL (Optional)</label>
+                                            <input
+                                                type="text"
+                                                value={editData.image_url}
+                                                onChange={(e) => setEditData('image_url', e.target.value)}
+                                                placeholder="https://..."
+                                                className="mt-1 w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 dark:bg-zinc-800 dark:text-zinc-100"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold text-slate-600 dark:text-zinc-400 uppercase">Location</label>
                                             <input
                                                 type="text"
                                                 value={editData.location}
                                                 onChange={(e) => setEditData('location', e.target.value)}
-                                                className="mt-1 w-full text-sm rounded-xl border-slate-200"
+                                                className="mt-1 w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 dark:bg-zinc-800 dark:text-zinc-100"
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-bold text-slate-600 uppercase">Brand</label>
+                                            <label className="text-[10px] font-bold text-slate-600 dark:text-zinc-400 uppercase">Brand</label>
                                             <input
                                                 type="text"
                                                 value={editData.brand}
                                                 onChange={(e) => setEditData('brand', e.target.value)}
-                                                className="mt-1 w-full text-sm rounded-xl border-slate-200"
+                                                className="mt-1 w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 dark:bg-zinc-800 dark:text-zinc-100"
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-bold text-slate-600 uppercase">Model</label>
+                                            <label className="text-[10px] font-bold text-slate-600 dark:text-zinc-400 uppercase">Model</label>
                                             <input
                                                 type="text"
                                                 value={editData.model}
                                                 onChange={(e) => setEditData('model', e.target.value)}
-                                                className="mt-1 w-full text-sm rounded-xl border-slate-200"
+                                                className="mt-1 w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 dark:bg-zinc-800 dark:text-zinc-100"
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-bold text-slate-600 uppercase">CPU</label>
+                                            <label className="text-[10px] font-bold text-slate-600 dark:text-zinc-400 uppercase">CPU</label>
                                             <input
                                                 type="text"
                                                 value={editData.cpu}
                                                 onChange={(e) => setEditData('cpu', e.target.value)}
-                                                className="mt-1 w-full text-sm rounded-xl border-slate-200"
+                                                className="mt-1 w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 dark:bg-zinc-800 dark:text-zinc-100"
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-bold text-slate-600 uppercase">RAM (GB)</label>
+                                            <label className="text-[10px] font-bold text-slate-600 dark:text-zinc-400 uppercase">RAM (GB)</label>
                                             <input
                                                 type="number"
                                                 value={editData.ram_gb}
                                                 onChange={(e) => setEditData('ram_gb', parseInt(e.target.value) || 0)}
-                                                className="mt-1 w-full text-sm rounded-xl border-slate-200"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-xs font-bold text-slate-600 uppercase">Storage (GB)</label>
-                                            <input
-                                                type="number"
-                                                value={editData.storage_gb}
-                                                onChange={(e) => setEditData('storage_gb', parseInt(e.target.value) || 0)}
-                                                className="mt-1 w-full text-sm rounded-xl border-slate-200"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-xs font-bold text-slate-600 uppercase">Purchase Cost ($)</label>
-                                            <input
-                                                type="number"
-                                                step="0.01"
-                                                value={editData.purchase_cost}
-                                                onChange={(e) => setEditData('purchase_cost', e.target.value)}
-                                                className="mt-1 w-full text-sm rounded-xl border-slate-200"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-xs font-bold text-slate-600 uppercase">Warranty Expiry</label>
-                                            <input
-                                                type="date"
-                                                value={editData.warranty_expiry}
-                                                onChange={(e) => setEditData('warranty_expiry', e.target.value)}
-                                                className="mt-1 w-full text-sm rounded-xl border-slate-200"
+                                                className="mt-1 w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 dark:bg-zinc-800 dark:text-zinc-100"
                                             />
                                         </div>
                                     </div>
-                                    <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                                    <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-zinc-800">
                                         <button
                                             type="button"
                                             onClick={() => setIsEditing(false)}
-                                            className="px-4 py-2 rounded-xl border text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                                            className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-750 font-semibold text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800"
                                         >
                                             Cancel
                                         </button>
                                         <button
                                             type="submit"
                                             disabled={updateProcessing}
-                                            className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700"
+                                            className="px-4 py-1.5 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700"
                                         >
                                             {updateProcessing ? 'Saving...' : 'Save Changes'}
                                         </button>
@@ -452,38 +487,38 @@ export default function DevicesShow({ device }) {
                                 </form>
                             </div>
                         ) : (
-                            <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
-                                <h3 className="text-base font-bold text-slate-900 mb-5">Hardware Specification Profile</h3>
-                                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
-                                    <div className="border-b border-slate-100 pb-3">
-                                        <dt className="text-xs text-slate-400 uppercase font-semibold">Processor (CPU)</dt>
-                                        <dd className="font-semibold text-slate-900 mt-0.5">{device.cpu}</dd>
-                                        <dd className="text-xs text-indigo-600 capitalize font-medium">{device.cpu_tier} Tier</dd>
+                            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 p-5 shadow-2xs">
+                                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-4">Hardware Specifications</h3>
+                                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-3.5 text-xs">
+                                    <div className="border-b border-slate-100 dark:border-zinc-800/60 pb-2.5">
+                                        <dt className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase font-semibold">Processor (CPU)</dt>
+                                        <dd className="font-semibold text-slate-900 dark:text-zinc-100 mt-0.5">{device.cpu}</dd>
+                                        <dd className="text-[10px] text-indigo-600 dark:text-indigo-400 capitalize font-medium">{device.cpu_tier} Tier</dd>
                                     </div>
-                                    <div className="border-b border-slate-100 pb-3">
-                                        <dt className="text-xs text-slate-400 uppercase font-semibold">Memory (RAM)</dt>
-                                        <dd className="font-semibold text-slate-900 mt-0.5">{device.ram_gb} GB</dd>
+                                    <div className="border-b border-slate-100 dark:border-zinc-800/60 pb-2.5">
+                                        <dt className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase font-semibold">Memory (RAM)</dt>
+                                        <dd className="font-semibold text-slate-900 dark:text-zinc-100 mt-0.5">{device.ram_gb} GB</dd>
                                     </div>
-                                    <div className="border-b border-slate-100 pb-3">
-                                        <dt className="text-xs text-slate-400 uppercase font-semibold">Storage Capacity</dt>
-                                        <dd className="font-semibold text-slate-900 mt-0.5">{device.storage_gb} GB {device.storage_type}</dd>
+                                    <div className="border-b border-slate-100 dark:border-zinc-800/60 pb-2.5">
+                                        <dt className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase font-semibold">Storage Capacity</dt>
+                                        <dd className="font-semibold text-slate-900 dark:text-zinc-100 mt-0.5">{device.storage_gb} GB {device.storage_type}</dd>
                                     </div>
-                                    <div className="border-b border-slate-100 pb-3">
-                                        <dt className="text-xs text-slate-400 uppercase font-semibold">Graphics Accelerator</dt>
-                                        <dd className="font-semibold text-slate-900 mt-0.5">{device.gpu || 'N/A'}</dd>
-                                        <dd className="text-xs text-slate-500 capitalize">{device.gpu_tier}</dd>
+                                    <div className="border-b border-slate-100 dark:border-zinc-800/60 pb-2.5">
+                                        <dt className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase font-semibold">Graphics Accelerator</dt>
+                                        <dd className="font-semibold text-slate-900 dark:text-zinc-100 mt-0.5">{device.gpu || 'N/A'}</dd>
+                                        <dd className="text-[10px] text-slate-500 dark:text-zinc-400 capitalize">{device.gpu_tier}</dd>
                                     </div>
-                                    <div className="border-b border-slate-100 pb-3">
-                                        <dt className="text-xs text-slate-400 uppercase font-semibold">Physical Condition</dt>
-                                        <dd className="font-semibold capitalize text-slate-900 mt-0.5">{device.condition.replace('_', ' ')}</dd>
+                                    <div className="border-b border-slate-100 dark:border-zinc-800/60 pb-2.5">
+                                        <dt className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase font-semibold">Physical Condition</dt>
+                                        <dd className="font-semibold capitalize text-slate-900 dark:text-zinc-100 mt-0.5">{device.condition.replace('_', ' ')}</dd>
                                     </div>
-                                    <div className="border-b border-slate-100 pb-3">
-                                        <dt className="text-xs text-slate-400 uppercase font-semibold">Inventory Status</dt>
-                                        <dd className="font-bold uppercase text-xs mt-1">
+                                    <div className="border-b border-slate-100 dark:border-zinc-800/60 pb-2.5">
+                                        <dt className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase font-semibold">Inventory State</dt>
+                                        <dd className="font-bold uppercase text-[10px] mt-1">
                                             <span className={`px-2 py-0.5 rounded-full ${
-                                                device.status === 'available' ? 'bg-emerald-100 text-emerald-800' :
-                                                device.status === 'assigned' ? 'bg-slate-100 text-slate-800' :
-                                                'bg-rose-100 text-rose-800'
+                                                device.status === 'available' ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300' :
+                                                device.status === 'assigned' ? 'bg-slate-100 dark:bg-zinc-800 text-slate-800 dark:text-zinc-200' :
+                                                'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300'
                                             }`}>
                                                 {device.status.replace('_', ' ')}
                                             </span>
@@ -491,80 +526,78 @@ export default function DevicesShow({ device }) {
                                     </div>
                                 </dl>
                                 {device.notes && (
-                                    <div className="mt-5 p-3 rounded-xl bg-slate-50 text-xs text-slate-600 border border-slate-200/60">
-                                        <span className="font-bold text-slate-700">Internal Audit Notes:</span> {device.notes}
+                                    <div className="mt-4 p-2.5 rounded-lg bg-slate-50 dark:bg-zinc-800/50 text-[11px] text-slate-600 dark:text-zinc-400 border border-slate-200/60 dark:border-zinc-800">
+                                        <span className="font-bold text-slate-700 dark:text-zinc-200">Audit Notes:</span> {device.notes}
                                     </div>
                                 )}
                             </div>
                         )}
 
                         {/* Maintenance & Servicing History Card */}
-                        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
-                            <div className="flex items-center justify-between mb-4">
+                        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 p-5 shadow-2xs">
+                            <div className="flex items-center justify-between mb-3">
                                 <div>
-                                    <h3 className="text-base font-bold text-slate-900">Maintenance & Servicing History</h3>
-                                    <p className="text-xs text-slate-500">Repairs, hardware upgrades, and performance assessments.</p>
+                                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Maintenance & Servicing History</h3>
+                                    <p className="text-[11px] text-slate-500 dark:text-zinc-400">Repairs, hardware upgrades, and performance assessments.</p>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={() => setShowMaintenanceModal(true)}
-                                    className="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 shadow-xs transition"
+                                    className="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-semibold transition"
                                 >
-                                    + Log Activity
+                                    + Log Servicing
                                 </button>
                             </div>
 
                             {(!device.maintenance_logs || device.maintenance_logs.length === 0) ? (
-                                <p className="text-sm text-slate-400 italic py-4">No maintenance or servicing activities recorded for this asset.</p>
+                                <p className="text-xs text-slate-400 dark:text-zinc-500 italic py-3">No maintenance activities recorded for this asset.</p>
                             ) : (
-                                <div className="space-y-3">
+                                <div className="space-y-2.5">
                                     {device.maintenance_logs.map((log) => (
-                                        <div key={log.id} className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition">
-                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                        <div key={log.id} className="p-3 rounded-lg border border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-850/50 text-xs">
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
                                                 <div className="flex items-center gap-2">
-                                                    <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded ${
-                                                        log.type === 'repair' ? 'bg-rose-100 text-rose-800' :
-                                                        log.type === 'upgrade' ? 'bg-indigo-100 text-indigo-800' :
-                                                        log.type === 'preventive' ? 'bg-emerald-100 text-emerald-800' :
-                                                        'bg-slate-200 text-slate-700'
+                                                    <span className={`px-1.5 py-0.2 text-[9px] font-bold uppercase rounded ${
+                                                        log.type === 'repair' ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300' :
+                                                        log.type === 'upgrade' ? 'bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300' :
+                                                        'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
                                                     }`}>
                                                         {log.type}
                                                     </span>
-                                                    <h4 className="font-bold text-sm text-slate-900">{log.title}</h4>
+                                                    <h4 className="font-bold text-slate-900 dark:text-zinc-100">{log.title}</h4>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
-                                                        log.status === 'completed' ? 'bg-emerald-100 text-emerald-800' :
-                                                        log.status === 'in_progress' ? 'bg-amber-100 text-amber-800' :
-                                                        'bg-slate-100 text-slate-700'
+                                                    <span className={`px-2 py-0.2 text-[10px] font-semibold rounded-full ${
+                                                        log.status === 'completed' ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300' :
+                                                        'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300'
                                                     }`}>
                                                         {log.status.replace('_', ' ')}
                                                     </span>
-                                                    <span className="text-xs font-bold text-slate-700">
+                                                    <span className="font-bold text-slate-700 dark:text-zinc-300">
                                                         ${Number(log.cost).toFixed(2)}
                                                     </span>
                                                     {log.status !== 'completed' && (
                                                         <button
                                                             type="button"
                                                             onClick={() => handleOpenUpdateLog(log)}
-                                                            className="text-xs text-indigo-600 font-semibold hover:underline"
+                                                            className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
                                                         >
-                                                            Assess & Complete
+                                                            Assess & Close
                                                         </button>
                                                     )}
                                                 </div>
                                             </div>
-                                            <p className="text-xs text-slate-600 mt-2">{log.description}</p>
+                                            <p className="text-[11px] text-slate-600 dark:text-zinc-400 mt-1">{log.description}</p>
                                             
                                             {log.performance_assessment && (
-                                                <div className="mt-2.5 p-2.5 rounded-lg bg-emerald-50 border border-emerald-100 text-xs text-emerald-800">
-                                                    <span className="font-bold text-emerald-900">Performance Assessment:</span> {log.performance_assessment}
+                                                <div className="mt-2 p-2 rounded bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/50 text-[11px] text-emerald-800 dark:text-emerald-300">
+                                                    <span className="font-bold">Performance Impact:</span> {log.performance_assessment}
                                                 </div>
                                             )}
 
-                                            <div className="text-[11px] text-slate-400 mt-2 flex items-center justify-between">
-                                                <span>Technician: {log.performed_by || 'Internal IT'}</span>
-                                                <span>Started: {new Date(log.started_at).toLocaleDateString()} {log.completed_at && `&bull; Completed: ${new Date(log.completed_at).toLocaleDateString()}`}</span>
+                                            <div className="text-[10px] text-slate-400 dark:text-zinc-500 mt-1.5 flex items-center justify-between">
+                                                <span>Tech: {log.performed_by || 'Internal IT'}</span>
+                                                <span>Started: {new Date(log.started_at).toLocaleDateString()}</span>
                                             </div>
                                         </div>
                                     ))}
@@ -573,25 +606,25 @@ export default function DevicesShow({ device }) {
                         </div>
 
                         {/* Lifecycle Audit Trail */}
-                        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
-                            <h3 className="text-base font-bold text-slate-900 mb-4">Lifecycle Audit Trail</h3>
+                        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 p-5 shadow-2xs">
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-3">Lifecycle Audit Trail</h3>
                             {(!device.lifecycle_events || device.lifecycle_events.length === 0) ? (
-                                <p className="text-sm text-slate-400 italic">No lifecycle transition events recorded.</p>
+                                <p className="text-xs text-slate-400 dark:text-zinc-500 italic">No transition events recorded.</p>
                             ) : (
-                                <div className="divide-y divide-slate-100">
+                                <div className="divide-y divide-slate-100 dark:divide-zinc-800/60 text-xs">
                                     {device.lifecycle_events.map((evt) => (
-                                        <div key={evt.id} className="py-3 flex items-start justify-between text-xs">
+                                        <div key={evt.id} className="py-2.5 flex items-start justify-between">
                                             <div>
-                                                <div className="font-semibold text-slate-800">
-                                                    Transitioned from <span className="uppercase text-slate-500">{evt.from_stage}</span> &rarr; <span className="uppercase font-bold text-indigo-600">{evt.to_stage}</span>
+                                                <div className="font-semibold text-slate-800 dark:text-zinc-200 text-xs">
+                                                    Phase <span className="uppercase text-slate-500">{evt.from_stage}</span> &rarr; <span className="uppercase font-bold text-indigo-600 dark:text-indigo-400">{evt.to_stage}</span>
                                                 </div>
-                                                <p className="text-slate-600 mt-0.5">{evt.notes}</p>
-                                                <div className="text-[10px] text-slate-400 mt-1">
-                                                    By: {evt.user?.name || 'System / IT Admin'}
+                                                <p className="text-[11px] text-slate-600 dark:text-zinc-400 mt-0.5">{evt.notes}</p>
+                                                <div className="text-[9px] text-slate-400 dark:text-zinc-500 mt-0.5">
+                                                    Auth: {evt.user?.name || 'System IT Admin'}
                                                 </div>
                                             </div>
-                                            <div className="text-slate-400 whitespace-nowrap ml-4">
-                                                {new Date(evt.created_at).toLocaleDateString()} {new Date(evt.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            <div className="text-[10px] text-slate-400 dark:text-zinc-500 whitespace-nowrap ml-3">
+                                                {new Date(evt.created_at).toLocaleDateString()}
                                             </div>
                                         </div>
                                     ))}
@@ -601,35 +634,33 @@ export default function DevicesShow({ device }) {
                     </div>
 
                     {/* Right Column: Allocation & Assignment History */}
-                    <div className="space-y-6">
-                        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
-                            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-4">Current Fleet Allocation</h3>
+                    <div className="space-y-5">
+                        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 p-5 shadow-2xs">
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-3">Current Allocation</h3>
                             {device.active_assignment?.employee ? (
-                                <div>
-                                    <div className="p-4 rounded-xl bg-indigo-50/50 border border-indigo-100">
-                                        <div className="text-xs font-bold uppercase tracking-wider text-indigo-600">Assigned To</div>
-                                        <div className="font-bold text-slate-900 text-lg mt-1">{device.active_assignment.employee.name}</div>
-                                        <div className="text-xs text-slate-500">{device.active_assignment.employee.department}</div>
-                                        <div className="mt-3 text-xs text-slate-500 flex items-center justify-between">
-                                            <span>Since {new Date(device.active_assignment.assigned_at).toLocaleDateString()}</span>
-                                            {device.active_assignment.match_score && (
-                                                <span className="font-bold text-indigo-700">
-                                                    Fit: {Math.round(device.active_assignment.match_score * 100)}%
-                                                </span>
-                                            )}
-                                        </div>
+                                <div className="p-3.5 rounded-lg bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50">
+                                    <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Assigned Employee</div>
+                                    <div className="font-bold text-slate-900 dark:text-zinc-100 text-base mt-1">{device.active_assignment.employee.name}</div>
+                                    <div className="text-xs text-slate-500 dark:text-zinc-400">{device.active_assignment.employee.department}</div>
+                                    <div className="mt-2.5 text-[10px] text-slate-500 dark:text-zinc-400 flex items-center justify-between">
+                                        <span>Since {new Date(device.active_assignment.assigned_at).toLocaleDateString()}</span>
+                                        {device.active_assignment.match_score && (
+                                            <span className="font-bold text-indigo-700 dark:text-indigo-400">
+                                                Fit: {Math.round(device.active_assignment.match_score * 100)}%
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             ) : (
-                                <div className="p-6 rounded-xl bg-emerald-50/60 border border-emerald-100 text-center">
-                                    <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-2 font-bold">
+                                <div className="p-5 rounded-lg bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 text-center">
+                                    <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center mx-auto mb-1.5 font-bold text-xs">
                                         ✓
                                     </div>
-                                    <div className="font-bold text-emerald-900 text-sm">Available for Assignment</div>
-                                    <p className="text-xs text-emerald-700 mt-1">This unit is currently idle in company inventory.</p>
+                                    <div className="font-bold text-emerald-900 dark:text-emerald-300 text-xs">Available Pool Unit</div>
+                                    <p className="text-[11px] text-emerald-700 dark:text-emerald-400 mt-0.5">Idle in inventory, ready to be matched.</p>
                                     <Link
                                         href={route('match.index')}
-                                        className="mt-4 inline-block w-full py-2 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition"
+                                        className="mt-3 inline-block w-full py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition"
                                     >
                                         Assign via Match Engine
                                     </Link>
@@ -637,24 +668,24 @@ export default function DevicesShow({ device }) {
                             )}
                         </div>
 
-                        {/* Assignment History */}
-                        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
-                            <h3 className="text-base font-bold text-slate-900 mb-4">Historical Assignments</h3>
+                        {/* Historical Assignments */}
+                        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 p-5 shadow-2xs">
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-3">Historical Allocations</h3>
                             {(!device.assignments || device.assignments.length === 0) ? (
-                                <p className="text-sm text-slate-400 italic">No historical assignments logged for this device.</p>
+                                <p className="text-xs text-slate-400 dark:text-zinc-500 italic">No past assignments logged.</p>
                             ) : (
-                                <div className="divide-y divide-slate-100">
+                                <div className="divide-y divide-slate-100 dark:divide-zinc-800/60 text-xs">
                                     {device.assignments.map((asg) => (
-                                        <div key={asg.id} className="py-3 text-xs">
-                                            <div className="flex items-center justify-between">
-                                                <span className="font-semibold text-slate-900">{asg.employee?.name}</span>
+                                        <div key={asg.id} className="py-2.5">
+                                            <div className="flex items-center justify-between font-medium">
+                                                <span className="text-slate-900 dark:text-zinc-100">{asg.employee?.name}</span>
                                                 {asg.match_score && (
-                                                    <span className="font-bold text-slate-600">
+                                                    <span className="text-slate-500 text-[11px]">
                                                         {Math.round(asg.match_score * 100)}%
                                                     </span>
                                                 )}
                                             </div>
-                                            <div className="text-[11px] text-slate-400 mt-0.5">
+                                            <div className="text-[10px] text-slate-400 dark:text-zinc-500 mt-0.5">
                                                 {new Date(asg.assigned_at).toLocaleDateString()}
                                                 {asg.unassigned_at && ` &rarr; ${new Date(asg.unassigned_at).toLocaleDateString()}`}
                                             </div>
@@ -669,34 +700,34 @@ export default function DevicesShow({ device }) {
 
             {/* Modal: Transition Lifecycle Stage */}
             {showLifecycleModal && (
-                <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200">
-                        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                            <h3 className="font-bold text-slate-900">Transition Lifecycle Stage</h3>
-                            <button onClick={() => setShowLifecycleModal(false)} className="text-slate-400 hover:text-slate-600 text-lg font-bold">&times;</button>
+                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-2xs flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-zinc-900 rounded-xl max-w-md w-full p-5 shadow-xl border border-slate-200 dark:border-zinc-800 text-xs">
+                        <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-zinc-800">
+                            <h3 className="font-bold text-sm text-slate-900 dark:text-zinc-100">Transition Lifecycle Phase</h3>
+                            <button onClick={() => setShowLifecycleModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 text-lg font-bold">&times;</button>
                         </div>
-                        <form onSubmit={handleLifecycleTransition} className="mt-4 space-y-4">
+                        <form onSubmit={handleLifecycleTransition} className="mt-3.5 space-y-3">
                             <div>
-                                <label className="block text-xs font-bold uppercase text-slate-700">Target Lifecycle Stage</label>
+                                <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Target Lifecycle Stage</label>
                                 <select
                                     value={lifecycleData.to_stage}
                                     onChange={(e) => setLifecycleData('to_stage', e.target.value)}
-                                    className="mt-1 w-full text-sm rounded-xl border-slate-200 font-semibold"
+                                    className="mt-1 w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 dark:bg-zinc-800 dark:text-zinc-100 font-semibold"
                                 >
-                                    <option value="acquisition">Acquisition (Procurement / Intake)</option>
+                                    <option value="acquisition">Acquisition (Intake / Staging)</option>
                                     <option value="deployment">Deployment (Active In-Service)</option>
                                     <option value="maintenance">Maintenance (Servicing / In-Repair)</option>
                                     <option value="retirement">Retirement (Decommissioned)</option>
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold uppercase text-slate-700">Audit Notes / Justification</label>
+                                <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Audit Notes / Reason</label>
                                 <textarea
                                     rows={3}
                                     value={lifecycleData.notes}
                                     onChange={(e) => setLifecycleData('notes', e.target.value)}
-                                    placeholder="Reason for stage change, approval reference, or incident number..."
-                                    className="mt-1 w-full text-sm rounded-xl border-slate-200"
+                                    placeholder="Reason for phase transition..."
+                                    className="mt-1 w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 dark:bg-zinc-800 dark:text-zinc-100"
                                     required
                                 />
                             </div>
@@ -704,16 +735,16 @@ export default function DevicesShow({ device }) {
                                 <button
                                     type="button"
                                     onClick={() => setShowLifecycleModal(false)}
-                                    className="px-4 py-2 rounded-xl border text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                                    className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-750 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={lifecycleProcessing}
-                                    className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 transition"
+                                    className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition"
                                 >
-                                    {lifecycleProcessing ? 'Transitioning...' : 'Confirm Transition'}
+                                    {lifecycleProcessing ? 'Transitioning...' : 'Confirm'}
                                 </button>
                             </div>
                         </form>
@@ -721,22 +752,22 @@ export default function DevicesShow({ device }) {
                 </div>
             )}
 
-            {/* Modal: Log Maintenance Activity */}
+            {/* Modal: Log Maintenance */}
             {showMaintenanceModal && (
-                <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-slate-200">
-                        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                            <h3 className="font-bold text-slate-900">Log Maintenance / Servicing</h3>
-                            <button onClick={() => setShowMaintenanceModal(false)} className="text-slate-400 hover:text-slate-600 text-lg font-bold">&times;</button>
+                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-2xs flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-zinc-900 rounded-xl max-w-lg w-full p-5 shadow-xl border border-slate-200 dark:border-zinc-800 text-xs">
+                        <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-zinc-800">
+                            <h3 className="font-bold text-sm text-slate-900 dark:text-zinc-100">Log Maintenance / Servicing</h3>
+                            <button onClick={() => setShowMaintenanceModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 text-lg font-bold">&times;</button>
                         </div>
-                        <form onSubmit={handleCreateMaintenance} className="mt-4 space-y-4">
-                            <div className="grid grid-cols-2 gap-3">
+                        <form onSubmit={handleCreateMaintenance} className="mt-3.5 space-y-3">
+                            <div className="grid grid-cols-2 gap-2.5">
                                 <div>
-                                    <label className="block text-xs font-bold uppercase text-slate-700">Activity Type</label>
+                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Activity Type</label>
                                     <select
                                         value={maintData.type}
                                         onChange={(e) => setMaintData('type', e.target.value)}
-                                        className="mt-1 w-full text-sm rounded-xl border-slate-200"
+                                        className="mt-1 w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 dark:bg-zinc-800 dark:text-zinc-100"
                                     >
                                         <option value="repair">Repair</option>
                                         <option value="upgrade">Hardware Upgrade</option>
@@ -746,89 +777,89 @@ export default function DevicesShow({ device }) {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold uppercase text-slate-700">Cost ($)</label>
+                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Cost ($)</label>
                                     <input
                                         type="number"
                                         step="0.01"
                                         min="0"
                                         value={maintData.cost}
                                         onChange={(e) => setMaintData('cost', e.target.value)}
-                                        className="mt-1 w-full text-sm rounded-xl border-slate-200"
+                                        className="mt-1 w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 dark:bg-zinc-800 dark:text-zinc-100"
                                         required
                                     />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold uppercase text-slate-700">Activity Title</label>
+                                <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Title</label>
                                 <input
                                     type="text"
                                     value={maintData.title}
                                     onChange={(e) => setMaintData('title', e.target.value)}
-                                    placeholder="e.g. Battery replacement & thermal cleaning"
-                                    className="mt-1 w-full text-sm rounded-xl border-slate-200"
+                                    placeholder="e.g. Battery replacement & thermal repaste"
+                                    className="mt-1 w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 dark:bg-zinc-800 dark:text-zinc-100"
                                     required
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold uppercase text-slate-700">Technician / Vendor</label>
+                                <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Technician / Vendor</label>
                                 <input
                                     type="text"
                                     value={maintData.performed_by}
                                     onChange={(e) => setMaintData('performed_by', e.target.value)}
                                     placeholder="e.g. Internal IT Support, Apex Tech"
-                                    className="mt-1 w-full text-sm rounded-xl border-slate-200"
+                                    className="mt-1 w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 dark:bg-zinc-800 dark:text-zinc-100"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold uppercase text-slate-700">Description of Work</label>
+                                <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Description of Work</label>
                                 <textarea
                                     rows={2}
                                     value={maintData.description}
                                     onChange={(e) => setMaintData('description', e.target.value)}
-                                    placeholder="Specific parts changed, symptoms observed..."
-                                    className="mt-1 w-full text-sm rounded-xl border-slate-200"
+                                    placeholder="Work performed, components changed..."
+                                    className="mt-1 w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 dark:bg-zinc-800 dark:text-zinc-100"
                                     required
                                 />
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-2 gap-2.5 items-center">
                                 <div>
-                                    <label className="block text-xs font-bold uppercase text-slate-700">Status</label>
+                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Status</label>
                                     <select
                                         value={maintData.status}
                                         onChange={(e) => setMaintData('status', e.target.value)}
-                                        className="mt-1 w-full text-sm rounded-xl border-slate-200"
+                                        className="mt-1 w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 dark:bg-zinc-800 dark:text-zinc-100"
                                     >
                                         <option value="in_progress">In Progress</option>
                                         <option value="scheduled">Scheduled</option>
                                         <option value="completed">Completed</option>
                                     </select>
                                 </div>
-                                <div className="flex items-center mt-5">
-                                    <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+                                <div className="mt-4">
+                                    <label className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-700 dark:text-zinc-300">
                                         <input
                                             type="checkbox"
                                             checked={maintData.send_to_maintenance_stage}
                                             onChange={(e) => setMaintData('send_to_maintenance_stage', e.target.checked)}
-                                            className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                            className="rounded border-slate-300 dark:border-zinc-700 text-indigo-600 focus:ring-indigo-500"
                                         />
-                                        Move Asset to Maintenance Stage
+                                        Set Asset to Maintenance Phase
                                     </label>
                                 </div>
                             </div>
-                            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-zinc-800">
                                 <button
                                     type="button"
                                     onClick={() => setShowMaintenanceModal(false)}
-                                    className="px-4 py-2 rounded-xl border text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                                    className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-750 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={maintProcessing}
-                                    className="px-5 py-2 rounded-xl bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 transition"
+                                    className="px-4 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold transition"
                                 >
-                                    {maintProcessing ? 'Logging...' : 'Record Maintenance Log'}
+                                    {maintProcessing ? 'Logging...' : 'Record Log'}
                                 </button>
                             </div>
                         </form>
@@ -836,81 +867,78 @@ export default function DevicesShow({ device }) {
                 </div>
             )}
 
-            {/* Modal: Complete Servicing & Record Performance Assessment */}
+            {/* Modal: Update / Complete Servicing Log */}
             {selectedLogToUpdate && (
-                <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-slate-200">
-                        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-2xs flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-zinc-900 rounded-xl max-w-lg w-full p-5 shadow-xl border border-slate-200 dark:border-zinc-800 text-xs">
+                        <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-zinc-800">
                             <div>
-                                <h3 className="font-bold text-slate-900">Assess & Complete Servicing</h3>
-                                <p className="text-xs text-slate-500 mt-0.5">{selectedLogToUpdate.title}</p>
+                                <h3 className="font-bold text-sm text-slate-900 dark:text-zinc-100">Assess & Close Servicing</h3>
+                                <p className="text-[10px] text-slate-500 dark:text-zinc-400">{selectedLogToUpdate.title}</p>
                             </div>
-                            <button onClick={() => setSelectedLogToUpdate(null)} className="text-slate-400 hover:text-slate-600 text-lg font-bold">&times;</button>
+                            <button onClick={() => setSelectedLogToUpdate(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 text-lg font-bold">&times;</button>
                         </div>
-                        <form onSubmit={handleUpdateMaintenanceLog} className="mt-4 space-y-4">
-                            <div className="grid grid-cols-2 gap-3">
+                        <form onSubmit={handleUpdateMaintenanceLog} className="mt-3.5 space-y-3">
+                            <div className="grid grid-cols-2 gap-2.5">
                                 <div>
-                                    <label className="block text-xs font-bold uppercase text-slate-700">Final Cost ($)</label>
+                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Final Cost ($)</label>
                                     <input
                                         type="number"
                                         step="0.01"
                                         min="0"
                                         value={updateMaintData.cost}
                                         onChange={(e) => setUpdateMaintData('cost', e.target.value)}
-                                        className="mt-1 w-full text-sm rounded-xl border-slate-200"
+                                        className="mt-1 w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 dark:bg-zinc-800 dark:text-zinc-100"
                                         required
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold uppercase text-slate-700">Completion Date</label>
+                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Completion Date</label>
                                     <input
                                         type="date"
                                         value={updateMaintData.completed_at}
                                         onChange={(e) => setUpdateMaintData('completed_at', e.target.value)}
-                                        className="mt-1 w-full text-sm rounded-xl border-slate-200"
+                                        className="mt-1 w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 dark:bg-zinc-800 dark:text-zinc-100"
                                         required
                                     />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold uppercase text-slate-700">Post-Maintenance Performance Assessment *</label>
+                                <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Performance Assessment *</label>
                                 <textarea
                                     rows={3}
                                     value={updateMaintData.performance_assessment}
                                     onChange={(e) => setUpdateMaintData('performance_assessment', e.target.value)}
-                                    placeholder="e.g. CPU benchmark scores restored, temperature reduced by 8°C under stress test, 0 memory faults logged..."
-                                    className="mt-1 w-full text-sm rounded-xl border-slate-200"
+                                    placeholder="Empirical performance impact post-servicing (e.g. stress test temperature drops, PassMark scores, memory test passes)..."
+                                    className="mt-1 w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 dark:bg-zinc-800 dark:text-zinc-100"
                                     required
                                 />
-                                <p className="text-[11px] text-slate-400 mt-1">
-                                    Assess the performance of the asset to verify full restoration of operational capacity.
-                                </p>
                             </div>
-                            <div className="p-3 bg-slate-50 rounded-xl">
-                                <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-800">
+                            <div className="p-2.5 bg-slate-50 dark:bg-zinc-800/50 rounded-lg">
+                                <label className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-800 dark:text-zinc-200">
                                     <input
                                         type="checkbox"
                                         checked={updateMaintData.restore_to_available}
                                         onChange={(e) => setUpdateMaintData('restore_to_available', e.target.checked)}
-                                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                        className="rounded border-slate-300 dark:border-zinc-700 text-indigo-600 focus:ring-indigo-500"
                                     />
-                                    Restore Asset back to Active Deployment Stage
+                                    Restore Asset back to Active Deployment Phase
                                 </label>
                             </div>
-                            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-zinc-800">
                                 <button
                                     type="button"
                                     onClick={() => setSelectedLogToUpdate(null)}
-                                    className="px-4 py-2 rounded-xl border text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                                    className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-750 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={updateMaintProcessing}
-                                    className="px-5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition"
+                                    className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition"
                                 >
-                                    {updateMaintProcessing ? 'Saving...' : 'Mark Servicing Completed'}
+                                    {updateMaintProcessing ? 'Saving...' : 'Complete & Save'}
                                 </button>
                             </div>
                         </form>

@@ -170,6 +170,12 @@ class TechSpecsService
         $releaseDate = $keyAspects['Release Date'] ?? ($raw['Metadata']['ReleaseDate'] ?? '');
         $year = !empty($releaseDate) && preg_match('/(\d{4})/', $releaseDate, $m) ? (int)$m[1] : (int)date('Y');
 
+        // Image / Thumbnail
+        $imageUrl = $raw['Thumbnail']['Image_1'] ?? ($raw['Thumbnail']['Image_2'] ?? null);
+        if (empty($imageUrl) && !empty($raw['Product']['Thumbnail'])) {
+            $imageUrl = $raw['Product']['Thumbnail'];
+        }
+
         return [
             'brand' => $brand,
             'model' => $model,
@@ -183,6 +189,7 @@ class TechSpecsService
             'gpu_tier' => $gpuTier,
             'year_acquired' => $year,
             'techspecs_id' => $prod['english_id'] ?? ($raw['_id'] ?? null),
+            'image_url' => $imageUrl,
         ];
     }
 
