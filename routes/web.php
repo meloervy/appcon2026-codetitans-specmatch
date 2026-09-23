@@ -16,6 +16,7 @@ Route::get('/', function () {
     if (auth()->check()) {
         return redirect()->route('dashboard');
     }
+
     return redirect()->route('login');
 });
 
@@ -26,6 +27,7 @@ Route::middleware('auth')->group(function () {
     // Devices (Inventory & Lifecycle)
     Route::get('/devices', [DeviceController::class, 'index'])->name('devices.index');
     Route::get('/devices/create', [DeviceController::class, 'create'])->name('devices.create');
+    Route::get('/devices/export/pdf', [DeviceController::class, 'exportPdf'])->name('devices.export.pdf');
     Route::post('/devices', [DeviceController::class, 'store'])->name('devices.store');
     Route::get('/devices/{id}', [DeviceController::class, 'show'])->name('devices.show');
     Route::put('/devices/{id}', [DeviceController::class, 'update'])->name('devices.update');

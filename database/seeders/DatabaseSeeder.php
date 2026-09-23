@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Assignment;
 use App\Models\Device;
 use App\Models\Employee;
+use App\Models\LifecycleEvent;
 use App\Models\RoleProfile;
 use App\Models\User;
 use App\Services\HardwareImageService;
@@ -18,12 +19,36 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Seed IT Staff User
+        // 1. Seed Enterprise ITAM Staff Users (Covering Admin, Asset Manager, and Technician)
         User::updateOrCreate(
             ['email' => 'admin@specmatch.local'],
             [
                 'name' => 'IT Administrator',
                 'password' => Hash::make('password'),
+                'role' => 'admin',
+                'department' => 'IT Infrastructure & Systems',
+                'email_verified_at' => now(),
+            ]
+        );
+
+        User::updateOrCreate(
+            ['email' => 'manager@specmatch.local'],
+            [
+                'name' => 'IT Asset Manager',
+                'password' => Hash::make('password'),
+                'role' => 'manager',
+                'department' => 'Asset Lifecycle & Procurement',
+                'email_verified_at' => now(),
+            ]
+        );
+
+        User::updateOrCreate(
+            ['email' => 'tech@specmatch.local'],
+            [
+                'name' => 'Hardware Technician',
+                'password' => Hash::make('password'),
+                'role' => 'technician',
+                'department' => 'Hardware Diagnostics & Maintenance',
                 'email_verified_at' => now(),
             ]
         );
@@ -129,7 +154,7 @@ class DatabaseSeeder extends Seeder
                 'gpu' => 'Apple 30-core GPU', 'gpu_tier' => 'dedicated-high', 'year_acquired' => 2024,
                 'purchase_cost' => 215000.00, 'purchase_date' => '2024-01-15', 'depreciation_rate_percent' => 20.0,
                 'vendor' => 'Power Mac Center Corporate / Apple PH', 'warranty_start' => '2024-01-15', 'warranty_expiry' => '2027-01-15', 'contract_sla' => 'AppleCare+ for Enterprise (4h onsite)',
-                'condition' => 'excellent', 'status' => 'available', 'lifecycle_stage' => 'deployment'
+                'condition' => 'excellent', 'status' => 'available', 'lifecycle_stage' => 'deployment',
             ],
             [
                 'asset_tag' => 'LAP-002', 'serial_number' => '8F29KD3X', 'barcode' => 'BC-LAP-002', 'techspecs_id' => 'dell-xps-15-9530',
@@ -140,9 +165,9 @@ class DatabaseSeeder extends Seeder
                 'gpu' => 'NVIDIA RTX 4070 Laptop', 'gpu_tier' => 'dedicated-high', 'year_acquired' => 2024,
                 'purchase_cost' => 155000.00, 'purchase_date' => '2024-02-10', 'depreciation_rate_percent' => 20.0,
                 'vendor' => 'Dell Philippines Direct', 'warranty_start' => '2024-02-10', 'warranty_expiry' => '2027-02-10', 'contract_sla' => 'ProSupport Plus Mission Critical NBD',
-                'condition' => 'excellent', 'status' => 'available', 'lifecycle_stage' => 'deployment'
+                'condition' => 'excellent', 'status' => 'available', 'lifecycle_stage' => 'deployment',
             ],
-            
+
             // Laptops - High / Integrated
             [
                 'asset_tag' => 'LAP-003', 'serial_number' => 'PF49XQ11', 'barcode' => 'BC-LAP-003', 'techspecs_id' => 'lenovo-thinkpad-t14s-gen4',
@@ -153,7 +178,7 @@ class DatabaseSeeder extends Seeder
                 'gpu' => 'AMD Radeon 780M', 'gpu_tier' => 'integrated', 'year_acquired' => 2024,
                 'purchase_cost' => 98000.00, 'purchase_date' => '2024-03-01', 'depreciation_rate_percent' => 20.0,
                 'vendor' => 'Lenovo Philippines Commercial Direct', 'warranty_start' => '2024-03-01', 'warranty_expiry' => '2027-03-01', 'contract_sla' => 'Premier Support NBD Onsite',
-                'condition' => 'excellent', 'status' => 'available', 'lifecycle_stage' => 'deployment'
+                'condition' => 'excellent', 'status' => 'available', 'lifecycle_stage' => 'deployment',
             ],
             [
                 'asset_tag' => 'LAP-004', 'serial_number' => 'H9Y21M89', 'barcode' => 'BC-LAP-004', 'techspecs_id' => 'apple-macbook-pro-14-m3-pro',
@@ -164,7 +189,7 @@ class DatabaseSeeder extends Seeder
                 'gpu' => 'Apple 14-core GPU', 'gpu_tier' => 'dedicated-entry', 'year_acquired' => 2024,
                 'purchase_cost' => 125000.00, 'purchase_date' => '2024-02-20', 'depreciation_rate_percent' => 20.0,
                 'vendor' => 'Power Mac Center Corporate / Apple PH', 'warranty_start' => '2024-02-20', 'warranty_expiry' => '2027-02-20', 'contract_sla' => 'AppleCare+ for Enterprise',
-                'condition' => 'excellent', 'status' => 'available', 'lifecycle_stage' => 'deployment'
+                'condition' => 'excellent', 'status' => 'available', 'lifecycle_stage' => 'deployment',
             ],
 
             // Laptops - Mid / Integrated
@@ -177,7 +202,7 @@ class DatabaseSeeder extends Seeder
                 'gpu' => 'Intel Iris Xe', 'gpu_tier' => 'integrated', 'year_acquired' => 2023,
                 'purchase_cost' => 56000.00, 'purchase_date' => '2023-05-12', 'depreciation_rate_percent' => 25.0,
                 'vendor' => 'Silicon Valley / Lenovo Partner PH', 'warranty_start' => '2023-05-12', 'warranty_expiry' => '2026-05-12', 'contract_sla' => 'Standard Depot Repair',
-                'condition' => 'good', 'status' => 'available', 'lifecycle_stage' => 'deployment'
+                'condition' => 'good', 'status' => 'available', 'lifecycle_stage' => 'deployment',
             ],
             [
                 'asset_tag' => 'LAP-006', 'serial_number' => 'DL98124K', 'barcode' => 'BC-LAP-006', 'techspecs_id' => 'dell-latitude-5440',
@@ -188,7 +213,7 @@ class DatabaseSeeder extends Seeder
                 'gpu' => 'Intel Iris Xe', 'gpu_tier' => 'integrated', 'year_acquired' => 2023,
                 'purchase_cost' => 68000.00, 'purchase_date' => '2023-06-18', 'depreciation_rate_percent' => 25.0,
                 'vendor' => 'Dell Philippines Direct', 'warranty_start' => '2023-06-18', 'warranty_expiry' => '2026-06-18', 'contract_sla' => 'Dell ProSupport NBD',
-                'condition' => 'good', 'status' => 'available', 'lifecycle_stage' => 'deployment'
+                'condition' => 'good', 'status' => 'available', 'lifecycle_stage' => 'deployment',
             ],
             [
                 'asset_tag' => 'LAP-007', 'serial_number' => 'CND29481M', 'barcode' => 'BC-LAP-007', 'techspecs_id' => 'hp-elitebook-840-g10',
@@ -199,7 +224,7 @@ class DatabaseSeeder extends Seeder
                 'gpu' => 'Intel Iris Xe', 'gpu_tier' => 'integrated', 'year_acquired' => 2023,
                 'purchase_cost' => 74000.00, 'purchase_date' => '2023-07-04', 'depreciation_rate_percent' => 25.0,
                 'vendor' => 'HP Philippines Enterprise', 'warranty_start' => '2023-07-04', 'warranty_expiry' => '2026-10-15', 'contract_sla' => 'HP Care Pack Next Business Day',
-                'condition' => 'good', 'status' => 'available', 'lifecycle_stage' => 'deployment'
+                'condition' => 'good', 'status' => 'available', 'lifecycle_stage' => 'deployment',
             ],
 
             // Laptops - Entry / Integrated or None (Approaching Warranty Expiry)
@@ -212,7 +237,7 @@ class DatabaseSeeder extends Seeder
                 'gpu' => 'Intel UHD Graphics', 'gpu_tier' => 'integrated', 'year_acquired' => 2022,
                 'purchase_cost' => 28500.00, 'purchase_date' => '2022-08-10', 'depreciation_rate_percent' => 33.3,
                 'vendor' => 'VillMan Computers PH', 'warranty_start' => '2022-08-10', 'warranty_expiry' => now()->addDays(25)->toDateString(), 'contract_sla' => '1-Year Limited Warranty (Extended)',
-                'condition' => 'good', 'status' => 'available', 'lifecycle_stage' => 'deployment'
+                'condition' => 'good', 'status' => 'available', 'lifecycle_stage' => 'deployment',
             ],
             [
                 'asset_tag' => 'LAP-009', 'serial_number' => 'PF10928N', 'barcode' => 'BC-LAP-009', 'techspecs_id' => 'lenovo-ideapad-1',
@@ -223,7 +248,7 @@ class DatabaseSeeder extends Seeder
                 'gpu' => 'Intel UHD 600', 'gpu_tier' => 'none', 'year_acquired' => 2021,
                 'purchase_cost' => 18500.00, 'purchase_date' => '2021-04-12', 'depreciation_rate_percent' => 33.3,
                 'vendor' => 'PC Express Commercial', 'warranty_start' => '2021-04-12', 'warranty_expiry' => '2023-04-12', 'contract_sla' => 'Standard Return Only',
-                'condition' => 'fair', 'status' => 'available', 'lifecycle_stage' => 'deployment'
+                'condition' => 'fair', 'status' => 'available', 'lifecycle_stage' => 'deployment',
             ],
             [
                 'asset_tag' => 'LAP-010', 'serial_number' => '5CD19283X', 'barcode' => 'BC-LAP-010', 'techspecs_id' => 'hp-250-g8',
@@ -234,7 +259,7 @@ class DatabaseSeeder extends Seeder
                 'gpu' => 'Intel UHD', 'gpu_tier' => 'none', 'year_acquired' => 2022,
                 'purchase_cost' => 26000.00, 'purchase_date' => '2022-09-01', 'depreciation_rate_percent' => 33.3,
                 'vendor' => 'Octagon Computer Superstore', 'warranty_start' => '2022-09-01', 'warranty_expiry' => now()->addDays(45)->toDateString(), 'contract_sla' => 'HP Base Hardware Support',
-                'condition' => 'fair', 'status' => 'available', 'lifecycle_stage' => 'deployment'
+                'condition' => 'fair', 'status' => 'available', 'lifecycle_stage' => 'deployment',
             ],
 
             // Desktops - Workstation / Dedicated-High
@@ -247,7 +272,7 @@ class DatabaseSeeder extends Seeder
                 'gpu' => 'NVIDIA RTX 6000 Ada 48GB', 'gpu_tier' => 'dedicated-high', 'year_acquired' => 2024,
                 'purchase_cost' => 540000.00, 'purchase_date' => '2024-01-20', 'depreciation_rate_percent' => 20.0,
                 'vendor' => 'Dell Philippines Direct Enterprise', 'warranty_start' => '2024-01-20', 'warranty_expiry' => '2029-01-20', 'contract_sla' => 'Mission Critical 24x7 4-Hour Response',
-                'condition' => 'excellent', 'status' => 'available', 'lifecycle_stage' => 'deployment'
+                'condition' => 'excellent', 'status' => 'available', 'lifecycle_stage' => 'deployment',
             ],
             [
                 'asset_tag' => 'DSK-002', 'serial_number' => 'HPZ8-1928-W', 'barcode' => 'BC-DSK-002', 'techspecs_id' => 'hp-z8-g5-workstation',
@@ -258,7 +283,7 @@ class DatabaseSeeder extends Seeder
                 'gpu' => 'NVIDIA RTX 4500 Ada 24GB', 'gpu_tier' => 'dedicated-high', 'year_acquired' => 2024,
                 'purchase_cost' => 380000.00, 'purchase_date' => '2024-02-05', 'depreciation_rate_percent' => 20.0,
                 'vendor' => 'HP Philippines Enterprise', 'warranty_start' => '2024-02-05', 'warranty_expiry' => '2029-02-05', 'contract_sla' => 'HP 5-Year Next Business Day Onsite',
-                'condition' => 'excellent', 'status' => 'available', 'lifecycle_stage' => 'deployment'
+                'condition' => 'excellent', 'status' => 'available', 'lifecycle_stage' => 'deployment',
             ],
             [
                 'asset_tag' => 'DSK-003', 'serial_number' => 'RIG-TR-7970-01', 'barcode' => 'BC-DSK-003', 'techspecs_id' => 'custom-ai-studio-rig',
@@ -269,7 +294,7 @@ class DatabaseSeeder extends Seeder
                 'gpu' => 'NVIDIA RTX 4090 24GB', 'gpu_tier' => 'dedicated-high', 'year_acquired' => 2024,
                 'purchase_cost' => 325000.00, 'purchase_date' => '2024-03-10', 'depreciation_rate_percent' => 25.0,
                 'vendor' => 'DynaQuest PC Enterprise Manila', 'warranty_start' => '2024-03-10', 'warranty_expiry' => '2027-03-10', 'contract_sla' => 'Parts & Labor 3-Year Coverage',
-                'condition' => 'excellent', 'status' => 'available', 'lifecycle_stage' => 'deployment'
+                'condition' => 'excellent', 'status' => 'available', 'lifecycle_stage' => 'deployment',
             ],
 
             // Desktops - High / Dedicated-Entry or Integrated
@@ -282,7 +307,7 @@ class DatabaseSeeder extends Seeder
                 'gpu' => 'NVIDIA GTX 1650 4GB', 'gpu_tier' => 'dedicated-entry', 'year_acquired' => 2023,
                 'purchase_cost' => 82000.00, 'purchase_date' => '2023-04-15', 'depreciation_rate_percent' => 25.0,
                 'vendor' => 'Dell Philippines Direct', 'warranty_start' => '2023-04-15', 'warranty_expiry' => '2026-04-15', 'contract_sla' => 'Dell ProSupport NBD',
-                'condition' => 'good', 'status' => 'available', 'lifecycle_stage' => 'deployment'
+                'condition' => 'good', 'status' => 'available', 'lifecycle_stage' => 'deployment',
             ],
             [
                 'asset_tag' => 'DSK-005', 'serial_number' => 'PD-600G9-3829', 'barcode' => 'BC-DSK-005', 'techspecs_id' => 'hp-prodesk-600-g9',
@@ -293,7 +318,7 @@ class DatabaseSeeder extends Seeder
                 'gpu' => 'Intel UHD 770', 'gpu_tier' => 'integrated', 'year_acquired' => 2023,
                 'purchase_cost' => 65000.00, 'purchase_date' => '2023-05-20', 'depreciation_rate_percent' => 25.0,
                 'vendor' => 'HP Philippines Enterprise', 'warranty_start' => '2023-05-20', 'warranty_expiry' => '2026-05-20', 'contract_sla' => 'HP Care Pack Next Business Day',
-                'condition' => 'good', 'status' => 'available', 'lifecycle_stage' => 'deployment'
+                'condition' => 'good', 'status' => 'available', 'lifecycle_stage' => 'deployment',
             ],
 
             // Desktops - Mid / Integrated
@@ -306,7 +331,7 @@ class DatabaseSeeder extends Seeder
                 'gpu' => 'Intel UHD 730', 'gpu_tier' => 'integrated', 'year_acquired' => 2023,
                 'purchase_cost' => 51000.00, 'purchase_date' => '2023-06-10', 'depreciation_rate_percent' => 25.0,
                 'vendor' => 'Lenovo Philippines Commercial', 'warranty_start' => '2023-06-10', 'warranty_expiry' => '2026-06-10', 'contract_sla' => 'Lenovo Premier NBD',
-                'condition' => 'good', 'status' => 'available', 'lifecycle_stage' => 'deployment'
+                'condition' => 'good', 'status' => 'available', 'lifecycle_stage' => 'deployment',
             ],
             [
                 'asset_tag' => 'DSK-007', 'serial_number' => 'OPTI-3000-471', 'barcode' => 'BC-DSK-007', 'techspecs_id' => 'dell-optiplex-3000-micro',
@@ -317,7 +342,7 @@ class DatabaseSeeder extends Seeder
                 'gpu' => 'Intel UHD 770', 'gpu_tier' => 'integrated', 'year_acquired' => 2023,
                 'purchase_cost' => 49000.00, 'purchase_date' => '2023-07-15', 'depreciation_rate_percent' => 25.0,
                 'vendor' => 'Dell Philippines Direct', 'warranty_start' => '2023-07-15', 'warranty_expiry' => '2026-07-15', 'contract_sla' => 'Standard NBD Onsite',
-                'condition' => 'good', 'status' => 'available', 'lifecycle_stage' => 'deployment'
+                'condition' => 'good', 'status' => 'available', 'lifecycle_stage' => 'deployment',
             ],
             [
                 'asset_tag' => 'DSK-008', 'serial_number' => 'ED-800G6-1192', 'barcode' => 'BC-DSK-008', 'techspecs_id' => 'hp-elitedesk-800-g6',
@@ -328,7 +353,7 @@ class DatabaseSeeder extends Seeder
                 'gpu' => 'Intel UHD 630', 'gpu_tier' => 'integrated', 'year_acquired' => 2021,
                 'purchase_cost' => 52000.00, 'purchase_date' => '2021-03-20', 'depreciation_rate_percent' => 33.3,
                 'vendor' => 'HP Philippines Enterprise', 'warranty_start' => '2021-03-20', 'warranty_expiry' => '2024-03-20', 'contract_sla' => 'Expired',
-                'condition' => 'fair', 'status' => 'available', 'lifecycle_stage' => 'deployment'
+                'condition' => 'fair', 'status' => 'available', 'lifecycle_stage' => 'deployment',
             ],
 
             // Desktops - Entry / None
@@ -341,7 +366,7 @@ class DatabaseSeeder extends Seeder
                 'gpu' => null, 'gpu_tier' => 'none', 'year_acquired' => 2020,
                 'purchase_cost' => 35000.00, 'purchase_date' => '2020-05-10', 'depreciation_rate_percent' => 33.3,
                 'vendor' => 'Dell Philippines Direct', 'warranty_start' => '2020-05-10', 'warranty_expiry' => '2023-05-10', 'contract_sla' => 'Expired',
-                'condition' => 'fair', 'status' => 'available', 'lifecycle_stage' => 'deployment'
+                'condition' => 'fair', 'status' => 'available', 'lifecycle_stage' => 'deployment',
             ],
             [
                 'asset_tag' => 'DSK-010', 'serial_number' => 'TC-M720S-048', 'barcode' => 'BC-DSK-010', 'techspecs_id' => 'lenovo-thinkcentre-m720s',
@@ -352,7 +377,7 @@ class DatabaseSeeder extends Seeder
                 'gpu' => null, 'gpu_tier' => 'none', 'year_acquired' => 2020,
                 'purchase_cost' => 34000.00, 'purchase_date' => '2020-08-14', 'depreciation_rate_percent' => 33.3,
                 'vendor' => 'PC Express Commercial', 'warranty_start' => '2020-08-14', 'warranty_expiry' => '2023-08-14', 'contract_sla' => 'Expired',
-                'condition' => 'fair', 'status' => 'available', 'lifecycle_stage' => 'deployment'
+                'condition' => 'fair', 'status' => 'available', 'lifecycle_stage' => 'deployment',
             ],
 
             // Active In-Maintenance & Retired Lifecycle Assets
@@ -366,7 +391,7 @@ class DatabaseSeeder extends Seeder
                 'purchase_cost' => 58000.00, 'purchase_date' => '2021-11-18', 'depreciation_rate_percent' => 25.0,
                 'vendor' => 'Beyond the Box / Apple Premium Reseller PH', 'warranty_start' => '2021-11-18', 'warranty_expiry' => '2024-11-18', 'contract_sla' => 'AppleCare+ Expired',
                 'condition' => 'needs_repair', 'status' => 'in_repair', 'lifecycle_stage' => 'maintenance',
-                'notes' => 'Swollen battery replacement and trackpad recalibration in progress.'
+                'notes' => 'Swollen battery replacement and trackpad recalibration in progress.',
             ],
             [
                 'asset_tag' => 'DSK-011', 'serial_number' => 'CQ-8200-LEGACY', 'barcode' => 'BC-DSK-011', 'techspecs_id' => 'hp-compaq-8200-elite',
@@ -378,7 +403,7 @@ class DatabaseSeeder extends Seeder
                 'purchase_cost' => 42000.00, 'purchase_date' => '2014-06-12', 'depreciation_rate_percent' => 33.3,
                 'vendor' => 'Legacy Hardware Vendor Manila', 'warranty_start' => '2014-06-12', 'warranty_expiry' => '2017-06-12', 'contract_sla' => 'Decommissioned',
                 'condition' => 'retired', 'status' => 'retired', 'lifecycle_stage' => 'retirement',
-                'notes' => 'End of 10-year lifecycle. Hard drives wiped via NIST 800-88 standard. Awaiting electronic recycling.'
+                'notes' => 'End of 10-year lifecycle. Hard drives wiped via NIST 800-88 standard. Awaiting electronic recycling.',
             ],
 
             // Newly Acquired Asset in Staging
@@ -392,7 +417,7 @@ class DatabaseSeeder extends Seeder
                 'purchase_cost' => 128000.00, 'purchase_date' => now()->subDays(3)->toDateString(), 'depreciation_rate_percent' => 20.0,
                 'vendor' => 'Lenovo Philippines Commercial', 'warranty_start' => now()->subDays(3)->toDateString(), 'warranty_expiry' => now()->addYears(3)->toDateString(), 'contract_sla' => 'Premier Support Plus 3-Yr',
                 'condition' => 'excellent', 'status' => 'available', 'lifecycle_stage' => 'acquisition',
-                'notes' => 'Newly arrived from vendor. Staging corporate image, disk encryption, and asset tags.'
+                'notes' => 'Newly arrived from vendor. Staging corporate image, disk encryption, and asset tags.',
             ],
         ];
 
@@ -404,7 +429,7 @@ class DatabaseSeeder extends Seeder
             $devices[$data['asset_tag']] = $device;
 
             // Seed initial lifecycle audit record
-            \App\Models\LifecycleEvent::create([
+            LifecycleEvent::create([
                 'device_id' => $device->id,
                 'from_stage' => 'new',
                 'to_stage' => $device->lifecycle_stage,

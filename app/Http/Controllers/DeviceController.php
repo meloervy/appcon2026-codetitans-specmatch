@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Device;
 use App\Models\LifecycleEvent;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -19,11 +20,11 @@ class DeviceController extends Controller
             $s = $request->input('search');
             $query->where(function ($q) use ($s) {
                 $q->where('asset_tag', 'like', "%{$s}%")
-                  ->orWhere('serial_number', 'like', "%{$s}%")
-                  ->orWhere('brand', 'like', "%{$s}%")
-                  ->orWhere('model', 'like', "%{$s}%")
-                  ->orWhere('cpu', 'like', "%{$s}%")
-                  ->orWhere('location', 'like', "%{$s}%");
+                    ->orWhere('serial_number', 'like', "%{$s}%")
+                    ->orWhere('brand', 'like', "%{$s}%")
+                    ->orWhere('model', 'like', "%{$s}%")
+                    ->orWhere('cpu', 'like', "%{$s}%")
+                    ->orWhere('location', 'like', "%{$s}%");
             });
         }
 
@@ -79,7 +80,7 @@ class DeviceController extends Controller
             'storage_gb' => ['required', 'integer', 'min:1'],
             'gpu' => ['nullable', 'string', 'max:150'],
             'gpu_tier' => ['required', 'in:none,integrated,dedicated-entry,dedicated-high'],
-            'year_acquired' => ['required', 'integer', 'min:2000', 'max:' . (date('Y') + 1)],
+            'year_acquired' => ['required', 'integer', 'min:2000', 'max:'.(date('Y') + 1)],
             'purchase_cost' => ['nullable', 'numeric', 'min:0'],
             'purchase_date' => ['nullable', 'date'],
             'depreciation_rate_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
@@ -115,7 +116,7 @@ class DeviceController extends Controller
             'assignments.employee',
             'activeAssignment.employee',
             'maintenanceLogs',
-            'lifecycleEvents.user'
+            'lifecycleEvents.user',
         ])->findOrFail($id);
 
         return Inertia::render('Devices/Show', [
@@ -128,8 +129,8 @@ class DeviceController extends Controller
         $device = Device::findOrFail($id);
 
         $validated = $request->validate([
-            'asset_tag' => ['required', 'string', 'max:50', 'unique:devices,asset_tag,' . $device->id],
-            'serial_number' => ['nullable', 'string', 'max:100', 'unique:devices,serial_number,' . $device->id],
+            'asset_tag' => ['required', 'string', 'max:50', 'unique:devices,asset_tag,'.$device->id],
+            'serial_number' => ['nullable', 'string', 'max:100', 'unique:devices,serial_number,'.$device->id],
             'barcode' => ['nullable', 'string', 'max:100'],
             'techspecs_id' => ['nullable', 'string', 'max:100'],
             'image_url' => ['nullable', 'string', 'max:500'],
@@ -144,7 +145,7 @@ class DeviceController extends Controller
             'storage_gb' => ['required', 'integer', 'min:1'],
             'gpu' => ['nullable', 'string', 'max:150'],
             'gpu_tier' => ['required', 'in:none,integrated,dedicated-entry,dedicated-high'],
-            'year_acquired' => ['required', 'integer', 'min:2000', 'max:' . (date('Y') + 1)],
+            'year_acquired' => ['required', 'integer', 'min:2000', 'max:'.(date('Y') + 1)],
             'purchase_cost' => ['nullable', 'numeric', 'min:0'],
             'purchase_date' => ['nullable', 'date'],
             'depreciation_rate_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
@@ -243,5 +244,24 @@ class DeviceController extends Controller
         ]);
 
         return back()->with('success', "Device {$device->asset_tag} has been retired.");
+    }
+
+    /**
+     * Export complete hardware asset inventory as a compliance PDF report.
+     */
+    public function exportPdf(Request $request)
+    {
+        $devices = Device::with('activeAssignment.employee')
+            ->orderBy('asset_tag')
+            ->get();
+
+        $pdf = Pdf::loadView('reports.devices_inventory', [
+            'devices' => $devices,
+            'generated_at' => now()->format('F j, Y, g:i A'),
+            'total_assets' => $devices->count(),
+            'total_value' => $devices->sum(fn ($d) => $d->current_book_value),
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->download('specmatch-itam-inventory-'.date('Ymd-His').'.pdf');
     }
 }

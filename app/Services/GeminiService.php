@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Ai\Agents\SpecMatchExtractionAgent;
 use App\Models\MatchRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -10,10 +11,6 @@ class GeminiService
 {
     /**
      * Extract structured hardware requirements from free-form text.
-     *
-     * @param string $rawInput
-     * @param int|null $employeeId
-     * @return array
      */
     public function extractRequirements(string $rawInput, ?int $employeeId = null): array
     {
@@ -23,13 +20,14 @@ class GeminiService
             if (str_starts_with($rawInput, substr($prompt, 0, 50))) {
                 $payload['source'] = 'cached_demo';
                 $payload['reasoning'] = 'Instantly extracted from pre-cached demo template.';
-                
+
                 MatchRequest::create([
                     'employee_id' => $employeeId,
                     'raw_input' => $rawInput,
                     'extracted_requirements' => $payload,
                     'extraction_failed' => false,
                 ]);
+
                 return $payload;
             }
         }
@@ -38,20 +36,43 @@ class GeminiService
         if (env('GEMINI_DEMO_OFFLINE', false)) {
             $fallback = $this->heuristicFallback($rawInput);
             $fallback['source'] = 'offline_heuristic';
-            
+
             MatchRequest::create([
                 'employee_id' => $employeeId,
                 'raw_input' => $rawInput,
                 'extracted_requirements' => $fallback,
                 'extraction_failed' => true,
             ]);
+
             return $fallback;
         }
 
         $apiKey = config('services.gemini.api_key', env('GEMINI_API_KEY'));
 
-        if (!empty($apiKey)) {
+        if (! empty($apiKey)) {
             try {
+                // 1. Utilize official Laravel AI SDK Agent with Google Gemini
+                if (class_exists(SpecMatchExtractionAgent::class)) {
+                    $agent = new SpecMatchExtractionAgent;
+                    $response = $agent->prompt($rawInput);
+                    $text = (string) $response;
+                    $decoded = json_decode($text, true);
+
+                    if (is_array($decoded) && isset($decoded['min_cpu_tier'])) {
+                        $decoded['source'] = 'laravel_ai_gemini';
+
+                        MatchRequest::create([
+                            'employee_id' => $employeeId,
+                            'raw_input' => $rawInput,
+                            'extracted_requirements' => $decoded,
+                            'extraction_failed' => false,
+                        ]);
+
+                        return $decoded;
+                    }
+                }
+
+                // 2. Direct Gemini REST endpoint fallback
                 $extracted = $this->callGeminiApi($rawInput, $apiKey);
 
                 MatchRequest::create([
@@ -63,7 +84,7 @@ class GeminiService
 
                 return $extracted;
             } catch (\Throwable $e) {
-                Log::warning('Gemini API extraction failed: ' . $e->getMessage());
+                Log::warning('Gemini extraction failed: '.$e->getMessage());
             }
         }
 
@@ -103,24 +124,24 @@ EOT;
             'contents' => [
                 [
                     'parts' => [
-                        ['text' => $prompt]
-                    ]
-                ]
+                        ['text' => $prompt],
+                    ],
+                ],
             ],
             'generationConfig' => [
                 'temperature' => 0.1,
-                'responseMimeType' => 'application/json'
-            ]
+                'responseMimeType' => 'application/json',
+            ],
         ]);
 
-        if (!$response->successful()) {
-            throw new \RuntimeException('Gemini API returned status ' . $response->status() . ': ' . $response->body());
+        if (! $response->successful()) {
+            throw new \RuntimeException('Gemini API returned status '.$response->status().': '.$response->body());
         }
 
         $body = $response->json();
         $text = $body['candidates'][0]['content']['parts'][0]['text'] ?? null;
 
-        if (!$text) {
+        if (! $text) {
             throw new \RuntimeException('Empty or malformed Gemini response.');
         }
 
@@ -128,7 +149,7 @@ EOT;
         $cleanJson = trim(preg_replace('/^```(?:json)?\s*|\s*```$/i', '', trim($text)));
         $decoded = json_decode($cleanJson, true);
 
-        if (!is_array($decoded) || !isset($decoded['min_cpu_tier'], $decoded['min_ram_gb'])) {
+        if (! is_array($decoded) || ! isset($decoded['min_cpu_tier'], $decoded['min_ram_gb'])) {
             throw new \RuntimeException('Invalid JSON structure from Gemini.');
         }
 
@@ -142,18 +163,22 @@ EOT;
     {
         $lower = strtolower($input);
 
-        $isWorkstation = str_contains($lower, '3d') || str_contains($lower, 'machine learning') || str_contains($lower, 'rendering') || str_contains($lower, 'simulation');
+        $isWorkstation = str_contains($lower, '3d') || str_contains($lower, 'machine learning') || str_contains($lower, 'deep learning') || str_contains($lower, 'rendering') || str_contains($lower, 'simulation') || str_contains($lower, 'workstation');
         $isHigh = str_contains($lower, 'video') || str_contains($lower, '4k') || str_contains($lower, 'developer') || str_contains($lower, 'engineer') || str_contains($lower, 'design');
         $isMid = str_contains($lower, 'data') || str_contains($lower, 'analyst') || str_contains($lower, 'multitask') || str_contains($lower, 'finance');
 
         $cpuTier = 'entry';
-        if ($isWorkstation) $cpuTier = 'workstation';
-        elseif ($isHigh) $cpuTier = 'high';
-        elseif ($isMid) $cpuTier = 'mid';
+        if ($isWorkstation) {
+            $cpuTier = 'workstation';
+        } elseif ($isHigh) {
+            $cpuTier = 'high';
+        } elseif ($isMid) {
+            $cpuTier = 'mid';
+        }
 
         $ram = 8;
         if (preg_match('/(\d+)\s*gb\s*(?:ram|memory)/i', $input, $m)) {
-            $ram = (int)$m[1];
+            $ram = (int) $m[1];
         } elseif ($isWorkstation) {
             $ram = 32;
         } elseif ($isHigh) {
@@ -164,7 +189,7 @@ EOT;
 
         $storage = 256;
         if (preg_match('/(\d+)\s*(?:gb|tb)\s*(?:ssd|hdd|storage)/i', $input, $m)) {
-            $val = (int)$m[1];
+            $val = (int) $m[1];
             $storage = str_contains(strtolower($m[0]), 'tb') ? $val * 1024 : $val;
         } elseif ($isWorkstation || $isHigh) {
             $storage = 512;
@@ -192,7 +217,7 @@ EOT;
             'requires_gpu' => $requiresGpu,
             'min_gpu_tier' => $gpuTier,
             'portability_required' => $portability,
-            'reasoning' => "Inferred based on workload keywords: CPU {$cpuTier}, {$ram}GB RAM, " . ($requiresGpu ? "{$gpuTier} GPU" : "no dedicated GPU") . ", " . ($portability ? "portable laptop" : "desktop") . ".",
+            'reasoning' => "Inferred based on workload keywords: CPU {$cpuTier}, {$ram}GB RAM, ".($requiresGpu ? "{$gpuTier} GPU" : 'no dedicated GPU').', '.($portability ? 'portable laptop' : 'desktop').'.',
         ];
     }
 
@@ -203,12 +228,12 @@ EOT;
 
         return [
             'min_cpu_tier' => in_array($data['min_cpu_tier'] ?? '', $validCpu) ? $data['min_cpu_tier'] : 'entry',
-            'min_ram_gb' => max(4, (int)($data['min_ram_gb'] ?? 8)),
-            'min_storage_gb' => max(128, (int)($data['min_storage_gb'] ?? 256)),
-            'requires_gpu' => (bool)($data['requires_gpu'] ?? false),
+            'min_ram_gb' => max(4, (int) ($data['min_ram_gb'] ?? 8)),
+            'min_storage_gb' => max(128, (int) ($data['min_storage_gb'] ?? 256)),
+            'requires_gpu' => (bool) ($data['requires_gpu'] ?? false),
             'min_gpu_tier' => in_array($data['min_gpu_tier'] ?? '', $validGpu) ? $data['min_gpu_tier'] : 'none',
-            'portability_required' => (bool)($data['portability_required'] ?? false),
-            'reasoning' => (string)($data['reasoning'] ?? 'Automated requirement analysis.'),
+            'portability_required' => (bool) ($data['portability_required'] ?? false),
+            'reasoning' => (string) ($data['reasoning'] ?? 'Automated requirement analysis.'),
         ];
     }
 }

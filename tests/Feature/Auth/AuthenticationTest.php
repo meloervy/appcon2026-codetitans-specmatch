@@ -51,4 +51,26 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
         $response->assertRedirect('/');
     }
+
+    public function test_user_role_methods_and_title(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'department' => 'IT Systems']);
+        $manager = User::factory()->create(['role' => 'manager', 'department' => 'Asset Management']);
+        $tech = User::factory()->create(['role' => 'technician', 'department' => 'Diagnostics Bench']);
+
+        $this->assertTrue($admin->isAdmin());
+        $this->assertTrue($admin->isManager());
+        $this->assertTrue($admin->isTechnician());
+        $this->assertEquals('IT Administrator', $admin->role_title);
+
+        $this->assertFalse($manager->isAdmin());
+        $this->assertTrue($manager->isManager());
+        $this->assertTrue($manager->isTechnician());
+        $this->assertEquals('IT Asset Manager', $manager->role_title);
+
+        $this->assertFalse($tech->isAdmin());
+        $this->assertFalse($tech->isManager());
+        $this->assertTrue($tech->isTechnician());
+        $this->assertEquals('Hardware Technician', $tech->role_title);
+    }
 }

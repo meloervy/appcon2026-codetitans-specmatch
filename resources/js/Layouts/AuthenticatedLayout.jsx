@@ -112,6 +112,9 @@ export default function AuthenticatedLayout({ header, children }) {
                                             {user.name.charAt(0)}
                                         </div>
                                         <span>{user.name}</span>
+                                        <span className="hidden sm:inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 border border-slate-200/60 dark:border-zinc-700/60">
+                                            {user.role === 'admin' ? 'Admin' : user.role === 'manager' ? 'Manager' : user.role === 'technician' ? 'Tech' : 'Staff'}
+                                        </span>
                                         <svg className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500" viewBox="0 0 20 20" fill="currentColor">
                                             <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                                         </svg>
@@ -120,8 +123,18 @@ export default function AuthenticatedLayout({ header, children }) {
 
                                 <Dropdown.Content width="56">
                                     <div className="px-3.5 py-2.5 border-b border-slate-100 dark:border-zinc-800 text-xs">
-                                        <div className="font-semibold text-slate-800 dark:text-zinc-200 truncate">{user.name}</div>
+                                        <div className="flex items-center justify-between gap-1.5 mb-0.5">
+                                            <div className="font-semibold text-slate-800 dark:text-zinc-200 truncate">{user.name}</div>
+                                            <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                                                {user.role_title || 'Staff'}
+                                            </span>
+                                        </div>
                                         <div className="text-[11px] text-slate-400 dark:text-zinc-500 truncate">{user.email}</div>
+                                        {user.department && (
+                                            <div className="text-[10px] text-slate-500 dark:text-zinc-400 mt-1 font-medium truncate flex items-center gap-1">
+                                                <span>🏢</span> {user.department}
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Light / Dark Mode Segmented Switch */}
