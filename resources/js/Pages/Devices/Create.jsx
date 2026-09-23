@@ -192,16 +192,16 @@ export default function DevicesCreate() {
 
             <div className="max-w-4xl mx-auto space-y-6">
                 {/* TechSpecs API Lookup Card */}
-                <div className="bg-gradient-to-br from-indigo-900 via-slate-900 to-indigo-950 dark:from-zinc-950 dark:via-zinc-900 dark:to-indigo-950 text-white rounded-2xl p-6 shadow-md border border-indigo-700/40 dark:border-zinc-800">
+                <div className="bg-gradient-to-br from-[#031a40] via-[#021230] to-[#031a40] dark:from-zinc-950 dark:via-zinc-900 dark:to-[#031a40] text-white rounded-2xl p-6 shadow-md border border-[#026eff]/30 dark:border-zinc-800">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                                <span className="px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider bg-indigo-500/30 text-indigo-300 rounded border border-indigo-400/30">
+                                <span className="px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider bg-[#026eff]/20 text-[#0b79ff] rounded border border-[#0b79ff]/30">
                                     TechSpecs v5 API
                                 </span>
                                 <h2 className="text-base font-semibold text-white">Automated Asset Identification</h2>
                             </div>
-                            <p className="text-xs text-indigo-200/80">
+                            <p className="text-xs text-[#0b79ff]/60">
                                 Search 180,000+ verified hardware models to auto-fill CPU, RAM, GPU, storage architecture, and tiers.
                             </p>
                         </div>
@@ -212,12 +212,12 @@ export default function DevicesCreate() {
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="e.g. ThinkPad T14, MacBook Pro, XPS 15"
-                                className="w-full sm:w-64 text-xs rounded-xl bg-white/10 border-white/20 text-white placeholder-indigo-200/50 focus:bg-white/20 focus:ring-indigo-400 focus:border-indigo-400"
+                                className="w-full sm:w-64 text-xs rounded-xl bg-white/10 border-white/20 text-white placeholder-white/50 focus:bg-white/20 focus:ring-[#026eff] focus:border-[#026eff]"
                             />
                             <button
                                 type="submit"
                                 disabled={searching || searchQuery.trim().length < 2}
-                                className="shrink-0 px-3.5 py-2 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-semibold shadow-xs disabled:opacity-50 transition flex items-center gap-1.5"
+                                className="shrink-0 px-3.5 py-2 rounded-xl bg-[#026eff] hover:bg-[#026eff] text-white text-xs font-semibold shadow-xs disabled:opacity-50 transition flex items-center gap-1.5"
                             >
                                 {searching ? (
                                     <>
@@ -251,7 +251,7 @@ export default function DevicesCreate() {
                     {/* Search Results Dropdown List */}
                     {searchResults.length > 0 && (
                         <div className="mt-4 bg-slate-900/90 dark:bg-zinc-900/95 border border-white/10 dark:border-zinc-800 rounded-xl overflow-hidden divide-y divide-white/5">
-                            <div className="px-3.5 py-2 bg-white/5 text-[11px] font-semibold text-indigo-200 flex justify-between">
+                            <div className="px-3.5 py-2 bg-white/5 text-[11px] font-semibold text-[#0b79ff] flex justify-between">
                                 <span>TechSpecs Matches ({searchResults.length})</span>
                                 <button type="button" onClick={() => setSearchResults([])} className="hover:text-white">&times; Close</button>
                             </div>
@@ -265,7 +265,7 @@ export default function DevicesCreate() {
                                             <div className="text-xs font-semibold text-white">
                                                 {prod.brand} {prod.model}
                                             </div>
-                                            <div className="text-[11px] text-indigo-300/70">
+                                            <div className="text-[11px] text-[#0b79ff]/70">
                                                 Category: {prod.category || 'Laptop/PC'} &bull; Year: {prod.release_year || 'Recent'}
                                             </div>
                                         </div>
@@ -273,7 +273,7 @@ export default function DevicesCreate() {
                                             type="button"
                                             onClick={() => handleSelectProduct(prod)}
                                             disabled={loadingDetails}
-                                            className="px-3 py-1.5 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-semibold shrink-0 transition"
+                                            className="px-3 py-1.5 rounded-lg bg-[#026eff] hover:bg-[#0256cc] text-white text-xs font-semibold shrink-0 transition"
                                         >
                                             {loadingDetails && selectedProduct?.id === prod.id ? 'Loading...' : 'Auto-Fill Specs'}
                                         </button>
@@ -309,7 +309,7 @@ export default function DevicesCreate() {
                         <div>
                             <div className="border-b border-slate-100 dark:border-zinc-800 pb-2 mb-4">
                                 <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-zinc-200 flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
+                                    <span className="w-2 h-2 rounded-full bg-[#026eff]"></span>
                                     1. Asset Identification & Tagging
                                 </h3>
                                 <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">Physical labeling, serial numbers, and barcode tracking.</p>
@@ -323,7 +323,7 @@ export default function DevicesCreate() {
                                         value={data.asset_tag}
                                         onChange={(e) => setData('asset_tag', e.target.value.toUpperCase())}
                                         placeholder="e.g. LAP-023"
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-indigo-500 focus:ring-indigo-500 font-mono"
+                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff] font-mono"
                                         required
                                     />
                                     {errors.asset_tag && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{errors.asset_tag}</p>}
@@ -336,7 +336,7 @@ export default function DevicesCreate() {
                                         value={data.serial_number}
                                         onChange={(e) => setData('serial_number', e.target.value)}
                                         placeholder="e.g. C02G45XP19F3"
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-indigo-500 focus:ring-indigo-500 font-mono"
+                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff] font-mono"
                                     />
                                     {errors.serial_number && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{errors.serial_number}</p>}
                                 </div>
@@ -348,7 +348,7 @@ export default function DevicesCreate() {
                                         value={data.barcode}
                                         onChange={(e) => setData('barcode', e.target.value)}
                                         placeholder="e.g. BC-LAP-023"
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-indigo-500 focus:ring-indigo-500 font-mono"
+                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff] font-mono"
                                     />
                                     {errors.barcode && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{errors.barcode}</p>}
                                 </div>
@@ -360,7 +360,7 @@ export default function DevicesCreate() {
                                         value={data.location}
                                         onChange={(e) => setData('location', e.target.value)}
                                         placeholder="e.g. BGC, Taguig City - Level 12 HQ"
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-indigo-500 focus:ring-indigo-500"
+                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff]"
                                     />
                                     {errors.location && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{errors.location}</p>}
                                 </div>
@@ -399,11 +399,11 @@ export default function DevicesCreate() {
                                             type="button"
                                             onClick={handleFetchHardwarePhoto}
                                             disabled={fetchingPhoto || (!data.brand && !data.model)}
-                                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 text-[11px] font-semibold transition disabled:opacity-50 disabled:pointer-events-none"
+                                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#026eff]/10 dark:bg-[#031a40]/60 hover:bg-[#026eff]/15 dark:hover:bg-[#031a40]/60 text-[#026eff] dark:text-[#0b79ff] border border-[#026eff]/20 dark:border-[#031a40]/60 text-[11px] font-semibold transition disabled:opacity-50 disabled:pointer-events-none"
                                         >
                                             {fetchingPhoto ? (
                                                 <>
-                                                    <svg className="animate-spin -ml-0.5 mr-1 h-3.5 w-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24">
+                                                    <svg className="animate-spin -ml-0.5 mr-1 h-3.5 w-3.5 text-[#026eff]" fill="none" viewBox="0 0 24 24">
                                                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                                     </svg>
@@ -424,7 +424,7 @@ export default function DevicesCreate() {
                                         value={data.image_url}
                                         onChange={(e) => setData('image_url', e.target.value)}
                                         placeholder="https://... (Populated automatically via Wikimedia / TechSpecs or enter custom URL)"
-                                        className="mt-1.5 w-full text-xs rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-indigo-500 focus:ring-indigo-500"
+                                        className="mt-1.5 w-full text-xs rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff]"
                                     />
                                     {photoNotice && (
                                         <p className={`text-[11px] mt-1 font-medium ${
@@ -447,7 +447,7 @@ export default function DevicesCreate() {
                                     <select
                                         value={data.device_type}
                                         onChange={(e) => setData('device_type', e.target.value)}
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:ring-indigo-500"
+                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
                                     >
                                         <option value="laptop">Laptop (Mobile)</option>
                                         <option value="desktop">Desktop / Workstation (Stationary)</option>
@@ -462,7 +462,7 @@ export default function DevicesCreate() {
                                         value={data.brand}
                                         onChange={(e) => setData('brand', e.target.value)}
                                         placeholder="e.g. Dell, Apple, Lenovo, HP"
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-indigo-500 focus:ring-indigo-500"
+                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff]"
                                         required
                                     />
                                     {errors.brand && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{errors.brand}</p>}
@@ -475,7 +475,7 @@ export default function DevicesCreate() {
                                         value={data.model}
                                         onChange={(e) => setData('model', e.target.value)}
                                         placeholder="e.g. ThinkPad T14s, MacBook Pro 16"
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-indigo-500 focus:ring-indigo-500"
+                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff]"
                                         required
                                     />
                                     {errors.model && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{errors.model}</p>}
@@ -488,7 +488,7 @@ export default function DevicesCreate() {
                                         value={data.cpu}
                                         onChange={(e) => setData('cpu', e.target.value)}
                                         placeholder="e.g. Intel Core i7-13700H, Apple M3 Max"
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-indigo-500 focus:ring-indigo-500"
+                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff]"
                                         required
                                     />
                                     {errors.cpu && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{errors.cpu}</p>}
@@ -499,7 +499,7 @@ export default function DevicesCreate() {
                                     <select
                                         value={data.cpu_tier}
                                         onChange={(e) => setData('cpu_tier', e.target.value)}
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:ring-indigo-500"
+                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
                                     >
                                         <option value="entry">Entry (Celeron, Core i3, older quad-core)</option>
                                         <option value="mid">Mid (Core i5, Ryzen 5, Apple base)</option>
@@ -516,7 +516,7 @@ export default function DevicesCreate() {
                                         min="1"
                                         value={data.ram_gb}
                                         onChange={(e) => setData('ram_gb', parseInt(e.target.value) || 0)}
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:ring-indigo-500"
+                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
                                         required
                                     />
                                     {errors.ram_gb && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{errors.ram_gb}</p>}
@@ -530,7 +530,7 @@ export default function DevicesCreate() {
                                             min="1"
                                             value={data.storage_gb}
                                             onChange={(e) => setData('storage_gb', parseInt(e.target.value) || 0)}
-                                            className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:ring-indigo-500"
+                                            className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
                                             required
                                         />
                                     </div>
@@ -539,7 +539,7 @@ export default function DevicesCreate() {
                                         <select
                                             value={data.storage_type}
                                             onChange={(e) => setData('storage_type', e.target.value)}
-                                            className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:ring-indigo-500"
+                                            className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
                                         >
                                             <option value="SSD">SSD</option>
                                             <option value="HDD">HDD</option>
@@ -554,7 +554,7 @@ export default function DevicesCreate() {
                                         value={data.gpu}
                                         onChange={(e) => setData('gpu', e.target.value)}
                                         placeholder="e.g. NVIDIA RTX 4070, Intel Iris Xe"
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-indigo-500 focus:ring-indigo-500"
+                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff]"
                                     />
                                 </div>
 
@@ -563,7 +563,7 @@ export default function DevicesCreate() {
                                     <select
                                         value={data.gpu_tier}
                                         onChange={(e) => setData('gpu_tier', e.target.value)}
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:ring-indigo-500"
+                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
                                     >
                                         <option value="none">None</option>
                                         <option value="integrated">Integrated (Intel UHD/Iris, Radeon 780M)</option>
@@ -594,7 +594,7 @@ export default function DevicesCreate() {
                                         value={data.purchase_cost}
                                         onChange={(e) => setData('purchase_cost', e.target.value)}
                                         placeholder="e.g. 75000.00"
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-indigo-500 focus:ring-indigo-500"
+                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff]"
                                     />
                                 </div>
 
@@ -604,7 +604,7 @@ export default function DevicesCreate() {
                                         type="date"
                                         value={data.purchase_date}
                                         onChange={(e) => setData('purchase_date', e.target.value)}
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:ring-indigo-500"
+                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
                                     />
                                 </div>
 
@@ -617,7 +617,7 @@ export default function DevicesCreate() {
                                         max="100"
                                         value={data.depreciation_rate_percent}
                                         onChange={(e) => setData('depreciation_rate_percent', e.target.value)}
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:ring-indigo-500"
+                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
                                     />
                                 </div>
 
@@ -628,7 +628,7 @@ export default function DevicesCreate() {
                                         value={data.vendor}
                                         onChange={(e) => setData('vendor', e.target.value)}
                                         placeholder="e.g. Dell Direct, CDW, Apple"
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-indigo-500 focus:ring-indigo-500"
+                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff]"
                                     />
                                 </div>
 
@@ -638,7 +638,7 @@ export default function DevicesCreate() {
                                         type="date"
                                         value={data.warranty_start}
                                         onChange={(e) => setData('warranty_start', e.target.value)}
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:ring-indigo-500"
+                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
                                     />
                                 </div>
 
@@ -648,7 +648,7 @@ export default function DevicesCreate() {
                                         type="date"
                                         value={data.warranty_expiry}
                                         onChange={(e) => setData('warranty_expiry', e.target.value)}
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:ring-indigo-500"
+                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
                                     />
                                 </div>
 
@@ -659,7 +659,7 @@ export default function DevicesCreate() {
                                         value={data.contract_sla}
                                         onChange={(e) => setData('contract_sla', e.target.value)}
                                         placeholder="e.g. ProSupport Plus NBD Onsite, AppleCare+ Enterprise"
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-indigo-500 focus:ring-indigo-500"
+                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff]"
                                     />
                                 </div>
                             </div>
@@ -681,7 +681,7 @@ export default function DevicesCreate() {
                                     <select
                                         value={data.lifecycle_stage}
                                         onChange={(e) => setData('lifecycle_stage', e.target.value)}
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:ring-indigo-500 font-semibold"
+                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff] font-semibold"
                                     >
                                         <option value="acquisition">Acquisition (Procured / Staging)</option>
                                         <option value="deployment">Deployment (Active In-Service)</option>
@@ -695,7 +695,7 @@ export default function DevicesCreate() {
                                     <select
                                         value={data.condition}
                                         onChange={(e) => setData('condition', e.target.value)}
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:ring-indigo-500"
+                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
                                     >
                                         <option value="excellent">Excellent</option>
                                         <option value="good">Good</option>
@@ -710,7 +710,7 @@ export default function DevicesCreate() {
                                     <select
                                         value={data.status}
                                         onChange={(e) => setData('status', e.target.value)}
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:ring-indigo-500"
+                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
                                     >
                                         <option value="available">Available (Pool Stock)</option>
                                         <option value="assigned">Assigned</option>
@@ -727,7 +727,7 @@ export default function DevicesCreate() {
                                     value={data.notes}
                                     onChange={(e) => setData('notes', e.target.value)}
                                     placeholder="Serial numbers on peripherals, special BIOS configurations, or intake inspections..."
-                                    className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-indigo-500 focus:ring-indigo-500"
+                                    className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff]"
                                 />
                             </div>
                         </div>
@@ -743,7 +743,7 @@ export default function DevicesCreate() {
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="px-6 py-2.5 rounded-xl bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 shadow-sm transition disabled:opacity-50"
+                                className="px-6 py-2.5 rounded-xl bg-[#026eff] text-sm font-semibold text-white hover:bg-[#0256cc] shadow-sm transition disabled:opacity-50"
                             >
                                 {processing ? 'Enrolling Asset...' : 'Enroll Asset into Inventory'}
                             </button>

@@ -1,6 +1,7 @@
 import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
+import SpecMatchLogo from '@/Components/SpecMatchLogo';
 import { Link, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
@@ -38,26 +39,14 @@ export default function AuthenticatedLayout({ header, children }) {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 transition-colors duration-150">
+        <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 transition-colors duration-150 font-sans">
             {/* Top Navigation Bar */}
             <nav className="border-b border-slate-200/80 dark:border-zinc-800/80 bg-white/95 dark:bg-zinc-900/95 sticky top-0 z-30 backdrop-blur-md">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="flex h-14 justify-between items-center">
                         <div className="flex items-center gap-7">
-                            <Link href="/dashboard" className="flex items-center gap-2.5 group">
-                                <div className="h-8 w-8 rounded-lg bg-indigo-600 dark:bg-indigo-500 flex items-center justify-center text-white shadow-xs">
-                                    <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-                                    </svg>
-                                </div>
-                                <div className="leading-tight flex items-center gap-1.5">
-                                    <span className="font-bold text-sm tracking-tight text-slate-900 dark:text-zinc-50">
-                                        SpecMatch
-                                    </span>
-                                    <span className="hidden sm:inline-block px-1.5 py-0.2 text-[9px] uppercase font-bold tracking-wider rounded bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 border border-slate-200/60 dark:border-zinc-700/60">
-                                        ITAM
-                                    </span>
-                                </div>
+                            <Link href="/dashboard" className="flex items-center group">
+                                <SpecMatchLogo variant="full" size={26} showBadge={true} />
                             </Link>
 
                             <div className="hidden lg:flex items-center space-x-1">
@@ -76,9 +65,9 @@ export default function AuthenticatedLayout({ header, children }) {
                                 <NavLink href={route('employees.index')} active={route().current('employees.*')}>
                                     Employees
                                 </NavLink>
-                                <NavLink href={route('match.index')} active={route().current('match.*')} className="text-indigo-600 dark:text-indigo-400">
-                                    <span className="flex items-center gap-1">
-                                        <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                <NavLink href={route('match.index')} active={route().current('match.*')} className="text-[#026eff] dark:text-[#38bdf8]">
+                                    <span className="flex items-center gap-1 font-semibold">
+                                        <svg className="w-3.5 h-3.5 text-[#026eff] dark:text-[#38bdf8]" fill="currentColor" viewBox="0 0 20 20">
                                             <path d="M13 10V3L4 14h7v7l9-11h-7z" />
                                         </svg>
                                         AI Match
@@ -93,7 +82,7 @@ export default function AuthenticatedLayout({ header, children }) {
                         <div className="hidden lg:flex lg:items-center lg:gap-3">
                             <Link
                                 href={route('match.index')}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-2xs transition"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#026eff] hover:bg-[#0b79ff] active:bg-[#025bd9] text-white shadow-xs transition"
                             >
                                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -108,7 +97,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                         type="button"
                                         className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs font-medium text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800 transition"
                                     >
-                                        <div className="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-[10px] font-bold">
+                                        <div className="w-5 h-5 rounded-full bg-[#026eff]/15 dark:bg-[#031a40]/60 text-[#026eff] dark:text-[#0b79ff] flex items-center justify-center text-[10px] font-bold">
                                             {user.name.charAt(0)}
                                         </div>
                                         <span>{user.name}</span>
@@ -125,7 +114,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                     <div className="px-3.5 py-2.5 border-b border-slate-100 dark:border-zinc-800 text-xs">
                                         <div className="flex items-center justify-between gap-1.5 mb-0.5">
                                             <div className="font-semibold text-slate-800 dark:text-zinc-200 truncate">{user.name}</div>
-                                            <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                                            <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-[#026eff]/10 dark:bg-[#031a40]/60 text-[#026eff] dark:text-[#0b79ff] border border-[#026eff]/20 dark:border-[#031a40]/60">
                                                 {user.role_title || 'Staff'}
                                             </span>
                                         </div>
@@ -166,7 +155,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                         : 'text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
                                                 }`}
                                             >
-                                                <svg className="w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <svg className="w-3.5 h-3.5 text-[#0b79ff]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                                                 </svg>
                                                 <span>Dark</span>
@@ -195,7 +184,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                                     </svg>
                                 ) : (
-                                    <svg className="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg className="w-4 h-4 text-[#026eff]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                                     </svg>
                                 )}

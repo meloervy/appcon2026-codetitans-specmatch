@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import HardwareImage from '@/Components/HardwareImage';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -79,7 +80,7 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                     <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 p-5 shadow-xs">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-400">Total Servicing Spend</span>
-                            <span className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400">
+                            <span className="p-2 rounded-xl bg-[#026eff]/10 dark:bg-[#031a40]/40 text-[#026eff] dark:text-[#0b79ff]">
                                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
@@ -129,7 +130,7 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                             <select
                                 value={type}
                                 onChange={(e) => setType(e.target.value)}
-                                className="w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:ring-indigo-500"
+                                className="w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
                             >
                                 <option value="">All Maintenance Types</option>
                                 <option value="repair">Repair</option>
@@ -142,7 +143,7 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                             <select
                                 value={status}
                                 onChange={(e) => setStatus(e.target.value)}
-                                className="w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:ring-indigo-500"
+                                className="w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
                             >
                                 <option value="">All Statuses</option>
                                 <option value="scheduled">Scheduled</option>
@@ -200,19 +201,15 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                                             <td className="py-4 px-4 font-mono font-bold">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/60 p-0.5 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
-                                                        <img
-                                                            src={log.device?.image_clip_url || log.device?.image_url || 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Modern_Laptop_Computer.jpg/800px-Modern_Laptop_Computer.jpg'}
-                                                            alt=""
+                                                        <HardwareImage
+                                                            src={log.device?.image_clip_url || log.device?.image_url}
+                                                            alt={log.device?.name}
                                                             className="w-full h-full object-contain"
-                                                            onError={(e) => {
-                                                                e.target.onerror = null;
-                                                                e.target.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Modern_Laptop_Computer.jpg/800px-Modern_Laptop_Computer.jpg';
-                                                            }}
                                                         />
                                                     </div>
                                                     <div>
                                                         {log.device ? (
-                                                            <Link href={route('devices.show', log.device.id)} className="text-indigo-600 dark:text-indigo-400 hover:underline">
+                                                            <Link href={route('devices.show', log.device.id)} className="text-[#026eff] dark:text-[#0b79ff] hover:underline">
                                                                 {log.device.asset_tag}
                                                             </Link>
                                                         ) : (
@@ -228,7 +225,7 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                                                 <div className="font-semibold text-slate-900 dark:text-zinc-100">{log.title}</div>
                                                 <span className={`inline-block mt-1 px-2 py-0.5 text-[10px] font-bold uppercase rounded ${
                                                     log.type === 'repair' ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300' :
-                                                    log.type === 'upgrade' ? 'bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300' :
+                                                    log.type === 'upgrade' ? 'bg-[#026eff]/15 dark:bg-[#031a40]/60 text-[#026eff] dark:text-[#0b79ff]' :
                                                     log.type === 'preventive' ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300' :
                                                     'bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300'
                                                 }`}>
@@ -269,7 +266,7 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                                                 <button
                                                     type="button"
                                                     onClick={() => handleOpenUpdateModal(log)}
-                                                    className="inline-flex items-center text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300"
+                                                    className="inline-flex items-center text-xs font-bold text-[#026eff] dark:text-[#0b79ff] hover:text-[#026eff] dark:hover:text-[#0b79ff]"
                                                 >
                                                     {log.status === 'completed' ? 'Edit Assessment' : 'Assess & Close'}
                                                 </button>
@@ -294,7 +291,7 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                                         href={link.url || '#'}
                                         dangerouslySetInnerHTML={{ __html: link.label }}
                                         className={`px-3 py-1.5 text-xs rounded-lg font-medium transition ${
-                                            link.active ? 'bg-indigo-600 text-white' : 'border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700'
+                                            link.active ? 'bg-[#026eff] text-white' : 'border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700'
                                         } ${!link.url ? 'opacity-40 pointer-events-none' : ''}`}
                                     />
                                 ))}
@@ -325,7 +322,7 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                                         min="0"
                                         value={updateData.cost}
                                         onChange={(e) => setUpdateData('cost', e.target.value)}
-                                        className="mt-1 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:ring-indigo-500"
+                                        className="mt-1 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
                                         required
                                     />
                                 </div>
@@ -334,7 +331,7 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                                     <select
                                         value={updateData.status}
                                         onChange={(e) => setUpdateData('status', e.target.value)}
-                                        className="mt-1 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:ring-indigo-500 font-semibold"
+                                        className="mt-1 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff] font-semibold"
                                     >
                                         <option value="in_progress">In Progress</option>
                                         <option value="completed">Completed</option>
@@ -349,7 +346,7 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                                     type="date"
                                     value={updateData.completed_at}
                                     onChange={(e) => setUpdateData('completed_at', e.target.value)}
-                                    className="mt-1 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:ring-indigo-500"
+                                    className="mt-1 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
                                 />
                             </div>
                             <div>
@@ -359,7 +356,7 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                                     value={updateData.performance_assessment}
                                     onChange={(e) => setUpdateData('performance_assessment', e.target.value)}
                                     placeholder="Assess asset performance post-servicing (e.g. stress test temperature, passmark scores, battery health, RAM stability)..."
-                                    className="mt-1 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-indigo-500 focus:ring-indigo-500"
+                                    className="mt-1 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff]"
                                     required
                                 />
                                 <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1">
@@ -372,7 +369,7 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                                         type="checkbox"
                                         checked={updateData.restore_to_available}
                                         onChange={(e) => setUpdateData('restore_to_available', e.target.checked)}
-                                        className="rounded border-slate-300 dark:border-zinc-600 text-indigo-600 focus:ring-indigo-500 bg-white dark:bg-zinc-700"
+                                        className="rounded border-slate-300 dark:border-zinc-600 text-[#026eff] focus:ring-[#026eff] bg-white dark:bg-zinc-700"
                                     />
                                     Transition Asset back to Active Deployment Stage
                                 </label>

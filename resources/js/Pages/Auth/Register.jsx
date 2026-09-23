@@ -81,7 +81,7 @@ export default function Register() {
                             name="role"
                             value={data.role}
                             onChange={(e) => setData('role', e.target.value)}
-                            className="mt-1 block w-full rounded-xl border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-900 dark:text-zinc-100 text-sm shadow-xs focus:border-indigo-500 focus:ring-indigo-500"
+                            className="mt-1 block w-full rounded-xl border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-900 dark:text-zinc-100 text-sm shadow-xs focus:border-[#026eff] focus:ring-[#026eff]"
                         >
                             <option value="admin">IT Administrator</option>
                             <option value="manager">IT Asset Manager</option>

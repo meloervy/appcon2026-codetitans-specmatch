@@ -63,7 +63,7 @@ export default function RoleProfilesIndex({ profiles }) {
                     </div>
                     <button
                         onClick={openCreate}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 shadow-sm transition self-start sm:self-auto"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#026eff] text-sm font-semibold text-white hover:bg-[#0256cc] shadow-sm transition self-start sm:self-auto"
                     >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -110,7 +110,7 @@ export default function RoleProfilesIndex({ profiles }) {
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <span className="text-slate-400 dark:text-zinc-500 font-medium">GPU Requirement:</span>
-                                    <span className={`font-semibold ${profile.requires_gpu ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-zinc-400'}`}>
+                                    <span className={`font-semibold ${profile.requires_gpu ? 'text-[#026eff] dark:text-[#0b79ff]' : 'text-slate-600 dark:text-zinc-400'}`}>
                                         {profile.requires_gpu ? `Required (${profile.min_gpu_tier})` : 'None required'}
                                     </span>
                                 </div>
@@ -126,7 +126,7 @@ export default function RoleProfilesIndex({ profiles }) {
                         <div className="mt-6 pt-4 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-end">
                             <button
                                 onClick={() => openEdit(profile)}
-                                className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300"
+                                className="text-xs font-bold text-[#026eff] dark:text-[#0b79ff] hover:text-[#026eff] dark:hover:text-[#0b79ff]"
                             >
                                 Edit Profile &rarr;
                             </button>
@@ -156,7 +156,7 @@ export default function RoleProfilesIndex({ profiles }) {
                                     value={data.name}
                                     onChange={(e) => setData('name', e.target.value)}
                                     placeholder="e.g. Lead Frontend Engineer"
-                                    className="mt-1 w-full rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:ring-indigo-500"
+                                    className="mt-1 w-full rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
                                     required
                                 />
                                 {errors.name && <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{errors.name}</p>}
@@ -168,7 +168,7 @@ export default function RoleProfilesIndex({ profiles }) {
                                     <select
                                         value={data.min_cpu_tier}
                                         onChange={(e) => setData('min_cpu_tier', e.target.value)}
-                                        className="mt-1 w-full rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:ring-indigo-500"
+                                        className="mt-1 w-full rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
                                     >
                                         <option value="entry">Entry</option>
                                         <option value="mid">Mid</option>
@@ -183,7 +183,7 @@ export default function RoleProfilesIndex({ profiles }) {
                                         min="4"
                                         value={data.min_ram_gb}
                                         onChange={(e) => setData('min_ram_gb', parseInt(e.target.value) || 0)}
-                                        className="mt-1 w-full rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:ring-indigo-500"
+                                        className="mt-1 w-full rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
                                         required
                                     />
                                 </div>
@@ -197,7 +197,7 @@ export default function RoleProfilesIndex({ profiles }) {
                                         min="64"
                                         value={data.min_storage_gb}
                                         onChange={(e) => setData('min_storage_gb', parseInt(e.target.value) || 0)}
-                                        className="mt-1 w-full rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:ring-indigo-500"
+                                        className="mt-1 w-full rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
                                         required
                                     />
                                 </div>
@@ -206,7 +206,7 @@ export default function RoleProfilesIndex({ profiles }) {
                                     <select
                                         value={data.min_gpu_tier}
                                         onChange={(e) => setData('min_gpu_tier', e.target.value)}
-                                        className="mt-1 w-full rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:ring-indigo-500"
+                                        className="mt-1 w-full rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
                                         disabled={!data.requires_gpu}
                                     >
                                         <option value="none">None</option>
@@ -223,7 +223,7 @@ export default function RoleProfilesIndex({ profiles }) {
                                         type="checkbox"
                                         checked={data.requires_gpu}
                                         onChange={(e) => setData('requires_gpu', e.target.checked)}
-                                        className="rounded border-slate-300 dark:border-zinc-600 text-indigo-600 focus:ring-indigo-500 bg-white dark:bg-zinc-700"
+                                        className="rounded border-slate-300 dark:border-zinc-600 text-[#026eff] focus:ring-[#026eff] bg-white dark:bg-zinc-700"
                                     />
                                     Requires Dedicated/Capable GPU
                                 </label>
@@ -232,7 +232,7 @@ export default function RoleProfilesIndex({ profiles }) {
                                         type="checkbox"
                                         checked={data.portability_required}
                                         onChange={(e) => setData('portability_required', e.target.checked)}
-                                        className="rounded border-slate-300 dark:border-zinc-600 text-indigo-600 focus:ring-indigo-500 bg-white dark:bg-zinc-700"
+                                        className="rounded border-slate-300 dark:border-zinc-600 text-[#026eff] focus:ring-[#026eff] bg-white dark:bg-zinc-700"
                                     />
                                     Portability Required (Laptop Essential)
                                 </label>
@@ -245,7 +245,7 @@ export default function RoleProfilesIndex({ profiles }) {
                                     value={data.description}
                                     onChange={(e) => setData('description', e.target.value)}
                                     placeholder="Applications used, performance expectations..."
-                                    className="mt-1 w-full rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-indigo-500 focus:ring-indigo-500"
+                                    className="mt-1 w-full rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff]"
                                 />
                             </div>
 
@@ -260,7 +260,7 @@ export default function RoleProfilesIndex({ profiles }) {
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 transition"
+                                    className="px-5 py-2 rounded-xl bg-[#026eff] text-white text-xs font-semibold hover:bg-[#0256cc] transition"
                                 >
                                     {editingProfile ? 'Save Changes' : 'Create Profile'}
                                 </button>

@@ -62,9 +62,9 @@ export default function Login({ status, canResetPassword }) {
                         type="button"
                         disabled={processing}
                         onClick={() => handleQuickLogin('admin@specmatch.local')}
-                        className="flex flex-col items-center justify-center p-2 rounded-lg bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 hover:border-indigo-500 dark:hover:border-indigo-400 hover:shadow-xs transition group text-left"
+                        className="flex flex-col items-center justify-center p-2 rounded-lg bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 hover:border-[#026eff] dark:hover:border-[#0b79ff] hover:shadow-xs transition group text-left"
                     >
-                        <span className="text-xs font-semibold text-slate-800 dark:text-zinc-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                        <span className="text-xs font-semibold text-slate-800 dark:text-zinc-200 group-hover:text-[#026eff] dark:group-hover:text-[#0b79ff]">
                             IT Admin
                         </span>
                         <span className="text-[10px] text-slate-400 dark:text-zinc-500 truncate max-w-full">
@@ -76,9 +76,9 @@ export default function Login({ status, canResetPassword }) {
                         type="button"
                         disabled={processing}
                         onClick={() => handleQuickLogin('manager@specmatch.local')}
-                        className="flex flex-col items-center justify-center p-2 rounded-lg bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 hover:border-indigo-500 dark:hover:border-indigo-400 hover:shadow-xs transition group text-left"
+                        className="flex flex-col items-center justify-center p-2 rounded-lg bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 hover:border-[#026eff] dark:hover:border-[#0b79ff] hover:shadow-xs transition group text-left"
                     >
-                        <span className="text-xs font-semibold text-slate-800 dark:text-zinc-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                        <span className="text-xs font-semibold text-slate-800 dark:text-zinc-200 group-hover:text-[#026eff] dark:group-hover:text-[#0b79ff]">
                             Asset Manager
                         </span>
                         <span className="text-[10px] text-slate-400 dark:text-zinc-500 truncate max-w-full">
@@ -90,9 +90,9 @@ export default function Login({ status, canResetPassword }) {
                         type="button"
                         disabled={processing}
                         onClick={() => handleQuickLogin('tech@specmatch.local')}
-                        className="flex flex-col items-center justify-center p-2 rounded-lg bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 hover:border-indigo-500 dark:hover:border-indigo-400 hover:shadow-xs transition group text-left"
+                        className="flex flex-col items-center justify-center p-2 rounded-lg bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 hover:border-[#026eff] dark:hover:border-[#0b79ff] hover:shadow-xs transition group text-left"
                     >
-                        <span className="text-xs font-semibold text-slate-800 dark:text-zinc-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                        <span className="text-xs font-semibold text-slate-800 dark:text-zinc-200 group-hover:text-[#026eff] dark:group-hover:text-[#0b79ff]">
                             Technician
                         </span>
                         <span className="text-[10px] text-slate-400 dark:text-zinc-500 truncate max-w-full">
@@ -171,7 +171,7 @@ export default function Login({ status, canResetPassword }) {
                     {canResetPassword && (
                         <Link
                             href={route('password.request')}
-                            className="rounded-md text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 underline focus:outline-hidden"
+                            className="rounded-md text-xs text-[#026eff] dark:text-[#0b79ff] hover:text-[#0256cc] underline focus:outline-hidden"
                         >
                             Forgot password?
                         </Link>

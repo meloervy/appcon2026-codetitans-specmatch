@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import HardwareImage from '@/Components/HardwareImage';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -65,7 +66,7 @@ export default function DevicesIndex({ devices, filters }) {
                         </Link>
                         <Link
                             href={route('devices.create')}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-xs font-semibold text-white shadow-2xs transition"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#026eff] hover:bg-[#0256cc] text-xs font-semibold text-white shadow-2xs transition"
                         >
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -87,14 +88,14 @@ export default function DevicesIndex({ devices, filters }) {
                             placeholder="Search tag, serial, brand, model..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 bg-slate-50/50 dark:bg-zinc-800/60 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-indigo-500 focus:ring-indigo-500"
+                            className="w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 bg-slate-50/50 dark:bg-zinc-800/60 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff]"
                         />
                     </div>
                     <div>
                         <select
                             value={lifecycleStage}
                             onChange={(e) => setLifecycleStage(e.target.value)}
-                            className="w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 bg-slate-50/50 dark:bg-zinc-800/60 dark:text-zinc-100 focus:border-indigo-500 focus:ring-indigo-500"
+                            className="w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 bg-slate-50/50 dark:bg-zinc-800/60 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
                         >
                             <option value="">All Lifecycle Stages</option>
                             <option value="acquisition">Acquisition</option>
@@ -107,7 +108,7 @@ export default function DevicesIndex({ devices, filters }) {
                         <select
                             value={status}
                             onChange={(e) => setStatus(e.target.value)}
-                            className="w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 bg-slate-50/50 dark:bg-zinc-800/60 dark:text-zinc-100 focus:border-indigo-500 focus:ring-indigo-500"
+                            className="w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 bg-slate-50/50 dark:bg-zinc-800/60 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
                         >
                             <option value="">All Statuses</option>
                             <option value="available">Available (Idle)</option>
@@ -120,7 +121,7 @@ export default function DevicesIndex({ devices, filters }) {
                         <select
                             value={deviceType}
                             onChange={(e) => setDeviceType(e.target.value)}
-                            className="w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 bg-slate-50/50 dark:bg-zinc-800/60 dark:text-zinc-100 focus:border-indigo-500 focus:ring-indigo-500"
+                            className="w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 bg-slate-50/50 dark:bg-zinc-800/60 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
                         >
                             <option value="">All Types</option>
                             <option value="laptop">Laptop</option>
@@ -131,7 +132,7 @@ export default function DevicesIndex({ devices, filters }) {
                         <select
                             value={cpuTier}
                             onChange={(e) => setCpuTier(e.target.value)}
-                            className="w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 bg-slate-50/50 dark:bg-zinc-800/60 dark:text-zinc-100 focus:border-indigo-500 focus:ring-indigo-500"
+                            className="w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 bg-slate-50/50 dark:bg-zinc-800/60 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
                         >
                             <option value="">All CPU Tiers</option>
                             <option value="entry">Entry Tier</option>
@@ -188,7 +189,7 @@ export default function DevicesIndex({ devices, filters }) {
                                     <tr key={device.id} className="hover:bg-slate-50/50 dark:hover:bg-zinc-800/40 transition-colors">
                                         {/* Tag & Serial */}
                                         <td className="py-3 px-4 font-mono">
-                                            <Link href={route('devices.show', device.id)} className="text-indigo-600 dark:text-indigo-400 hover:underline font-bold block">
+                                            <Link href={route('devices.show', device.id)} className="text-[#026eff] dark:text-[#0b79ff] hover:underline font-bold block">
                                                 {device.asset_tag}
                                             </Link>
                                             <span className="text-[10px] text-slate-400 dark:text-zinc-500 block truncate max-w-[110px]">
@@ -200,15 +201,10 @@ export default function DevicesIndex({ devices, filters }) {
                                         <td className="py-3 px-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-11 h-11 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-200/70 dark:border-zinc-700/60 shrink-0 overflow-hidden shadow-2xs">
-                                                    <img
-                                                        src={device.image_clip_url}
+                                                    <HardwareImage
+                                                        src={device.image_clip_url || device.image_url}
                                                         alt={`${device.brand} ${device.model}`}
                                                         className="w-full h-full object-cover object-center"
-                                                        loading="lazy"
-                                                        onError={(e) => {
-                                                            e.target.onerror = null;
-                                                            e.target.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Modern_Laptop_Computer.jpg/800px-Modern_Laptop_Computer.jpg';
-                                                        }}
                                                     />
                                                 </div>
                                                 <div className="min-w-0">
@@ -290,7 +286,7 @@ export default function DevicesIndex({ devices, filters }) {
                                         <td className="py-3 px-4 text-right">
                                             <Link
                                                 href={route('devices.show', device.id)}
-                                                className="inline-flex items-center text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+                                                className="inline-flex items-center text-xs font-semibold text-[#026eff] dark:text-[#0b79ff] hover:underline"
                                             >
                                                 Details &rarr;
                                             </Link>
@@ -315,7 +311,7 @@ export default function DevicesIndex({ devices, filters }) {
                                     href={link.url || '#'}
                                     dangerouslySetInnerHTML={{ __html: link.label }}
                                     className={`px-2.5 py-1 text-xs rounded-lg font-medium transition ${
-                                        link.active ? 'bg-indigo-600 text-white' : 'border border-slate-200 dark:border-zinc-750 text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800'
+                                        link.active ? 'bg-[#026eff] text-white' : 'border border-slate-200 dark:border-zinc-750 text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800'
                                     } ${!link.url ? 'opacity-40 pointer-events-none' : ''}`}
                                 />
                             ))}

@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import HardwareImage from '@/Components/HardwareImage';
 import { Head, Link } from '@inertiajs/react';
 
 export default function Dashboard({ metrics, mismatches, recent_assignments, available_fleet, itam }) {
@@ -28,7 +29,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                         </Link>
                         <Link
                             href={route('match.index')}
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 shadow-sm transition"
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#026eff] text-sm font-semibold text-white hover:bg-[#0256cc] shadow-sm transition"
                         >
                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -147,7 +148,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                     </div>
                     <div className="mt-3 text-xs text-slate-500 dark:text-zinc-400 flex items-center justify-between">
                         <span className="font-semibold text-amber-700 dark:text-amber-400">{metrics.active_maintenance_count} in servicing</span>
-                        <Link href={route('maintenance.index')} className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">
+                        <Link href={route('maintenance.index')} className="text-[#026eff] dark:text-[#0b79ff] font-semibold hover:underline">
                             Open Hub &rarr;
                         </Link>
                     </div>
@@ -157,17 +158,17 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                 <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-slate-200/80 dark:border-zinc-800 shadow-xs">
                     <div className="flex items-center justify-between">
                         <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Procurement Avoidance</span>
-                        <span className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400">
+                        <span className="p-2 rounded-xl bg-[#026eff]/10 dark:bg-[#031a40]/40 text-[#026eff] dark:text-[#0b79ff]">
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                             </svg>
                         </span>
                     </div>
                     <div className="mt-4 flex items-baseline gap-2">
-                        <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400">
+                        <span className="text-2xl font-black text-[#026eff] dark:text-[#0b79ff]">
                             ₱{metrics.procurement_savings.toLocaleString()}
                         </span>
-                        <span className="text-xs text-indigo-700 dark:text-indigo-300 font-semibold bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.5 rounded">Saved</span>
+                        <span className="text-xs text-[#026eff] dark:text-[#0b79ff] font-semibold bg-[#026eff]/10 dark:bg-[#031a40]/60 px-1.5 py-0.5 rounded">Saved</span>
                     </div>
                     <p className="mt-3 text-xs text-slate-500 dark:text-zinc-400">
                         Capital saved by matching idle fleet vs purchasing new units.
@@ -206,9 +207,9 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
 
                 {/* Redundancy / Efficiency Optimization Alert */}
                 {metrics.idle_high_spec_count > 0 && (
-                    <div className="rounded-2xl bg-indigo-500/10 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-900/60 p-5 flex items-center justify-between gap-4">
+                    <div className="rounded-2xl bg-[#026eff]/100/10 dark:bg-[#031a40]/20 border border-[#026eff]/20 dark:border-[#031a40]/60 p-5 flex items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-xl bg-indigo-600 text-white shrink-0">
+                            <div className="p-2 rounded-xl bg-[#026eff] text-white shrink-0">
                                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                                 </svg>
@@ -224,7 +225,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                         </div>
                         <Link
                             href={route('match.index')}
-                            className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 shrink-0 transition"
+                            className="px-3 py-1.5 rounded-lg bg-[#026eff] text-white text-xs font-bold hover:bg-[#0256cc] shrink-0 transition"
                         >
                             Assign Assets
                         </Link>
@@ -268,7 +269,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                             <h2 className="font-bold text-slate-900 dark:text-zinc-100 text-lg">Available Fleet for Assignment</h2>
                             <p className="text-xs text-slate-500 dark:text-zinc-400">Currently idle units ready to be circulation-matched</p>
                         </div>
-                        <Link href={route('devices.index', { status: 'available' })} className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
+                        <Link href={route('devices.index', { status: 'available' })} className="text-xs font-semibold text-[#026eff] dark:text-[#0b79ff] hover:underline">
                             View All Available ({metrics.idle_devices}) &rarr;
                         </Link>
                     </div>
@@ -279,14 +280,10 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                                 <div>
                                     <div className="flex items-start gap-3">
                                         <div className="w-14 h-14 rounded-xl bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/60 p-1 flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
-                                            <img
-                                                src={device.image_clip_url || device.image_url || 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Modern_Laptop_Computer.jpg/800px-Modern_Laptop_Computer.jpg'}
+                                            <HardwareImage
+                                                src={device.image_clip_url || device.image_url}
                                                 alt={`${device.brand} ${device.model}`}
                                                 className="w-full h-full object-contain"
-                                                onError={(e) => {
-                                                    e.target.onerror = null;
-                                                    e.target.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Modern_Laptop_Computer.jpg/800px-Modern_Laptop_Computer.jpg';
-                                                }}
                                             />
                                         </div>
                                         <div className="min-w-0 flex-1">
@@ -313,7 +310,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                                             {device.cpu_tier} CPU
                                         </span>
                                         {device.gpu_tier !== 'none' && (
-                                            <span className="text-[11px] px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-900/50 font-medium text-indigo-700 dark:text-indigo-300">
+                                            <span className="text-[11px] px-2 py-0.5 rounded bg-[#026eff]/10 dark:bg-[#031a40]/60 border border-[#026eff]/15 dark:border-[#031a40]/50 font-medium text-[#026eff] dark:text-[#0b79ff]">
                                                 {device.gpu_tier}
                                             </span>
                                         )}
@@ -321,7 +318,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                                 </div>
                                 <div className="mt-4 pt-3 border-t border-slate-200/60 dark:border-zinc-800 flex items-center justify-between text-xs">
                                     <span className="text-slate-400 dark:text-zinc-500 capitalize">{device.device_type} &bull; {device.condition}</span>
-                                    <Link href={route('devices.show', device.id)} className="font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300">
+                                    <Link href={route('devices.show', device.id)} className="font-semibold text-[#026eff] dark:text-[#0b79ff] hover:text-[#026eff] dark:hover:text-[#0b79ff]">
                                         Details &rarr;
                                     </Link>
                                 </div>
@@ -331,28 +328,28 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                 </div>
 
                 {/* Workflow Shortcuts */}
-                <div className="bg-gradient-to-br from-indigo-900 via-indigo-950 to-slate-900 dark:from-zinc-950 dark:via-zinc-900 dark:to-indigo-950 text-white rounded-2xl p-6 shadow-md border border-indigo-800/40 dark:border-zinc-800 flex flex-col justify-between">
+                <div className="bg-gradient-to-br from-[#031a40] via-[#021230] to-[#031a40] dark:from-zinc-950 dark:via-zinc-900 dark:to-[#031a40] text-white rounded-2xl p-6 shadow-md border border-[#031a40]/40 dark:border-zinc-800 flex flex-col justify-between">
                     <div>
                         <div className="inline-flex p-2.5 rounded-xl bg-white/10 mb-4 backdrop-blur-xs">
-                            <svg className="w-6 h-6 text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="w-6 h-6 text-[#0b79ff]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
                             </svg>
                         </div>
                         <h3 className="text-xl font-bold tracking-tight">TechSpecs & AI Match</h3>
-                        <p className="text-sm text-indigo-200/80 mt-2 leading-relaxed">
+                        <p className="text-sm text-[#0b79ff]/60 mt-2 leading-relaxed">
                             Continuous IT asset management with 1-click TechSpecs hardware lookup, straight-line depreciation, lifecycle transitions, and intelligent assignment.
                         </p>
 
                         <div className="mt-6 space-y-2.5">
-                            <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-xs text-indigo-100 flex items-center justify-between">
+                            <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-xs text-[#0b79ff] flex items-center justify-between">
                                 <span>Hardware Identification</span>
                                 <span className="font-semibold text-emerald-400">TechSpecs API</span>
                             </div>
-                            <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-xs text-indigo-100 flex items-center justify-between">
+                            <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-xs text-[#0b79ff] flex items-center justify-between">
                                 <span>AI Extraction Engine</span>
-                                <span className="font-semibold text-indigo-300">Gemini 2.5</span>
+                                <span className="font-semibold text-[#0b79ff]">Gemini AI</span>
                             </div>
-                            <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-xs text-indigo-100 flex items-center justify-between">
+                            <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-xs text-[#0b79ff] flex items-center justify-between">
                                 <span>Lifecycle Stages</span>
                                 <span className="font-semibold text-amber-300">4 Tracked Phases</span>
                             </div>
@@ -361,7 +358,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
 
                     <Link
                         href={route('match.index')}
-                        className="mt-6 w-full py-3 rounded-xl bg-white text-indigo-950 font-bold text-center text-sm hover:bg-indigo-50 transition shadow-sm"
+                        className="mt-6 w-full py-3 rounded-xl bg-white text-[#031a40] font-bold text-center text-sm hover:bg-[#026eff]/10 transition shadow-sm"
                     >
                         Launch Match Engine &rarr;
                     </Link>
@@ -375,7 +372,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                         <h2 className="font-bold text-slate-900 dark:text-zinc-100 text-lg">Recent Fleet Assignments</h2>
                         <p className="text-xs text-slate-500 dark:text-zinc-400">Audit trail of equipment deployments and match scores</p>
                     </div>
-                    <Link href={route('employees.index')} className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
+                    <Link href={route('employees.index')} className="text-xs font-semibold text-[#026eff] dark:text-[#0b79ff] hover:underline">
                         View All Employees &rarr;
                     </Link>
                 </div>
@@ -396,7 +393,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                             {recent_assignments.map((asg) => (
                                 <tr key={asg.id} className="hover:bg-slate-50/60 dark:hover:bg-zinc-800/40 transition">
                                     <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-zinc-100">
-                                        <Link href={route('devices.show', asg.device.id)} className="text-indigo-600 dark:text-indigo-400 hover:underline">
+                                        <Link href={route('devices.show', asg.device.id)} className="text-[#026eff] dark:text-[#0b79ff] hover:underline">
                                             {asg.device.asset_tag}
                                         </Link>
                                         <div className="text-xs text-slate-400 dark:text-zinc-500 font-normal">{asg.device.brand} {asg.device.model}</div>
@@ -412,7 +409,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                                         {asg.match_score ? (
                                             <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
                                                 asg.match_score >= 0.8 ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300' :
-                                                asg.match_score >= 0.65 ? 'bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300' :
+                                                asg.match_score >= 0.65 ? 'bg-[#026eff]/15 dark:bg-[#031a40]/60 text-[#026eff] dark:text-[#0b79ff]' :
                                                 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300'
                                             }`}>
                                                 {Math.round(asg.match_score * 100)}%

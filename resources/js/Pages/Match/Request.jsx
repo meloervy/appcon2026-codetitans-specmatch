@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import HardwareImage from '@/Components/HardwareImage';
 import { Head, useForm } from '@inertiajs/react';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
@@ -111,7 +112,7 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                     {/* Step 1: Employee & Request */}
                     <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 p-6 shadow-xs">
                         <div className="flex items-center gap-2 mb-4">
-                            <span className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold">1</span>
+                            <span className="w-6 h-6 rounded-full bg-[#026eff] text-white flex items-center justify-center text-xs font-bold">1</span>
                             <h2 className="font-bold text-slate-900 dark:text-zinc-100 text-base">Request Specification</h2>
                         </div>
 
@@ -123,7 +124,7 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                             <select
                                 value={employeeId}
                                 onChange={(e) => setEmployeeId(e.target.value)}
-                                className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:ring-indigo-500"
+                                className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
                             >
                                 <option value="">-- Choose employee (optional for ad-hoc search) --</option>
                                 {employees.map((emp) => (
@@ -140,14 +141,14 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">
                                     Natural Language Need
                                 </label>
-                                <span className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">Layer 1: Gemini 2.5 Flash</span>
+                                <span className="text-[11px] text-[#026eff] dark:text-[#0b79ff] font-medium">Layer 1: Gemini AI</span>
                             </div>
                             <textarea
                                 rows={4}
                                 value={rawInput}
                                 onChange={(e) => setRawInput(e.target.value)}
                                 placeholder="Describe the workload requirements, software used, mobility needs, or performance expectations..."
-                                className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-indigo-500 focus:ring-indigo-500 resize-none"
+                                className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff] resize-none"
                             />
                         </div>
 
@@ -162,7 +163,7 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                                         key={idx}
                                         type="button"
                                         onClick={() => setRawInput(p)}
-                                        className="text-left text-xs p-2 rounded-lg bg-slate-50 dark:bg-zinc-800/60 hover:bg-indigo-50 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:text-indigo-700 dark:hover:text-indigo-300 border border-slate-200/60 dark:border-zinc-700/60 transition line-clamp-1"
+                                        className="text-left text-xs p-2 rounded-lg bg-slate-50 dark:bg-zinc-800/60 hover:bg-[#026eff]/10 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:text-[#026eff] dark:hover:text-[#0b79ff] border border-slate-200/60 dark:border-zinc-700/60 transition line-clamp-1"
                                     >
                                         &bull; {p}
                                     </button>
@@ -175,7 +176,7 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                             type="button"
                             onClick={handleExtract}
                             disabled={isExtracting || isRanking || !rawInput.trim()}
-                            className="mt-5 w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-sm transition disabled:opacity-50 flex items-center justify-center gap-2"
+                            className="mt-5 w-full py-3 rounded-xl bg-[#026eff] hover:bg-[#0256cc] text-white font-bold text-sm shadow-sm transition disabled:opacity-50 flex items-center justify-center gap-2"
                         >
                             {isExtracting ? (
                                 <>
@@ -227,7 +228,7 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                                             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
                                                 <path d="M11 2L7.33 10.67 2 11l5.33 3.67L5 22l6-3.33L17 22l-2.33-7.33L20 11l-5.33-.33L11 2zm8 4l-1.33 2.67L15 9l2.67 1.33L19 13l1.33-2.67L23 9l-2.67-1.33z" />
                                             </svg>
-                                            Gemini 2.5 Flash
+                                            Gemini AI
                                         </span>
                                     </div>
                                     <div className="flex flex-wrap gap-2 mb-4">
@@ -264,7 +265,7 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
 
                                 <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 p-6 shadow-xs relative overflow-hidden">
                                     {isExtracting ? (
-                                        <div className="flex flex-col items-center justify-center py-8 text-indigo-600 dark:text-indigo-400">
+                                        <div className="flex flex-col items-center justify-center py-8 text-[#026eff] dark:text-[#0b79ff]">
                                             <svg className="animate-spin h-8 w-8 mb-4" fill="none" viewBox="0 0 24 24">
                                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
@@ -275,11 +276,11 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                                         extracted && (
                                             <>
                                                 <div className="flex items-center justify-between mb-4">
-                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 shadow-sm">
-                                                        <svg className="w-4 h-4 text-indigo-600 dark:text-indigo-400" viewBox="0 0 24 24" fill="currentColor">
+                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-[#026eff]/10 dark:bg-[#031a40]/60 text-[#026eff] dark:text-[#0b79ff] border border-[#026eff]/20 dark:border-[#031a40]/60 shadow-sm">
+                                                        <svg className="w-4 h-4 text-[#026eff] dark:text-[#0b79ff]" viewBox="0 0 24 24" fill="currentColor">
                                                             <path d="M11 2L7.33 10.67 2 11l5.33 3.67L5 22l6-3.33L17 22l-2.33-7.33L20 11l-5.33-.33L11 2zm8 4l-1.33 2.67L15 9l2.67 1.33L19 13l1.33-2.67L23 9l-2.67-1.33z" />
                                                         </svg>
-                                                        Powered by Gemini 2.5 Flash
+                                                        Powered by Gemini AI
                                                     </span>
                                                     <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-900/50">
                                                         Validated JSON
@@ -366,7 +367,7 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                                                                     type="checkbox"
                                                                     checked={extracted.requires_gpu}
                                                                     onChange={(e) => setExtracted({ ...extracted, requires_gpu: e.target.checked })}
-                                                                    className="rounded border-slate-300 dark:border-zinc-600 text-indigo-600 dark:bg-zinc-700 text-xs"
+                                                                    className="rounded border-slate-300 dark:border-zinc-600 text-[#026eff] dark:bg-zinc-700 text-xs"
                                                                 />
                                                                 <span className="font-semibold text-slate-700 dark:text-zinc-300">Requires GPU</span>
                                                             </label>
@@ -375,7 +376,7 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                                                                     type="checkbox"
                                                                     checked={extracted.portability_required}
                                                                     onChange={(e) => setExtracted({ ...extracted, portability_required: e.target.checked })}
-                                                                    className="rounded border-slate-300 dark:border-zinc-600 text-indigo-600 dark:bg-zinc-700 text-xs"
+                                                                    className="rounded border-slate-300 dark:border-zinc-600 text-[#026eff] dark:bg-zinc-700 text-xs"
                                                                 />
                                                                 <span className="font-semibold text-slate-700 dark:text-zinc-300">Laptop / Mobile</span>
                                                             </label>
@@ -384,7 +385,7 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                                                             type="button"
                                                             onClick={() => handleRank(extracted)}
                                                             disabled={isRanking}
-                                                            className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition disabled:opacity-50"
+                                                            className="px-3 py-1.5 rounded-lg bg-[#026eff] hover:bg-[#0256cc] text-white font-bold text-xs transition disabled:opacity-50"
                                                         >
                                                             {isRanking ? 'Re-scoring...' : 'Re-rank Fleet'}
                                                         </button>
@@ -392,7 +393,7 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                                                 </div>
 
                                                 <details className="group">
-                                                    <summary className="text-xs font-bold text-indigo-600 dark:text-indigo-400 cursor-pointer hover:text-indigo-800 dark:hover:text-indigo-300 transition select-none flex items-center gap-1.5">
+                                                    <summary className="text-xs font-bold text-[#026eff] dark:text-[#0b79ff] cursor-pointer hover:text-[#026eff] dark:hover:text-[#0b79ff] transition select-none flex items-center gap-1.5">
                                                         <svg className="w-4 h-4 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                                                         </svg>
@@ -459,7 +460,7 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                                         {rankedResults && (
                                             <div className="space-y-4">
                                                 {rankedResults.map((item, idx) => {
-                                                    const { device, score, subscores, rationale, disqualified, disqualification_reason, passes_threshold } = item;
+                                                    const { device, score, subscores, component_meters, capex_saved_php, fit_grade, overprovisioning_risk, rationale, disqualified, disqualification_reason, passes_threshold } = item;
                                                     const isTop = idx === 0 && passes_threshold;
 
                                                     return (
@@ -481,14 +482,10 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                                                                         #{idx + 1}
                                                                     </span>
                                                                     <div className="w-12 h-12 rounded-xl bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/60 p-0.5 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
-                                                                        <img
-                                                                            src={device.image_clip_url || device.image_url || 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Modern_Laptop_Computer.jpg/800px-Modern_Laptop_Computer.jpg'}
-                                                                            alt=""
+                                                                        <HardwareImage
+                                                                            src={device.image_clip_url || device.image_url}
+                                                                            alt={device.name}
                                                                             className="w-full h-full object-contain"
-                                                                            onError={(e) => {
-                                                                                e.target.onerror = null;
-                                                                                e.target.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Modern_Laptop_Computer.jpg/800px-Modern_Laptop_Computer.jpg';
-                                                                            }}
                                                                         />
                                                                     </div>
                                                                     <div>
@@ -512,14 +509,39 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                                                                         </span>
                                                                     ) : (
                                                                         <div className="text-right">
-                                                                            <div className="text-lg font-black text-slate-900 dark:text-zinc-100">
-                                                                                {Math.round(score * 100)}%
+                                                                            <div className="flex items-center justify-end gap-2">
+                                                                                {fit_grade && (
+                                                                                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                                                                                        fit_grade === 'Perfect Fit' ? 'bg-[#0aceb3]/20 text-[#0aceb3] border border-[#0aceb3]/30' :
+                                                                                        fit_grade === 'Strong Fit' ? 'bg-[#026eff]/20 text-[#0b79ff] border border-[#026eff]/30' :
+                                                                                        fit_grade === 'Good Fit' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                                                                                        fit_grade === 'Acceptable' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                                                                                        'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                                                                                    }`}>
+                                                                                        {fit_grade}
+                                                                                    </span>
+                                                                                )}
+                                                                                {overprovisioning_risk && (
+                                                                                    <span className="inline-flex items-center rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 text-[10px] font-bold">
+                                                                                        ⚠ Overprovisioned
+                                                                                    </span>
+                                                                                )}
+                                                                                <div className="text-lg font-black text-slate-900 dark:text-zinc-100">
+                                                                                    {Math.round(score * 100)}%
+                                                                                </div>
                                                                             </div>
-                                                                            <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                                                                                passes_threshold ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300' : 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
-                                                                            }`}>
-                                                                                {passes_threshold ? 'Clears Threshold' : 'Sub-threshold'}
-                                                                            </span>
+                                                                            <div className="flex items-center justify-end gap-2 mt-0.5">
+                                                                                {capex_saved_php > 0 && (
+                                                                                    <span className="text-[10px] font-bold text-[#0aceb3]">
+                                                                                        ₱{Number(capex_saved_php).toLocaleString()} CapEx Saved
+                                                                                    </span>
+                                                                                )}
+                                                                                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                                                                                    passes_threshold ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300' : 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
+                                                                                }`}>
+                                                                                    {passes_threshold ? 'Clears Threshold' : 'Sub-threshold'}
+                                                                                </span>
+                                                                            </div>
                                                                         </div>
                                                                     )}
                                                                 </div>
@@ -531,35 +553,35 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                                                                     <div>
                                                                         <div className="text-slate-400 dark:text-zinc-500 text-[10px] font-semibold uppercase">CPU (30%)</div>
                                                                         <div className="w-full bg-slate-100 dark:bg-zinc-800 rounded-full h-1.5 mt-1 overflow-hidden">
-                                                                            <div className="bg-indigo-600 h-1.5 rounded-full" style={{ width: `${subscores.cpu * 100}%` }} />
+                                                                            <div className={`h-1.5 rounded-full ${subscores.cpu >= 0.8 ? 'bg-[#0aceb3]' : subscores.cpu >= 0.5 ? 'bg-[#026eff]' : 'bg-amber-500'}`} style={{ width: `${subscores.cpu * 100}%` }} />
                                                                         </div>
                                                                         <span className="font-mono text-slate-700 dark:text-zinc-300 text-[10px]">{Math.round(subscores.cpu * 100)}%</span>
                                                                     </div>
                                                                     <div>
                                                                         <div className="text-slate-400 dark:text-zinc-500 text-[10px] font-semibold uppercase">RAM (25%)</div>
                                                                         <div className="w-full bg-slate-100 dark:bg-zinc-800 rounded-full h-1.5 mt-1 overflow-hidden">
-                                                                            <div className="bg-indigo-600 h-1.5 rounded-full" style={{ width: `${subscores.ram * 100}%` }} />
+                                                                            <div className={`h-1.5 rounded-full ${subscores.ram >= 0.8 ? 'bg-[#0aceb3]' : subscores.ram >= 0.5 ? 'bg-[#026eff]' : 'bg-amber-500'}`} style={{ width: `${subscores.ram * 100}%` }} />
                                                                         </div>
                                                                         <span className="font-mono text-slate-700 dark:text-zinc-300 text-[10px]">{Math.round(subscores.ram * 100)}%</span>
                                                                     </div>
                                                                     <div>
                                                                         <div className="text-slate-400 dark:text-zinc-500 text-[10px] font-semibold uppercase">Disk (15%)</div>
                                                                         <div className="w-full bg-slate-100 dark:bg-zinc-800 rounded-full h-1.5 mt-1 overflow-hidden">
-                                                                            <div className="bg-indigo-600 h-1.5 rounded-full" style={{ width: `${subscores.storage * 100}%` }} />
+                                                                            <div className={`h-1.5 rounded-full ${subscores.storage >= 0.8 ? 'bg-[#0aceb3]' : subscores.storage >= 0.5 ? 'bg-[#026eff]' : 'bg-amber-500'}`} style={{ width: `${subscores.storage * 100}%` }} />
                                                                         </div>
                                                                         <span className="font-mono text-slate-700 dark:text-zinc-300 text-[10px]">{Math.round(subscores.storage * 100)}%</span>
                                                                     </div>
                                                                     <div>
                                                                         <div className="text-slate-400 dark:text-zinc-500 text-[10px] font-semibold uppercase">GPU (20%)</div>
                                                                         <div className="w-full bg-slate-100 dark:bg-zinc-800 rounded-full h-1.5 mt-1 overflow-hidden">
-                                                                            <div className="bg-indigo-600 h-1.5 rounded-full" style={{ width: `${subscores.gpu * 100}%` }} />
+                                                                            <div className={`h-1.5 rounded-full ${subscores.gpu >= 0.8 ? 'bg-[#0aceb3]' : subscores.gpu >= 0.5 ? 'bg-[#026eff]' : 'bg-amber-500'}`} style={{ width: `${subscores.gpu * 100}%` }} />
                                                                         </div>
                                                                         <span className="font-mono text-slate-700 dark:text-zinc-300 text-[10px]">{Math.round(subscores.gpu * 100)}%</span>
                                                                     </div>
                                                                     <div>
                                                                         <div className="text-slate-400 dark:text-zinc-500 text-[10px] font-semibold uppercase">Port (10%)</div>
                                                                         <div className="w-full bg-slate-100 dark:bg-zinc-800 rounded-full h-1.5 mt-1 overflow-hidden">
-                                                                            <div className="bg-indigo-600 h-1.5 rounded-full" style={{ width: `${subscores.portability * 100}%` }} />
+                                                                            <div className={`h-1.5 rounded-full ${subscores.portability >= 0.8 ? 'bg-[#0aceb3]' : subscores.portability >= 0.5 ? 'bg-[#026eff]' : 'bg-amber-500'}`} style={{ width: `${subscores.portability * 100}%` }} />
                                                                         </div>
                                                                         <span className="font-mono text-slate-700 dark:text-zinc-300 text-[10px]">{Math.round(subscores.portability * 100)}%</span>
                                                                     </div>

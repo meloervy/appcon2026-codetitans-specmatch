@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import HardwareImage from '@/Components/HardwareImage';
 import { Head, Link } from '@inertiajs/react';
 
 export default function MismatchesIndex({ mismatches, threshold }) {
@@ -17,7 +18,7 @@ export default function MismatchesIndex({ mismatches, threshold }) {
                     </div>
                     <Link
                         href={route('match.index')}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 shadow-sm transition self-start sm:self-auto"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#026eff] text-sm font-semibold text-white hover:bg-[#0256cc] shadow-sm transition self-start sm:self-auto"
                     >
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -110,7 +111,7 @@ export default function MismatchesIndex({ mismatches, threshold }) {
                                     <div className="flex items-center gap-3 self-end lg:self-center">
                                         <Link
                                             href={route('match.index', { employee_id: employee.id })}
-                                            className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 shadow-sm transition"
+                                            className="px-4 py-2 rounded-xl bg-[#026eff] text-white text-xs font-bold hover:bg-[#0256cc] shadow-sm transition"
                                         >
                                             Find Replacement Device &rarr;
                                         </Link>
@@ -156,14 +157,10 @@ export default function MismatchesIndex({ mismatches, threshold }) {
                                     }`}>
                                         <div className="flex items-center gap-3 mb-2">
                                             <div className="w-12 h-12 rounded-xl bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/60 p-0.5 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
-                                                <img
-                                                    src={device.image_clip_url || device.image_url || 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Modern_Laptop_Computer.jpg/800px-Modern_Laptop_Computer.jpg'}
-                                                    alt=""
+                                                <HardwareImage
+                                                    src={device.image_clip_url || device.image_url}
+                                                    alt={device.name}
                                                     className="w-full h-full object-contain"
-                                                    onError={(e) => {
-                                                        e.target.onerror = null;
-                                                        e.target.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Modern_Laptop_Computer.jpg/800px-Modern_Laptop_Computer.jpg';
-                                                    }}
                                                 />
                                             </div>
                                             <div className="flex-1 min-w-0">

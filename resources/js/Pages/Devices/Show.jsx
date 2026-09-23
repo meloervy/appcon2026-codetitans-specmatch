@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import HardwareImage from '@/Components/HardwareImage';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -146,7 +147,7 @@ export default function DevicesShow({ device }) {
                             <div className="flex items-center gap-2">
                                 <h1 className="text-lg font-bold text-slate-900 dark:text-zinc-50">{device.brand} {device.model}</h1>
                                 {device.techspecs_id && (
-                                    <span className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60">
+                                    <span className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded bg-[#026eff]/10 dark:bg-[#031a40]/60 text-[#026eff] dark:text-[#0b79ff] border border-[#026eff]/20 dark:border-[#031a40]/60">
                                         TechSpecs Verified
                                     </span>
                                 )}
@@ -176,7 +177,7 @@ export default function DevicesShow({ device }) {
                         <button
                             type="button"
                             onClick={() => setShowLifecycleModal(true)}
-                            className="px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60 text-xs font-semibold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 transition"
+                            className="px-3 py-1.5 rounded-lg bg-[#026eff]/10 dark:bg-[#031a40]/40 border border-[#026eff]/20 dark:border-[#031a40]/60 text-xs font-semibold text-[#026eff] dark:text-[#0b79ff] hover:bg-[#026eff]/15 transition"
                         >
                             Transition Stage
                         </button>
@@ -209,13 +210,13 @@ export default function DevicesShow({ device }) {
                         <div>
                             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Asset Lifecycle Phase</span>
                             <h2 className="text-sm font-bold text-slate-900 dark:text-zinc-100 mt-0.5">
-                                Current Status: <span className="text-indigo-600 dark:text-indigo-400 capitalize">{device.lifecycle_stage}</span>
+                                Current Status: <span className="text-[#026eff] dark:text-[#0b79ff] capitalize">{device.lifecycle_stage}</span>
                             </h2>
                         </div>
                         <button
                             type="button"
                             onClick={() => setShowLifecycleModal(true)}
-                            className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+                            className="text-xs font-semibold text-[#026eff] dark:text-[#0b79ff] hover:underline flex items-center gap-1"
                         >
                             Transition Phase &rarr;
                         </button>
@@ -230,7 +231,7 @@ export default function DevicesShow({ device }) {
                                     key={stage.key}
                                     className={`relative p-3 rounded-lg border transition ${
                                         isCurrent
-                                            ? 'bg-indigo-50/70 dark:bg-indigo-950/40 border-indigo-300 dark:border-indigo-700 ring-1 ring-indigo-500/20'
+                                            ? 'bg-[#026eff]/10 dark:bg-[#031a40]/40 border-[#026eff]/30 dark:border-[#026eff]/70 ring-1 ring-[#026eff]/20'
                                             : isPast
                                             ? 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/50'
                                             : 'bg-slate-50/50 dark:bg-zinc-800/30 border-slate-200 dark:border-zinc-800 opacity-60'
@@ -238,14 +239,14 @@ export default function DevicesShow({ device }) {
                                 >
                                     <div className="flex items-center justify-between mb-1">
                                         <span className={`text-[10px] font-bold uppercase tracking-wider ${
-                                            isCurrent ? 'text-indigo-700 dark:text-indigo-300' : isPast ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-400 dark:text-zinc-500'
+                                            isCurrent ? 'text-[#026eff] dark:text-[#0b79ff]' : isPast ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-400 dark:text-zinc-500'
                                         }`}>
                                             Stage {idx + 1}
                                         </span>
                                         {isCurrent && (
                                             <span className="relative flex h-2 w-2">
-                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                                                <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-600"></span>
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0b79ff] opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#026eff]"></span>
                                             </span>
                                         )}
                                         {isPast && (
@@ -269,14 +270,10 @@ export default function DevicesShow({ device }) {
                         <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 p-5 shadow-2xs">
                             <div className="flex flex-col sm:flex-row items-center gap-5">
                                 <div className="w-32 h-32 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shrink-0 overflow-hidden shadow-2xs relative">
-                                    <img
-                                        src={device.image_clip_url}
+                                    <HardwareImage
+                                        src={device.image_clip_url || device.image_url}
                                         alt={`${device.brand} ${device.model}`}
                                         className="w-full h-full object-cover object-center"
-                                        onError={(e) => {
-                                            e.target.onerror = null;
-                                            e.target.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Modern_Laptop_Computer.jpg/800px-Modern_Laptop_Computer.jpg';
-                                        }}
                                     />
                                     {device.techspecs_id && (
                                         <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-xs text-[9px] text-white font-mono font-semibold">
@@ -378,12 +375,12 @@ export default function DevicesShow({ device }) {
                             </div>
 
                             {device.contract_sla && (
-                                <div className="mt-3 p-2.5 rounded-lg bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 text-xs flex items-center justify-between text-indigo-900 dark:text-indigo-300">
+                                <div className="mt-3 p-2.5 rounded-lg bg-[#026eff]/10 dark:bg-[#031a40]/30 border border-[#026eff]/15 dark:border-[#031a40]/50 text-xs flex items-center justify-between text-[#031a40] dark:text-[#0b79ff]">
                                     <div>
-                                        <span className="font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider text-[9px] mr-2">SLA Coverage</span>
+                                        <span className="font-bold text-[#026eff] dark:text-[#0b79ff] uppercase tracking-wider text-[9px] mr-2">SLA Coverage</span>
                                         <span className="font-medium">{device.contract_sla}</span>
                                     </div>
-                                    <span className="text-[10px] text-indigo-600 dark:text-indigo-400">Enterprise SLA</span>
+                                    <span className="text-[10px] text-[#026eff] dark:text-[#0b79ff]">Enterprise SLA</span>
                                 </div>
                             )}
                         </div>
@@ -479,7 +476,7 @@ export default function DevicesShow({ device }) {
                                         <button
                                             type="submit"
                                             disabled={updateProcessing}
-                                            className="px-4 py-1.5 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700"
+                                            className="px-4 py-1.5 rounded-lg bg-[#026eff] text-white font-semibold hover:bg-[#0256cc]"
                                         >
                                             {updateProcessing ? 'Saving...' : 'Save Changes'}
                                         </button>
@@ -493,7 +490,7 @@ export default function DevicesShow({ device }) {
                                     <div className="border-b border-slate-100 dark:border-zinc-800/60 pb-2.5">
                                         <dt className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase font-semibold">Processor (CPU)</dt>
                                         <dd className="font-semibold text-slate-900 dark:text-zinc-100 mt-0.5">{device.cpu}</dd>
-                                        <dd className="text-[10px] text-indigo-600 dark:text-indigo-400 capitalize font-medium">{device.cpu_tier} Tier</dd>
+                                        <dd className="text-[10px] text-[#026eff] dark:text-[#0b79ff] capitalize font-medium">{device.cpu_tier} Tier</dd>
                                     </div>
                                     <div className="border-b border-slate-100 dark:border-zinc-800/60 pb-2.5">
                                         <dt className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase font-semibold">Memory (RAM)</dt>
@@ -559,7 +556,7 @@ export default function DevicesShow({ device }) {
                                                 <div className="flex items-center gap-2">
                                                     <span className={`px-1.5 py-0.2 text-[9px] font-bold uppercase rounded ${
                                                         log.type === 'repair' ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300' :
-                                                        log.type === 'upgrade' ? 'bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300' :
+                                                        log.type === 'upgrade' ? 'bg-[#026eff]/15 dark:bg-[#031a40]/60 text-[#026eff] dark:text-[#0b79ff]' :
                                                         'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
                                                     }`}>
                                                         {log.type}
@@ -580,7 +577,7 @@ export default function DevicesShow({ device }) {
                                                         <button
                                                             type="button"
                                                             onClick={() => handleOpenUpdateLog(log)}
-                                                            className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+                                                            className="text-[#026eff] dark:text-[#0b79ff] font-semibold hover:underline"
                                                         >
                                                             Assess & Close
                                                         </button>
@@ -616,7 +613,7 @@ export default function DevicesShow({ device }) {
                                         <div key={evt.id} className="py-2.5 flex items-start justify-between">
                                             <div>
                                                 <div className="font-semibold text-slate-800 dark:text-zinc-200 text-xs">
-                                                    Phase <span className="uppercase text-slate-500">{evt.from_stage}</span> &rarr; <span className="uppercase font-bold text-indigo-600 dark:text-indigo-400">{evt.to_stage}</span>
+                                                    Phase <span className="uppercase text-slate-500">{evt.from_stage}</span> &rarr; <span className="uppercase font-bold text-[#026eff] dark:text-[#0b79ff]">{evt.to_stage}</span>
                                                 </div>
                                                 <p className="text-[11px] text-slate-600 dark:text-zinc-400 mt-0.5">{evt.notes}</p>
                                                 <div className="text-[9px] text-slate-400 dark:text-zinc-500 mt-0.5">
@@ -638,14 +635,14 @@ export default function DevicesShow({ device }) {
                         <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 p-5 shadow-2xs">
                             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-3">Current Allocation</h3>
                             {device.active_assignment?.employee ? (
-                                <div className="p-3.5 rounded-lg bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50">
-                                    <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Assigned Employee</div>
+                                <div className="p-3.5 rounded-lg bg-[#026eff]/10 dark:bg-[#031a40]/30 border border-[#026eff]/15 dark:border-[#031a40]/50">
+                                    <div className="text-[10px] font-bold uppercase tracking-wider text-[#026eff] dark:text-[#0b79ff]">Assigned Employee</div>
                                     <div className="font-bold text-slate-900 dark:text-zinc-100 text-base mt-1">{device.active_assignment.employee.name}</div>
                                     <div className="text-xs text-slate-500 dark:text-zinc-400">{device.active_assignment.employee.department}</div>
                                     <div className="mt-2.5 text-[10px] text-slate-500 dark:text-zinc-400 flex items-center justify-between">
                                         <span>Since {new Date(device.active_assignment.assigned_at).toLocaleDateString()}</span>
                                         {device.active_assignment.match_score && (
-                                            <span className="font-bold text-indigo-700 dark:text-indigo-400">
+                                            <span className="font-bold text-[#026eff] dark:text-[#0b79ff]">
                                                 Fit: {Math.round(device.active_assignment.match_score * 100)}%
                                             </span>
                                         )}
@@ -742,7 +739,7 @@ export default function DevicesShow({ device }) {
                                 <button
                                     type="submit"
                                     disabled={lifecycleProcessing}
-                                    className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition"
+                                    className="px-4 py-1.5 rounded-lg bg-[#026eff] hover:bg-[#0256cc] text-white font-semibold transition"
                                 >
                                     {lifecycleProcessing ? 'Transitioning...' : 'Confirm'}
                                 </button>
@@ -840,7 +837,7 @@ export default function DevicesShow({ device }) {
                                             type="checkbox"
                                             checked={maintData.send_to_maintenance_stage}
                                             onChange={(e) => setMaintData('send_to_maintenance_stage', e.target.checked)}
-                                            className="rounded border-slate-300 dark:border-zinc-700 text-indigo-600 focus:ring-indigo-500"
+                                            className="rounded border-slate-300 dark:border-zinc-700 text-[#026eff] focus:ring-[#026eff]"
                                         />
                                         Set Asset to Maintenance Phase
                                     </label>
@@ -920,7 +917,7 @@ export default function DevicesShow({ device }) {
                                         type="checkbox"
                                         checked={updateMaintData.restore_to_available}
                                         onChange={(e) => setUpdateMaintData('restore_to_available', e.target.checked)}
-                                        className="rounded border-slate-300 dark:border-zinc-700 text-indigo-600 focus:ring-indigo-500"
+                                        className="rounded border-slate-300 dark:border-zinc-700 text-[#026eff] focus:ring-[#026eff]"
                                     />
                                     Restore Asset back to Active Deployment Phase
                                 </label>
