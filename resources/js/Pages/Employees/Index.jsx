@@ -1,0 +1,253 @@
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { useState } from 'react';
+
+export default function EmployeesIndex({ employees, role_profiles }) {
+    const [showModal, setShowModal] = useState(false);
+    const [editingEmp, setEditingEmp] = useState(null);
+
+    const { data, setData, post, put, processing, reset, errors } = useForm({
+        name: '',
+        department: '',
+        role_profile_id: '',
+        notes: '',
+    });
+
+    const { post: postUnassign } = useForm();
+
+    const openCreate = () => {
+        setEditingEmp(null);
+        reset();
+        setShowModal(true);
+    };
+
+    const openEdit = (emp) => {
+        setEditingEmp(emp);
+        setData({
+            name: emp.name,
+            department: emp.department,
+            role_profile_id: emp.role_profile_id || '',
+            notes: emp.notes || '',
+        });
+        setShowModal(true);
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (editingEmp) {
+            put(route('employees.update', editingEmp.id), {
+                onSuccess: () => setShowModal(false),
+            });
+        } else {
+            post(route('employees.store'), {
+                onSuccess: () => setShowModal(false),
+            });
+        }
+    };
+
+    const handleUnassign = (emp) => {
+        if (confirm(`Unassign hardware from ${emp.name}? Device will return to Available status.`)) {
+            postUnassign(route('employees.unassign', emp.id));
+        }
+    };
+
+    return (
+        <AuthenticatedLayout
+            header={
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Company Staff Directory</h1>
+                        <p className="text-sm text-slate-500 mt-1">
+                            Staff profiles, role templates, and currently issued hardware.
+                        </p>
+                    </div>
+                    <button
+                        onClick={openCreate}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 shadow-sm transition self-start sm:self-auto"
+                    >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add Employee
+                    </button>
+                </div>
+            }
+        >
+            <Head title="Employees - SpecMatch" />
+
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                        <thead className="bg-slate-50/80 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500">
+                            <tr>
+                                <th className="py-3.5 px-4">Employee</th>
+                                <th className="py-3.5 px-4">Department</th>
+                                <th className="py-3.5 px-4">Role Profile</th>
+                                <th className="py-3.5 px-4">Assigned Hardware</th>
+                                <th className="py-3.5 px-4">Device Specs</th>
+                                <th className="py-3.5 px-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {employees.map((emp) => {
+                                const device = emp.active_assignment?.device;
+                                return (
+                                    <tr key={emp.id} className="hover:bg-slate-50/60 transition">
+                                        <td className="py-4 px-4 font-semibold text-slate-900">
+                                            {emp.name}
+                                        </td>
+                                        <td className="py-4 px-4 text-slate-500">
+                                            {emp.department}
+                                        </td>
+                                        <td className="py-4 px-4">
+                                            {emp.role_profile ? (
+                                                <span className="text-xs px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 font-medium">
+                                                    {emp.role_profile.name}
+                                                </span>
+                                            ) : (
+                                                <span className="text-xs text-slate-400 italic">No Profile Assigned</span>
+                                            )}
+                                        </td>
+                                        <td className="py-4 px-4">
+                                            {device ? (
+                                                <div>
+                                                    <span className="font-mono text-xs font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border">
+                                                        {device.asset_tag}
+                                                    </span>
+                                                    <div className="font-medium text-slate-900 text-xs mt-1">
+                                                        {device.brand} {device.model}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <span className="text-xs text-amber-600 font-semibold bg-amber-50 px-2 py-0.5 rounded">
+                                                    No Device Assigned
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="py-4 px-4 text-xs text-slate-500">
+                                            {device ? (
+                                                <span>
+                                                    {device.ram_gb}GB • {device.storage_gb}GB {device.storage_type} • <span className="capitalize">{device.device_type}</span>
+                                                </span>
+                                            ) : (
+                                                <span className="text-slate-400">—</span>
+                                            )}
+                                        </td>
+                                        <td className="py-4 px-4 text-right space-x-2">
+                                            <Link
+                                                href={route('match.index', { employee_id: emp.id })}
+                                                className="inline-flex items-center text-xs font-bold text-indigo-600 hover:text-indigo-800"
+                                            >
+                                                {device ? 'Reassign' : 'Match Device'} &rarr;
+                                            </Link>
+                                            {device && (
+                                                <button
+                                                    onClick={() => handleUnassign(emp)}
+                                                    className="text-xs text-rose-600 hover:text-rose-800 font-medium"
+                                                >
+                                                    Unassign
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={() => openEdit(emp)}
+                                                className="text-xs text-slate-400 hover:text-slate-600"
+                                            >
+                                                Edit
+                                            </button>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* Modal */}
+            {showModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+                    <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-bold text-slate-900">
+                                {editingEmp ? 'Edit Employee' : 'Add Employee'}
+                            </h3>
+                            <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 text-sm">
+                                ✕
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-4 text-sm">
+                            <div>
+                                <label className="block text-xs font-bold uppercase text-slate-700">Full Name *</label>
+                                <input
+                                    type="text"
+                                    value={data.name}
+                                    onChange={(e) => setData('name', e.target.value)}
+                                    placeholder="e.g. Maya Lin"
+                                    className="mt-1 w-full rounded-xl border-slate-200"
+                                    required
+                                />
+                                {errors.name && <p className="text-xs text-rose-600 mt-1">{errors.name}</p>}
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold uppercase text-slate-700">Department *</label>
+                                <input
+                                    type="text"
+                                    value={data.department}
+                                    onChange={(e) => setData('department', e.target.value)}
+                                    placeholder="e.g. Engineering, Design, Finance"
+                                    className="mt-1 w-full rounded-xl border-slate-200"
+                                    required
+                                />
+                                {errors.department && <p className="text-xs text-rose-600 mt-1">{errors.department}</p>}
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold uppercase text-slate-700">Role / Workload Profile</label>
+                                <select
+                                    value={data.role_profile_id}
+                                    onChange={(e) => setData('role_profile_id', e.target.value)}
+                                    className="mt-1 w-full rounded-xl border-slate-200"
+                                >
+                                    <option value="">No Profile Assigned</option>
+                                    {role_profiles.map((p) => (
+                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold uppercase text-slate-700">Notes</label>
+                                <textarea
+                                    rows={2}
+                                    value={data.notes}
+                                    onChange={(e) => setData('notes', e.target.value)}
+                                    placeholder="Special requirements or location..."
+                                    className="mt-1 w-full rounded-xl border-slate-200"
+                                />
+                            </div>
+
+                            <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowModal(false)}
+                                    className="px-4 py-2 rounded-xl border text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={processing}
+                                    className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700"
+                                >
+                                    {editingEmp ? 'Save Changes' : 'Add Employee'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </AuthenticatedLayout>
+    );
+}
