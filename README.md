@@ -1,58 +1,234 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SpecMatch — Collaborator & Developer Guide
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Welcome to **SpecMatch**! This guide details everything you need to set up, run, develop, and test the project locally.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 1. Project Overview
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+SpecMatch is an intelligent internal device asset optimization web application designed for IT departments. It addresses hardware fragmentation, unclear device-selection criteria, and underutilized inventory by pairing employee requirements with available company devices using a two-layer matching engine:
+1. **Layer 1 (AI Requirement Extraction)**: Converts unstructured text requests into a standardized hardware requirement schema using Google Gemini.
+2. **Layer 2 (Deterministic Scoring & Ranking)**: Applies an objective weighted scoring formula across CPU, RAM, storage, GPU, and portability, strictly checking company inventory first before recommending procurement.
+3. **Mismatch Radar**: Scans active hardware assignments to identify under-provisioned performance bottlenecks and over-provisioned fleet waste.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## 2. Technology Stack
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- **Backend**: Laravel 13 (PHP 8.4+)
+- **Frontend**: React 18 with Inertia.js v2
+- **Styling**: Tailwind CSS v4 (`@tailwindcss/vite`)
+- **Database**: MySQL 8.0+
+- **Build Tool**: Vite 8 with Rolldown / OXC (requires Node 20.19+ or Node 22)
+- **AI Integration**: Google Gemini API (with built-in heuristic fallback)
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+## 3. Prerequisites
 
-## Agentic Development
+Ensure you have the following installed on your local environment:
+- **PHP**: `>= 8.3` (Recommended: `8.4.x`) with `pdo_mysql`, `mbstring`, `openssl`, `bcmath`.
+- **Composer**: `>= 2.8.x`
+- **Node.js**: `>= 22.x` (Recommended: Node 22 LTS). Use `nvm` to switch:
+  ```bash
+  nvm use 22
+  ```
+- **MySQL**: 8.0+ running on `127.0.0.1:3306` (or Docker).
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+---
 
+## 4. Local Setup Step-by-Step
+
+### 1. Clone the Repository
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+git clone https://github.com/meloervy/appcon2026-codetitans-specmatch.git
+cd appcon2026-codetitans-specmatch
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+### 2. Environment Configuration
+Copy `.env.example` to `.env`:
+```bash
+cp .env.example .env
+```
 
-## Contributing
+Ensure the database settings in `.env` match your local MySQL server:
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=specmatch
+DB_USERNAME=root
+DB_PASSWORD=
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# Optional: Add your Gemini API key (the system has an automatic heuristic fallback if left empty)
+GEMINI_API_KEY=your_gemini_api_key_here
+```
 
-## Code of Conduct
+### 3. Install PHP Dependencies
+```bash
+composer install
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 4. Generate Application Key
+```bash
+php artisan key:generate
+```
 
-## Security Vulnerabilities
+### 5. Create Database & Seed Initial Data
+Create the MySQL database if it does not already exist:
+```sql
+CREATE DATABASE IF NOT EXISTS specmatch CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Run migrations and seeders:
+```bash
+php artisan migrate:fresh --seed
+```
 
-## License
+### 6. Install Frontend Dependencies
+```bash
+# Pin to Node 22 (or run: source ~/.nvm/nvm.sh && nvm use 22)
+nvm use
+npm install
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+
+## 5. Running the Application Locally
+
+Run the development servers in two separate terminal windows:
+
+### Terminal 1 — Laravel Server:
+```bash
+php artisan serve
+```
+The app will be accessible at: **`http://127.0.0.1:8000`**
+
+### Terminal 2 — Vite Dev Server (Hot Module Reloading):
+```bash
+nvm use 22
+npm run dev
+```
+
+*(Alternatively, to build static assets for production):*
+```bash
+npm run build
+```
+
+---
+
+## 6. Default Credentials
+
+The database seeder creates an IT Administrator account:
+
+| Role | Email | Password |
+|---|---|---|
+| **IT Administrator** | `admin@specmatch.local` | `password` |
+
+---
+
+## 7. Key Features & How to Test
+
+### 1. Dashboard (`/dashboard`)
+- **Fleet Metrics**: Total active units, available/idle units, assigned units, in-repair units.
+- **Utilization Rate**: Real-time gauge of assigned vs idle devices.
+- **Mismatch Alert Banner**: Highlights active assignments failing role benchmarks.
+- **Procurement Avoidance Savings**: Displays dollar savings calculated from reusing existing inventory.
+- **Available Fleet & Recent Trail**: Quick cards for idle devices and recent assignment history.
+
+### 2. Hardware Inventory (`/devices`)
+- **Search & Filter**: Search by asset tag, brand, model, CPU, or filter by status, device type, CPU tier, and condition.
+- **Register New Unit** (`/devices/create`): Add new laptops or desktops to the fleet with full specifications.
+- **Device Details & History** (`/devices/{id}`): View hardware profile, current assignment, past assignment history, edit specifications, or retire a unit.
+
+### 3. Role & Workload Profiles (`/role-profiles`)
+- Standardized templates defining hardware expectations for job roles (e.g. Software Engineer, Video Designer, Data Analyst, Admin Staff, Sales, AI Researcher).
+- Includes CPU tier, minimum RAM, minimum storage, GPU requirements, and portability need.
+
+### 4. Employee Directory (`/employees`)
+- View all staff members, their departments, assigned role profiles, and currently issued devices.
+- Direct "Reassign" and "Unassign" actions.
+
+### 5. AI Matching Engine (`/match`)
+- **Layer 1 (AI Extraction)**: Enter a natural language request (e.g. *"New video editor needing to render 4K video and travel frequently"*). Click **Extract Requirements** to parse it into structured JSON with Gemini's reasoning.
+- **Manual Adjustments**: Refine CPU tier, RAM, storage, GPU, or portability before scoring.
+- **Layer 2 (Deterministic Scoring)**: Ranks eligible available devices using the weighted formula:
+  $$\text{Score} = (0.30 \times \text{CPU}) + (0.25 \times \text{RAM}) + (0.15 \times \text{Storage}) + (0.20 \times \text{GPU}) + (0.10 \times \text{Portability})$$
+- **Explainable Rationale**: Every device card includes a plain-language explanation of why it scored high or low.
+- **Procurement Recommendation**: If no existing unit achieves $\ge 0.65$ score, an alert banner recommends procurement, strictly adhering to Constraint #1 (inventory first).
+- **Assign Action**: One-click atomic assignment directly updates device and employee status.
+
+### 6. Assignment Mismatch Radar (`/mismatches`)
+- Audits active assignments against their employee's role profile.
+- Flags mismatches into **Under-Provisioned** (insufficient specs) or **Over-Provisioned** (hardware fleet waste).
+- Includes 3 pre-seeded demo test cases:
+  1. *Carla Diaz* (Video Editor) on an entry-level laptop &rarr; Flagged as Under-Provisioned (10% score).
+  2. *Grace Hopper* (Admin Staff) on an extreme Xeon/RTX 6000 Ada workstation &rarr; Flagged as Over-Provisioned (56% score).
+  3. *Isabella Gomez* (Field Sales) on an OptiPlex desktop with HDD &rarr; Flagged as Under-Provisioned / Zero Mobility (33% score).
+- Click **Find Replacement Device** to launch the matching pipeline pre-filled for that employee.
+
+---
+
+## 8. Testing & Code Quality
+
+Run the automated test suite:
+```bash
+php artisan test
+```
+
+Current test suite status:
+- **40 tests passing (141 assertions)** covering:
+  - MatchingService scoring formula and subscores
+  - Eligibility filters (GPU and availability checks)
+  - Procurement threshold logic
+  - Single active assignment transactional invariant
+  - GeminiService extraction and heuristic fallback
+  - Device CRUD and retirement
+  - Dashboard metrics and mismatch radar integration
+  - Authentication and profile flows
+
+---
+
+## 9. Codebase Architecture & File Structure
+
+```
+app/
+├── Http/
+│   └── Controllers/
+│       ├── DashboardController.php   # Fleet stats & savings calculations
+│       ├── DeviceController.php      # Hardware inventory CRUD & lifecycle
+│       ├── EmployeeController.php    # Staff directory & unassign actions
+│       ├── MatchingController.php    # Layer 1 extraction & Layer 2 ranking
+│       ├── MismatchController.php    # Fleet audit & mismatch radar
+│       └── RoleProfileController.php # Workload specification templates
+├── Models/
+│   ├── Assignment.php                # Hardware-to-employee relationship
+│   ├── Device.php                    # Hardware specifications & state
+│   ├── Employee.php                  # Staff member records
+│   ├── MatchRequest.php              # Log of matching pipeline runs
+│   └── RoleProfile.php               # Workload template specifications
+└── Services/
+    ├── GeminiService.php             # Layer 1: AI text-to-spec extractor
+    └── MatchingService.php           # Layer 2: Deterministic scoring & mismatch detector
+
+resources/js/
+├── Layouts/
+│   └── AuthenticatedLayout.jsx       # Global navbar, navigation, and flash alerts
+└── Pages/
+    ├── Dashboard/Index.jsx           # Operations dashboard & utilization gauge
+    ├── Devices/                      # Inventory data tables, creation, & show views
+    ├── Employees/Index.jsx           # Staff directory & assignment status
+    ├── Match/Request.jsx             # AI matching pipeline & recommendation cards
+    ├── Mismatches/Index.jsx          # Mismatch radar & discrepancy audit
+    └── RoleProfiles/Index.jsx        # Role profile templates & editor
+```
+
+---
+
+## 10. Collaboration Conventions
+
+- **Branching**: Create feature branches from `main` (`git checkout -b feature/your-feature-name`).
+- **Commits**: Use conventional commits (e.g. `feat:`, `fix:`, `docs:`, `test:`).
+- **Frontend**: Keep all styling aligned with Tailwind CSS v4 utility classes.
+- **Controllers**: Keep controllers thin; place complex calculations in dedicated Service classes.
+- **Verification**: Always run `php artisan test` and `npm run build` before pushing.
