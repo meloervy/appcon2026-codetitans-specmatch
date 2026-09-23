@@ -175,6 +175,9 @@ class TechSpecsService
         if (empty($imageUrl) && !empty($raw['Product']['Thumbnail'])) {
             $imageUrl = $raw['Product']['Thumbnail'];
         }
+        if (empty($imageUrl)) {
+            $imageUrl = \App\Services\HardwareImageService::resolveModelImage($brand, $model, $deviceType);
+        }
 
         return [
             'brand' => $brand,

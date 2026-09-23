@@ -26,9 +26,9 @@ class DashboardController extends Controller
         $mismatchCount = count($mismatches);
 
         // Procurement avoidance savings calculation:
-        // Each appropriately assigned existing device avoids purchasing a new commercial unit (~$1,200 avg)
+        // Each appropriately assigned existing device avoids purchasing a new commercial unit (~₱65,000 avg)
         $properlyAssignedCount = max(0, $assignedDevices - count(array_filter($mismatches, fn($m) => $m['classification'] === 'under-provisioned')));
-        $procurementSavings = $properlyAssignedCount * 1200;
+        $procurementSavings = $properlyAssignedCount * 65000;
 
         $recentAssignments = Assignment::with(['device', 'employee.roleProfile'])
             ->latest('assigned_at')

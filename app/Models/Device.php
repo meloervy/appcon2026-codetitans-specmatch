@@ -91,7 +91,7 @@ class Device extends Model
      */
     public function getCurrentBookValueAttribute(): float
     {
-        $cost = $this->purchase_cost ?? 1200.00;
+        $cost = $this->purchase_cost ?? 65000.00;
         $rate = ($this->depreciation_rate_percent ?? 20.00) / 100.0;
 
         $startDate = $this->purchase_date ? Carbon::parse($this->purchase_date) : Carbon::createFromDate($this->year_acquired, 1, 1);
@@ -140,47 +140,10 @@ class Device extends Model
     }
 
     /**
-     * Resolved image clip URL from TechSpecs or curated device illustration.
+     * Resolved image clip URL from TechSpecs, Wikimedia Commons, or authentic hardware registry.
      */
     public function getImageClipUrlAttribute(): string
     {
-        if (!empty($this->image_url)) {
-            return $this->image_url;
-        }
-
-        $brand = strtolower($this->brand ?? '');
-        $model = strtolower($this->model ?? '');
-        $type = strtolower($this->device_type ?? 'laptop');
-
-        if (str_contains($brand, 'apple')) {
-            return 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=400&q=80';
-        }
-
-        if (str_contains($brand, 'lenovo')) {
-            if ($type === 'desktop' || str_contains($model, 'tiny') || str_contains($model, 'centre')) {
-                return 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=400&q=80';
-            }
-            return 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=400&q=80';
-        }
-
-        if (str_contains($brand, 'dell')) {
-            if ($type === 'desktop' || str_contains($model, 'precision') || str_contains($model, 'optiplex')) {
-                return 'https://images.unsplash.com/photo-1593640408182-31c70c8268f5?auto=format&fit=crop&w=400&q=80';
-            }
-            return 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?auto=format&fit=crop&w=400&q=80';
-        }
-
-        if (str_contains($brand, 'hp')) {
-            if ($type === 'desktop' || str_contains($model, 'prodesk') || str_contains($model, 'elitedesk') || str_contains($model, 'z8') || str_contains($model, 'compaq')) {
-                return 'https://images.unsplash.com/photo-1547082299-de196ea013d6?auto=format&fit=crop&w=400&q=80';
-            }
-            return 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80';
-        }
-
-        if ($type === 'desktop') {
-            return 'https://images.unsplash.com/photo-1587831990711-23ca6441447b?auto=format&fit=crop&w=400&q=80';
-        }
-
-        return 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=400&q=80';
+        return \App\Services\HardwareImageService::resolveForDevice($this);
     }
 }

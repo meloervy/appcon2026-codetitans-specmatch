@@ -113,12 +113,12 @@ export default function EmployeesIndex({ employees, role_profiles }) {
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/60 p-0.5 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
                                                         <img
-                                                            src={device.image_clip_url || device.image_url || 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=200&auto=format&fit=crop&q=80'}
+                                                            src={device.image_clip_url || device.image_url || 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Modern_Laptop_Computer.jpg/800px-Modern_Laptop_Computer.jpg'}
                                                             alt=""
                                                             className="w-full h-full object-contain"
                                                             onError={(e) => {
                                                                 e.target.onerror = null;
-                                                                e.target.src = 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=200&auto=format&fit=crop&q=80';
+                                                                e.target.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Modern_Laptop_Computer.jpg/800px-Modern_Laptop_Computer.jpg';
                                                             }}
                                                         />
                                                     </div>

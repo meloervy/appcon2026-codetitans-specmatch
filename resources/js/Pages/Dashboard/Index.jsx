@@ -102,7 +102,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                     </div>
                     <div className="mt-4 flex items-baseline gap-2">
                         <span className="text-2xl font-black text-slate-900 dark:text-zinc-100">
-                            ${Number(metrics.total_acquisition_cost || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            ₱{Number(metrics.total_acquisition_cost || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                         </span>
                     </div>
                     <p className="mt-3 text-xs text-slate-500 dark:text-zinc-400">
@@ -122,7 +122,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                     </div>
                     <div className="mt-4 flex items-baseline gap-2">
                         <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-                            ${Number(metrics.current_book_value || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            ₱{Number(metrics.current_book_value || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                         </span>
                     </div>
                     <p className="mt-3 text-xs text-slate-500 dark:text-zinc-400">
@@ -142,7 +142,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                     </div>
                     <div className="mt-4 flex items-baseline gap-2">
                         <span className="text-2xl font-black text-slate-900 dark:text-zinc-100">
-                            ${Number(metrics.total_maintenance_spend || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            ₱{Number(metrics.total_maintenance_spend || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                         </span>
                     </div>
                     <div className="mt-3 text-xs text-slate-500 dark:text-zinc-400 flex items-center justify-between">
@@ -165,7 +165,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                     </div>
                     <div className="mt-4 flex items-baseline gap-2">
                         <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400">
-                            ${metrics.procurement_savings.toLocaleString()}
+                            ₱{metrics.procurement_savings.toLocaleString()}
                         </span>
                         <span className="text-xs text-indigo-700 dark:text-indigo-300 font-semibold bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.5 rounded">Saved</span>
                     </div>
@@ -280,12 +280,12 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                                     <div className="flex items-start gap-3">
                                         <div className="w-14 h-14 rounded-xl bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/60 p-1 flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
                                             <img
-                                                src={device.image_clip_url || device.image_url || 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=200&auto=format&fit=crop&q=80'}
+                                                src={device.image_clip_url || device.image_url || 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Modern_Laptop_Computer.jpg/800px-Modern_Laptop_Computer.jpg'}
                                                 alt={`${device.brand} ${device.model}`}
                                                 className="w-full h-full object-contain"
                                                 onError={(e) => {
                                                     e.target.onerror = null;
-                                                    e.target.src = 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=200&auto=format&fit=crop&q=80';
+                                                    e.target.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Modern_Laptop_Computer.jpg/800px-Modern_Laptop_Computer.jpg';
                                                 }}
                                             />
                                         </div>

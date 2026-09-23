@@ -33,4 +33,9 @@ class Employee extends Model
     {
         return $this->hasOne(Assignment::class)->whereNull('unassigned_at');
     }
+
+    public function getCurrentDeviceAttribute(): ?Device
+    {
+        return $this->activeAssignment?->device;
+    }
 }

@@ -15,7 +15,7 @@ class ItamTrackingService
     {
         $devices = Device::all();
 
-        $totalAcquisitionCost = $devices->sum(fn($d) => $d->purchase_cost ?? 1200.00);
+        $totalAcquisitionCost = $devices->sum(fn($d) => $d->purchase_cost ?? 65000.00);
         $currentBookValue = $devices->sum(fn($d) => $d->current_book_value);
         $totalDepreciation = max(0, $totalAcquisitionCost - $currentBookValue);
 

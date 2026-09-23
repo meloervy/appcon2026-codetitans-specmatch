@@ -196,7 +196,7 @@ export default function DevicesIndex({ devices, filters }) {
                                                         loading="lazy"
                                                         onError={(e) => {
                                                             e.target.onerror = null;
-                                                            e.target.src = 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=400&q=80';
+                                                            e.target.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Modern_Laptop_Computer.jpg/800px-Modern_Laptop_Computer.jpg';
                                                         }}
                                                     />
                                                 </div>

@@ -3,6 +3,7 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\HardwareImageController;
 use App\Http\Controllers\MaintenanceController;
 use App\Http\Controllers\MatchingController;
 use App\Http\Controllers\MismatchController;
@@ -30,6 +31,9 @@ Route::middleware('auth')->group(function () {
     Route::put('/devices/{id}', [DeviceController::class, 'update'])->name('devices.update');
     Route::post('/devices/{id}/lifecycle', [DeviceController::class, 'updateLifecycle'])->name('devices.lifecycle.update');
     Route::post('/devices/{id}/retire', [DeviceController::class, 'retire'])->name('devices.retire');
+
+    // Hardware Imagery Lookup (Wikimedia & Canonical Registry)
+    Route::post('/hardware/image-lookup', [HardwareImageController::class, 'lookup'])->name('hardware.image-lookup');
 
     // TechSpecs API Hardware Lookup
     Route::post('/techspecs/search', [TechSpecsController::class, 'search'])->name('techspecs.search');

@@ -86,7 +86,7 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                             </span>
                         </div>
                         <div className="mt-3 text-2xl font-black tracking-tight text-slate-900 dark:text-zinc-100">
-                            ${Number(stats.total_spend || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            ₱{Number(stats.total_spend || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                         </div>
                         <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">Cumulative hardware repair & upgrade expenditures</p>
                     </div>
@@ -181,7 +181,7 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                                     <th className="py-3.5 px-4">Activity Title & Type</th>
                                     <th className="py-3.5 px-4">Work Scope & Performance Impact</th>
                                     <th className="py-3.5 px-4">Technician / Vendor</th>
-                                    <th className="py-3.5 px-4">Cost ($)</th>
+                                    <th className="py-3.5 px-4">Cost (₱)</th>
                                     <th className="py-3.5 px-4">Timeline</th>
                                     <th className="py-3.5 px-4">Status</th>
                                     <th className="py-3.5 px-4 text-right">Actions</th>
@@ -201,12 +201,12 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/60 p-0.5 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
                                                         <img
-                                                            src={log.device?.image_clip_url || log.device?.image_url || 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=200&auto=format&fit=crop&q=80'}
+                                                            src={log.device?.image_clip_url || log.device?.image_url || 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Modern_Laptop_Computer.jpg/800px-Modern_Laptop_Computer.jpg'}
                                                             alt=""
                                                             className="w-full h-full object-contain"
                                                             onError={(e) => {
                                                                 e.target.onerror = null;
-                                                                e.target.src = 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=200&auto=format&fit=crop&q=80';
+                                                                e.target.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Modern_Laptop_Computer.jpg/800px-Modern_Laptop_Computer.jpg';
                                                             }}
                                                         />
                                                     </div>
@@ -247,7 +247,7 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                                                 {log.performed_by || 'Internal IT Desk'}
                                             </td>
                                             <td className="py-4 px-4 font-bold text-slate-900 dark:text-zinc-100">
-                                                ${Number(log.cost).toFixed(2)}
+                                                ₱{Number(log.cost).toFixed(2)}
                                             </td>
                                             <td className="py-4 px-4 text-xs text-slate-500 dark:text-zinc-400">
                                                 <div>Started: {new Date(log.started_at).toLocaleDateString()}</div>
@@ -318,7 +318,7 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                         <form onSubmit={handleSaveUpdate} className="mt-4 space-y-4">
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-bold uppercase text-slate-700 dark:text-zinc-300">Final Incurred Cost ($)</label>
+                                    <label className="block text-xs font-bold uppercase text-slate-700 dark:text-zinc-300">Final Incurred Cost (₱)</label>
                                     <input
                                         type="number"
                                         step="0.01"

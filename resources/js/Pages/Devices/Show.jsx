@@ -275,7 +275,7 @@ export default function DevicesShow({ device }) {
                                         className="w-full h-full object-cover object-center"
                                         onError={(e) => {
                                             e.target.onerror = null;
-                                            e.target.src = 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=400&q=80';
+                                            e.target.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Modern_Laptop_Computer.jpg/800px-Modern_Laptop_Computer.jpg';
                                         }}
                                     />
                                     {device.techspecs_id && (
@@ -335,7 +335,7 @@ export default function DevicesShow({ device }) {
                                 <div className="p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
                                     <dt className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 uppercase">Purchase Cost</dt>
                                     <dd className="text-base font-bold text-slate-900 dark:text-zinc-100 mt-0.5">
-                                        ${Number(device.purchase_cost || 1200).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                        ₱{Number(device.purchase_cost || 65000).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                     </dd>
                                     <span className="text-[10px] text-slate-400 dark:text-zinc-500">
                                         {device.purchase_date ? `Purchased: ${device.purchase_date}` : `Year: ${device.year_acquired}`}
@@ -345,7 +345,7 @@ export default function DevicesShow({ device }) {
                                 <div className="p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
                                     <dt className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 uppercase">Book Value</dt>
                                     <dd className="text-base font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
-                                        ${Number(device.current_book_value || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                        ₱{Number(device.current_book_value || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                     </dd>
                                     <span className="text-[10px] text-slate-400 dark:text-zinc-500">
                                         Depr: {device.depreciation_rate_percent || 20}%/yr
@@ -574,7 +574,7 @@ export default function DevicesShow({ device }) {
                                                         {log.status.replace('_', ' ')}
                                                     </span>
                                                     <span className="font-bold text-slate-700 dark:text-zinc-300">
-                                                        ${Number(log.cost).toFixed(2)}
+                                                        ₱{Number(log.cost).toFixed(2)}
                                                     </span>
                                                     {log.status !== 'completed' && (
                                                         <button
@@ -777,7 +777,7 @@ export default function DevicesShow({ device }) {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Cost ($)</label>
+                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Cost (₱)</label>
                                     <input
                                         type="number"
                                         step="0.01"
@@ -881,7 +881,7 @@ export default function DevicesShow({ device }) {
                         <form onSubmit={handleUpdateMaintenanceLog} className="mt-3.5 space-y-3">
                             <div className="grid grid-cols-2 gap-2.5">
                                 <div>
-                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Final Cost ($)</label>
+                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Final Cost (₱)</label>
                                     <input
                                         type="number"
                                         step="0.01"

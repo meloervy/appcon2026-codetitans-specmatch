@@ -48,6 +48,45 @@ export default function DevicesCreate() {
     const [apiError, setApiError] = useState(null);
     const [autoFilledNotice, setAutoFilledNotice] = useState(null);
 
+    // Hardware Photo Lookup State
+    const [fetchingPhoto, setFetchingPhoto] = useState(false);
+    const [photoNotice, setPhotoNotice] = useState(null);
+
+    const handleFetchHardwarePhoto = async () => {
+        if (!data.brand && !data.model) {
+            setPhotoNotice({ type: 'error', message: 'Please enter or select a Brand and Model first.' });
+            return;
+        }
+        setFetchingPhoto(true);
+        setPhotoNotice(null);
+        try {
+            const res = await axios.post(route('hardware.image-lookup'), {
+                brand: data.brand,
+                model: data.model,
+                device_type: data.device_type,
+            });
+            if (res.data.image_url) {
+                setData('image_url', res.data.image_url);
+                setPhotoNotice({
+                    type: 'success',
+                    message: `Found authentic photo from ${res.data.source === 'wikimedia' ? 'Wikimedia Commons' : 'Hardware Registry'}.`,
+                });
+            } else {
+                setPhotoNotice({
+                    type: 'info',
+                    message: 'No exact photo found in Wikimedia database. You may enter a custom URL.',
+                });
+            }
+        } catch (err) {
+            setPhotoNotice({
+                type: 'error',
+                message: 'Failed to look up hardware image. Please check network connection.',
+            });
+        } finally {
+            setFetchingPhoto(false);
+        }
+    };
+
     const handleTechSpecsSearch = async (e) => {
         if (e) e.preventDefault();
         if (!searchQuery || searchQuery.trim().length < 2) return;
@@ -122,12 +161,12 @@ export default function DevicesCreate() {
     // Calculate preview image
     const previewImage = data.image_url || (
         data.brand.toLowerCase().includes('apple')
-            ? 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=300&auto=format&fit=crop&q=80'
+            ? 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Macbook_Pro_M1_16_inch.jpg/800px-Macbook_Pro_M1_16_inch.jpg'
             : data.brand.toLowerCase().includes('dell')
-            ? 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=300&auto=format&fit=crop&q=80'
+            ? 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Dell_XPS_15_9500.jpg/800px-Dell_XPS_15_9500.jpg'
             : data.brand.toLowerCase().includes('lenovo')
-            ? 'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=300&auto=format&fit=crop&q=80'
-            : 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300&auto=format&fit=crop&q=80'
+            ? 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/ThinkPad_T14_Gen_1.jpg/800px-ThinkPad_T14_Gen_1.jpg'
+            : 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Modern_Laptop_Computer.jpg/800px-Modern_Laptop_Computer.jpg'
     );
 
     return (
@@ -320,7 +359,7 @@ export default function DevicesCreate() {
                                         type="text"
                                         value={data.location}
                                         onChange={(e) => setData('location', e.target.value)}
-                                        placeholder="e.g. HQ - Level 3 Room 302"
+                                        placeholder="e.g. BGC, Taguig City - Level 12 HQ"
                                         className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-indigo-500 focus:ring-indigo-500"
                                     />
                                     {errors.location && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{errors.location}</p>}
@@ -347,23 +386,57 @@ export default function DevicesCreate() {
                                         className="w-full h-full object-contain"
                                         onError={(e) => {
                                             e.target.onerror = null;
-                                            e.target.src = 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=200&auto=format&fit=crop&q=80';
+                                            e.target.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Modern_Laptop_Computer.jpg/800px-Modern_Laptop_Computer.jpg';
                                         }}
                                     />
                                 </div>
                                 <div className="flex-1 w-full">
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">
-                                        Hardware Image Clip URL (TechSpecs or Custom)
-                                    </label>
+                                    <div className="flex items-center justify-between gap-2">
+                                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">
+                                            Hardware Image Clip URL
+                                        </label>
+                                        <button
+                                            type="button"
+                                            onClick={handleFetchHardwarePhoto}
+                                            disabled={fetchingPhoto || (!data.brand && !data.model)}
+                                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 text-[11px] font-semibold transition disabled:opacity-50 disabled:pointer-events-none"
+                                        >
+                                            {fetchingPhoto ? (
+                                                <>
+                                                    <svg className="animate-spin -ml-0.5 mr-1 h-3.5 w-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                    </svg>
+                                                    Looking up...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                    </svg>
+                                                    Auto-Fetch Accurate Photo
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
                                     <input
                                         type="url"
                                         value={data.image_url}
                                         onChange={(e) => setData('image_url', e.target.value)}
-                                        placeholder="https://... (Populated automatically by TechSpecs API or enter image URL)"
+                                        placeholder="https://... (Populated automatically via Wikimedia / TechSpecs or enter custom URL)"
                                         className="mt-1.5 w-full text-xs rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-indigo-500 focus:ring-indigo-500"
                                     />
+                                    {photoNotice && (
+                                        <p className={`text-[11px] mt-1 font-medium ${
+                                            photoNotice.type === 'success' ? 'text-emerald-600 dark:text-emerald-400' :
+                                            photoNotice.type === 'error' ? 'text-rose-600 dark:text-rose-400' :
+                                            'text-amber-600 dark:text-amber-400'
+                                        }`}>
+                                            {photoNotice.message}
+                                        </p>
+                                    )}
                                     <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1">
-                                        Display thumbnail for physical inventory audit, inspection, and assignment match cards.
+                                        Authentic hardware clip fetched via Wikimedia Commons REST API or TechSpecs API for clear inventory audit.
                                     </p>
                                 </div>
                             </div>
@@ -513,14 +586,14 @@ export default function DevicesCreate() {
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Purchase Cost ($)</label>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Purchase Cost (₱)</label>
                                     <input
                                         type="number"
                                         step="0.01"
                                         min="0"
                                         value={data.purchase_cost}
                                         onChange={(e) => setData('purchase_cost', e.target.value)}
-                                        placeholder="e.g. 1499.00"
+                                        placeholder="e.g. 75000.00"
                                         className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-indigo-500 focus:ring-indigo-500"
                                     />
                                 </div>
