@@ -56,8 +56,8 @@ export default function RoleProfilesIndex({ profiles }) {
             header={
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">Role & Workload Profiles</h1>
-                        <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1">
+                        <h1 className="text-2xl font-sans font-extrabold tracking-tight text-slate-900 dark:text-zinc-100">Role & Workload Profiles</h1>
+                        <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1 max-w-2xl">
                             Objective hardware specifications per job function for scoring and mismatch detection.
                         </p>
                     </div>
@@ -80,7 +80,7 @@ export default function RoleProfilesIndex({ profiles }) {
                     <div key={profile.id} className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 p-6 shadow-xs flex flex-col justify-between hover:border-slate-300 dark:hover:border-zinc-700 transition">
                         <div>
                             <div className="flex items-start justify-between gap-2">
-                                <h3 className="text-lg font-bold text-slate-900 dark:text-zinc-100">{profile.name}</h3>
+                                <h3 className="text-xl font-sans font-extrabold tracking-tight text-slate-900 dark:text-zinc-100">{profile.name}</h3>
                                 <span className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full shrink-0">
                                     {profile.employees_count} staff
                                 </span>

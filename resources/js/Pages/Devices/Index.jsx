@@ -54,8 +54,8 @@ export default function DevicesIndex({ devices, filters }) {
             header={
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
-                        <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-zinc-50">Hardware Inventory</h1>
-                        <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+                        <h1 className="text-2xl font-sans font-extrabold tracking-tight text-slate-900 dark:text-zinc-50">Hardware Inventory</h1>
+                        <p className="text-sm text-slate-500 dark:text-zinc-400 mt-0.5 max-w-2xl">
                             Authoritative catalog with TechSpecs device clips, lifecycle tracking, and allocation status.
                         </p>
                     </div>
@@ -96,7 +96,7 @@ export default function DevicesIndex({ devices, filters }) {
             <Head title="Hardware Inventory - SpecMatch" />
 
             {/* Filter Bar */}
-            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 p-3.5 shadow-2xs mb-5">
+            <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 p-3.5 shadow-2xs mb-5">
                 <form onSubmit={handleFilter} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2.5">
                     <div className="lg:col-span-2">
                         <input
@@ -178,7 +178,7 @@ export default function DevicesIndex({ devices, filters }) {
             </div>
 
             {/* Inventory Table Card */}
-            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 shadow-2xs overflow-hidden">
+            <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 shadow-2xs overflow-hidden">
                 {/* Column Adjustment & Display Control Toolbar */}
                 <div className="px-4 py-2 bg-slate-50/70 dark:bg-zinc-800/40 border-b border-slate-200/70 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2 text-xs">
                     <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-400 text-[11px]">
@@ -217,7 +217,7 @@ export default function DevicesIndex({ devices, filters }) {
                         className="w-full text-left text-xs table-fixed"
                         style={{ minWidth: `${Math.max(1000, Object.values(widths).reduce((a, b) => a + b, 0))}px` }}
                     >
-                        <thead className="bg-slate-50/70 dark:bg-zinc-800/50 border-b border-slate-200/80 dark:border-zinc-800 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+                        <thead className="bg-slate-50/70 dark:bg-zinc-800/50 border-b border-slate-200/80 dark:border-zinc-800 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
                             <tr>
                                 <ResizableTh colKey="tag" width={widths.tag} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'tag'}>Asset Tag & Serial</ResizableTh>
                                 <ResizableTh colKey="model" width={widths.model} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'model'}>Device Clip & Model</ResizableTh>
