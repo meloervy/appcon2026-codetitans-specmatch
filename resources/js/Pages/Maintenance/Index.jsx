@@ -1,5 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import HardwareImage from '@/Components/HardwareImage';
+import ResizableTh from '@/Components/ResizableTh';
+import { useResizableColumns } from '@/Hooks/useResizableColumns';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -7,6 +9,20 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
     const [type, setType] = useState(filters.type || '');
     const [status, setStatus] = useState(filters.status || '');
     const [selectedLogToUpdate, setSelectedLogToUpdate] = useState(null);
+    const [wrapText, setWrapText] = useState(false);
+
+    const initialWidths = {
+        device: 220,
+        activity: 180,
+        scope: 280,
+        technician: 160,
+        cost: 110,
+        timeline: 140,
+        status: 110,
+        actions: 100,
+    };
+
+    const { widths, startResize, autoExpandCol, resetWidths, isResizing, resizingCol } = useResizableColumns(initialWidths, 'maintenance_table');
 
     const { data: updateData, setData: setUpdateData, put, processing, reset } = useForm({
         cost: 0,
@@ -174,18 +190,54 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
 
                 {/* Maintenance Logs Table */}
                 <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 shadow-xs overflow-hidden">
+                    {/* Column Adjustment & Display Control Toolbar */}
+                    <div className="px-4 py-2 bg-slate-50/70 dark:bg-zinc-800/40 border-b border-slate-200/70 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-400 text-[11px]">
+                            <span className="inline-flex items-center justify-center w-4 h-4 rounded bg-[#026eff]/10 text-[#026eff] font-bold text-[10px]">↔</span>
+                            <span>Drag column dividers to resize • Double-click divider to expand (+120px)</span>
+                        </div>
+                        <div className="flex items-center gap-2 ml-auto">
+                            <button
+                                type="button"
+                                onClick={() => setWrapText(!wrapText)}
+                                className={`px-2.5 py-1 rounded-lg border text-[11px] font-medium transition cursor-pointer flex items-center gap-1.5 ${
+                                    wrapText
+                                        ? 'bg-[#026eff]/15 text-[#026eff] border-[#026eff]/30 dark:bg-[#026eff]/20 dark:text-sky-300'
+                                        : 'bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 border-slate-200 dark:border-zinc-750 hover:bg-slate-50 dark:hover:bg-zinc-700/60'
+                                }`}
+                                title="Toggle text wrapping to reveal full maintenance descriptions without truncation"
+                            >
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h10l-3-3m0 6l3-3m5 3H4" />
+                                </svg>
+                                <span>{wrapText ? 'Wrap Text: ON' : 'Wrap Text: OFF'}</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={resetWidths}
+                                className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-zinc-750 bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200 text-[11px] font-medium transition cursor-pointer"
+                                title="Reset column widths to default"
+                            >
+                                Reset Columns
+                            </button>
+                        </div>
+                    </div>
+
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
+                        <table
+                            className="w-full text-left text-sm table-fixed"
+                            style={{ minWidth: `${Math.max(1000, Object.values(widths).reduce((a, b) => a + b, 0))}px` }}
+                        >
                             <thead className="bg-slate-50/80 dark:bg-zinc-800/60 border-b border-slate-200 dark:border-zinc-800 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
                                 <tr>
-                                    <th className="py-3.5 px-4">Asset Tag & Device</th>
-                                    <th className="py-3.5 px-4">Activity Title & Type</th>
-                                    <th className="py-3.5 px-4">Work Scope & Performance Impact</th>
-                                    <th className="py-3.5 px-4">Technician / Vendor</th>
-                                    <th className="py-3.5 px-4">Cost (₱)</th>
-                                    <th className="py-3.5 px-4">Timeline</th>
-                                    <th className="py-3.5 px-4">Status</th>
-                                    <th className="py-3.5 px-4 text-right">Actions</th>
+                                    <ResizableTh colKey="device" width={widths.device} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'device'}>Asset Tag & Device</ResizableTh>
+                                    <ResizableTh colKey="activity" width={widths.activity} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'activity'}>Activity Title & Type</ResizableTh>
+                                    <ResizableTh colKey="scope" width={widths.scope} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'scope'}>Work Scope & Performance Impact</ResizableTh>
+                                    <ResizableTh colKey="technician" width={widths.technician} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'technician'}>Technician / Vendor</ResizableTh>
+                                    <ResizableTh colKey="cost" width={widths.cost} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'cost'}>Cost (₱)</ResizableTh>
+                                    <ResizableTh colKey="timeline" width={widths.timeline} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'timeline'}>Timeline</ResizableTh>
+                                    <ResizableTh colKey="status" width={widths.status} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'status'}>Status</ResizableTh>
+                                    <ResizableTh colKey="actions" width={widths.actions} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'actions'} align="right" resizable={false}>Actions</ResizableTh>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
@@ -207,22 +259,22 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                                                             className="w-full h-full object-contain"
                                                         />
                                                     </div>
-                                                    <div>
+                                                    <div className="min-w-0 flex-1">
                                                         {log.device ? (
-                                                            <Link href={route('devices.show', log.device.id)} className="text-[#026eff] dark:text-[#0b79ff] hover:underline">
+                                                            <Link href={route('devices.show', log.device.id)} className="text-[#026eff] dark:text-[#0b79ff] hover:underline block truncate" title={log.device.asset_tag}>
                                                                 {log.device.asset_tag}
                                                             </Link>
                                                         ) : (
                                                             <span className="text-slate-400 dark:text-zinc-500">Unknown</span>
                                                         )}
-                                                        <div className="text-[11px] font-normal text-slate-500 dark:text-zinc-400">
+                                                        <div className={`text-[11px] font-normal text-slate-500 dark:text-zinc-400 ${wrapText ? 'break-words whitespace-normal' : 'truncate'}`} title={`${log.device?.brand} ${log.device?.model}`}>
                                                             {log.device?.brand} {log.device?.model}
                                                         </div>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td className="py-4 px-4">
-                                                <div className="font-semibold text-slate-900 dark:text-zinc-100">{log.title}</div>
+                                                <div className={`font-semibold text-slate-900 dark:text-zinc-100 ${wrapText ? 'break-words whitespace-normal' : 'truncate'}`} title={log.title}>{log.title}</div>
                                                 <span className={`inline-block mt-1 px-2 py-0.5 text-[10px] font-bold uppercase rounded ${
                                                     log.type === 'repair' ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300' :
                                                     log.type === 'upgrade' ? 'bg-[#026eff]/15 dark:bg-[#031a40]/60 text-[#026eff] dark:text-[#0b79ff]' :
@@ -232,16 +284,18 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                                                     {log.type}
                                                 </span>
                                             </td>
-                                            <td className="py-4 px-4 max-w-xs">
-                                                <p className="text-xs text-slate-600 dark:text-zinc-300 line-clamp-2">{log.description}</p>
+                                            <td className="py-4 px-4">
+                                                <p className={`text-xs text-slate-600 dark:text-zinc-300 ${wrapText ? 'break-words whitespace-normal' : 'line-clamp-2'}`} title={log.description}>{log.description}</p>
                                                 {log.performance_assessment && (
                                                     <div className="mt-1.5 p-2 rounded bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 text-[11px] text-emerald-800 dark:text-emerald-300">
-                                                        <span className="font-bold">Assessment:</span> {log.performance_assessment}
+                                                        <span className="font-bold">Assessment:</span> <span className={wrapText ? 'break-words whitespace-normal' : 'line-clamp-1'} title={log.performance_assessment}>{log.performance_assessment}</span>
                                                     </div>
                                                 )}
                                             </td>
                                             <td className="py-4 px-4 text-xs font-medium text-slate-700 dark:text-zinc-300">
-                                                {log.performed_by || 'Internal IT Desk'}
+                                                <div className={wrapText ? 'break-words whitespace-normal' : 'truncate'} title={log.performed_by || 'Internal IT Desk'}>
+                                                    {log.performed_by || 'Internal IT Desk'}
+                                                </div>
                                             </td>
                                             <td className="py-4 px-4 font-bold text-slate-900 dark:text-zinc-100">
                                                 ₱{Number(log.cost).toFixed(2)}
@@ -253,7 +307,7 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                                                 )}
                                             </td>
                                             <td className="py-4 px-4">
-                                                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                                                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider inline-block ${
                                                     log.status === 'completed' ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300' :
                                                     log.status === 'in_progress' ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300' :
                                                     log.status === 'scheduled' ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300' :
@@ -266,7 +320,7 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                                                 <button
                                                     type="button"
                                                     onClick={() => handleOpenUpdateModal(log)}
-                                                    className="inline-flex items-center text-xs font-bold text-[#026eff] dark:text-[#0b79ff] hover:text-[#026eff] dark:hover:text-[#0b79ff]"
+                                                    className="inline-flex items-center text-xs font-bold text-[#026eff] dark:text-[#0b79ff] hover:text-[#026eff] dark:hover:text-[#0b79ff] cursor-pointer"
                                                 >
                                                     {log.status === 'completed' ? 'Edit Assessment' : 'Assess & Close'}
                                                 </button>

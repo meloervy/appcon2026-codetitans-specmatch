@@ -1,5 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import HardwareImage from '@/Components/HardwareImage';
+import ResizableTh from '@/Components/ResizableTh';
+import { useResizableColumns } from '@/Hooks/useResizableColumns';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -10,6 +12,20 @@ export default function DevicesIndex({ devices, filters }) {
     const [deviceType, setDeviceType] = useState(filters.device_type || '');
     const [cpuTier, setCpuTier] = useState(filters.cpu_tier || '');
     const [condition, setCondition] = useState(filters.condition || '');
+    const [wrapText, setWrapText] = useState(false);
+
+    const initialWidths = {
+        tag: 150,
+        model: 240,
+        specs: 260,
+        location: 180,
+        lifecycle: 140,
+        warranty: 130,
+        user: 170,
+        action: 90,
+    };
+
+    const { widths, startResize, autoExpandCol, resetWidths, isResizing, resizingCol } = useResizableColumns(initialWidths, 'devices_table');
 
     const handleFilter = (e) => {
         e.preventDefault();
@@ -161,20 +177,56 @@ export default function DevicesIndex({ devices, filters }) {
                 </form>
             </div>
 
-            {/* Inventory Table */}
+            {/* Inventory Table Card */}
             <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 shadow-2xs overflow-hidden">
+                {/* Column Adjustment & Display Control Toolbar */}
+                <div className="px-4 py-2 bg-slate-50/70 dark:bg-zinc-800/40 border-b border-slate-200/70 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-400 text-[11px]">
+                        <span className="inline-flex items-center justify-center w-4 h-4 rounded bg-[#026eff]/10 text-[#026eff] font-bold text-[10px]">↔</span>
+                        <span>Drag column dividers to resize • Double-click divider to expand (+120px)</span>
+                    </div>
+                    <div className="flex items-center gap-2 ml-auto">
+                        <button
+                            type="button"
+                            onClick={() => setWrapText(!wrapText)}
+                            className={`px-2.5 py-1 rounded-lg border text-[11px] font-medium transition cursor-pointer flex items-center gap-1.5 ${
+                                wrapText
+                                    ? 'bg-[#026eff]/15 text-[#026eff] border-[#026eff]/30 dark:bg-[#026eff]/20 dark:text-sky-300'
+                                    : 'bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 border-slate-200 dark:border-zinc-750 hover:bg-slate-50 dark:hover:bg-zinc-700/60'
+                            }`}
+                            title="Toggle text wrapping to reveal long descriptions without truncation"
+                        >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h10l-3-3m0 6l3-3m5 3H4" />
+                            </svg>
+                            <span>{wrapText ? 'Wrap Text: ON' : 'Wrap Text: OFF'}</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={resetWidths}
+                            className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-zinc-750 bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200 text-[11px] font-medium transition cursor-pointer"
+                            title="Reset column widths to default"
+                        >
+                            Reset Columns
+                        </button>
+                    </div>
+                </div>
+
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs">
+                    <table
+                        className="w-full text-left text-xs table-fixed"
+                        style={{ minWidth: `${Math.max(1000, Object.values(widths).reduce((a, b) => a + b, 0))}px` }}
+                    >
                         <thead className="bg-slate-50/70 dark:bg-zinc-800/50 border-b border-slate-200/80 dark:border-zinc-800 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
                             <tr>
-                                <th className="py-3 px-4">Asset Tag & Serial</th>
-                                <th className="py-3 px-4">Device Clip & Model</th>
-                                <th className="py-3 px-4">Specifications</th>
-                                <th className="py-3 px-4">Location</th>
-                                <th className="py-3 px-4">Lifecycle Phase</th>
-                                <th className="py-3 px-4">Warranty</th>
-                                <th className="py-3 px-4">Current User</th>
-                                <th className="py-3 px-4 text-right">Action</th>
+                                <ResizableTh colKey="tag" width={widths.tag} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'tag'}>Asset Tag & Serial</ResizableTh>
+                                <ResizableTh colKey="model" width={widths.model} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'model'}>Device Clip & Model</ResizableTh>
+                                <ResizableTh colKey="specs" width={widths.specs} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'specs'}>Specifications</ResizableTh>
+                                <ResizableTh colKey="location" width={widths.location} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'location'}>Location</ResizableTh>
+                                <ResizableTh colKey="lifecycle" width={widths.lifecycle} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'lifecycle'}>Lifecycle Phase</ResizableTh>
+                                <ResizableTh colKey="warranty" width={widths.warranty} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'warranty'}>Warranty</ResizableTh>
+                                <ResizableTh colKey="user" width={widths.user} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'user'}>Current User</ResizableTh>
+                                <ResizableTh colKey="action" width={widths.action} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'action'} align="right" resizable={false}>Action</ResizableTh>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/60">
@@ -189,10 +241,10 @@ export default function DevicesIndex({ devices, filters }) {
                                     <tr key={device.id} className="hover:bg-slate-50/50 dark:hover:bg-zinc-800/40 transition-colors">
                                         {/* Tag & Serial */}
                                         <td className="py-3 px-4 font-mono">
-                                            <Link href={route('devices.show', device.id)} className="text-[#026eff] dark:text-[#0b79ff] hover:underline font-bold block">
+                                            <Link href={route('devices.show', device.id)} className="text-[#026eff] dark:text-[#0b79ff] hover:underline font-bold block truncate" title={device.asset_tag}>
                                                 {device.asset_tag}
                                             </Link>
-                                            <span className="text-[10px] text-slate-400 dark:text-zinc-500 block truncate max-w-[110px]">
+                                            <span className={`text-[10px] text-slate-400 dark:text-zinc-500 block ${wrapText ? 'break-all whitespace-normal' : 'truncate'}`} title={device.serial_number || 'No S/N'}>
                                                 {device.serial_number ? device.serial_number : 'No S/N'}
                                             </span>
                                         </td>
@@ -207,11 +259,11 @@ export default function DevicesIndex({ devices, filters }) {
                                                         className="w-full h-full object-cover object-center"
                                                     />
                                                 </div>
-                                                <div className="min-w-0">
-                                                    <div className="font-semibold text-slate-900 dark:text-zinc-100 truncate max-w-[160px]">
+                                                <div className="min-w-0 flex-1">
+                                                    <div className={`font-semibold text-slate-900 dark:text-zinc-100 ${wrapText ? 'break-words whitespace-normal' : 'truncate'}`} title={`${device.brand} ${device.model}`}>
                                                         {device.brand} {device.model}
                                                     </div>
-                                                    <div className="text-[10px] text-slate-400 dark:text-zinc-500 capitalize">
+                                                    <div className={`text-[10px] text-slate-400 dark:text-zinc-500 capitalize ${wrapText ? 'break-words whitespace-normal' : 'truncate'}`} title={`${device.device_type} • ${device.year_acquired}`}>
                                                         {device.device_type} &bull; {device.year_acquired}
                                                     </div>
                                                 </div>
@@ -220,28 +272,28 @@ export default function DevicesIndex({ devices, filters }) {
 
                                         {/* Specifications */}
                                         <td className="py-3 px-4">
-                                            <div className="font-medium text-slate-800 dark:text-zinc-200 truncate max-w-[160px] text-[11px]">
+                                            <div className={`font-medium text-slate-800 dark:text-zinc-200 text-[11px] ${wrapText ? 'break-words whitespace-normal leading-snug' : 'truncate'}`} title={device.cpu}>
                                                 {device.cpu}
                                             </div>
-                                            <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-slate-500 dark:text-zinc-400">
-                                                <span className="font-semibold">{device.ram_gb}GB RAM</span> &bull; 
-                                                <span>{device.storage_gb}GB {device.storage_type}</span>
+                                            <div className={`flex items-center gap-1.5 mt-0.5 text-[10px] text-slate-500 dark:text-zinc-400 ${wrapText ? 'flex-wrap' : 'truncate'}`}>
+                                                <span className="font-semibold shrink-0">{device.ram_gb}GB RAM</span> &bull; 
+                                                <span className="shrink-0">{device.storage_gb}GB {device.storage_type}</span>
                                             </div>
                                         </td>
 
                                         {/* Location */}
                                         <td className="py-3 px-4">
-                                            <div className="text-slate-800 dark:text-zinc-200 truncate max-w-[130px] font-medium">
+                                            <div className={`text-slate-800 dark:text-zinc-200 font-medium ${wrapText ? 'break-words whitespace-normal' : 'truncate'}`} title={device.location || 'Pool Inventory'}>
                                                 {device.location || 'Pool Inventory'}
                                             </div>
-                                            <div className="text-[10px] text-slate-400 dark:text-zinc-500 truncate max-w-[130px]">
+                                            <div className={`text-[10px] text-slate-400 dark:text-zinc-500 ${wrapText ? 'break-words whitespace-normal' : 'truncate'}`} title={device.vendor || 'Direct Purchase'}>
                                                 {device.vendor || 'Direct Purchase'}
                                             </div>
                                         </td>
 
                                         {/* Lifecycle Phase */}
                                         <td className="py-3 px-4">
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider inline-block ${
                                                 device.lifecycle_stage === 'acquisition' ? 'bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200/50 dark:border-sky-800/50' :
                                                 device.lifecycle_stage === 'deployment' ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-800/50' :
                                                 device.lifecycle_stage === 'maintenance' ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/50 dark:border-amber-800/50' :
@@ -254,7 +306,7 @@ export default function DevicesIndex({ devices, filters }) {
                                         {/* Warranty */}
                                         <td className="py-3 px-4">
                                             {device.warranty_expiry ? (
-                                                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-md ${
+                                                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-md inline-block ${
                                                     device.warranty_status === 'active' ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-800/50' :
                                                     device.warranty_status === 'expiring_soon' ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200/50 dark:border-amber-800/50' :
                                                     'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200/50 dark:border-rose-800/50'
@@ -269,11 +321,11 @@ export default function DevicesIndex({ devices, filters }) {
                                         {/* Current User */}
                                         <td className="py-3 px-4">
                                             {device.active_assignment?.employee ? (
-                                                <div>
-                                                    <div className="font-semibold text-slate-900 dark:text-zinc-100">
+                                                <div className="min-w-0">
+                                                    <div className={`font-semibold text-slate-900 dark:text-zinc-100 ${wrapText ? 'break-words whitespace-normal' : 'truncate'}`} title={device.active_assignment.employee.name}>
                                                         {device.active_assignment.employee.name}
                                                     </div>
-                                                    <div className="text-[10px] text-slate-400 dark:text-zinc-500">
+                                                    <div className={`text-[10px] text-slate-400 dark:text-zinc-500 ${wrapText ? 'break-words whitespace-normal' : 'truncate'}`} title={device.active_assignment.employee.department}>
                                                         {device.active_assignment.employee.department}
                                                     </div>
                                                 </div>

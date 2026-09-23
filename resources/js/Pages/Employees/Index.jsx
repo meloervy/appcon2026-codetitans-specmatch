@@ -1,11 +1,25 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import HardwareImage from '@/Components/HardwareImage';
+import ResizableTh from '@/Components/ResizableTh';
+import { useResizableColumns } from '@/Hooks/useResizableColumns';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 
 export default function EmployeesIndex({ employees, role_profiles }) {
     const [showModal, setShowModal] = useState(false);
     const [editingEmp, setEditingEmp] = useState(null);
+    const [wrapText, setWrapText] = useState(false);
+
+    const initialWidths = {
+        employee: 170,
+        department: 140,
+        role_profile: 160,
+        hardware: 240,
+        specs: 220,
+        actions: 160,
+    };
+
+    const { widths, startResize, autoExpandCol, resetWidths, isResizing, resizingCol } = useResizableColumns(initialWidths, 'employees_table');
 
     const { data, setData, post, put, processing, reset, errors } = useForm({
         name: '',
@@ -77,16 +91,52 @@ export default function EmployeesIndex({ employees, role_profiles }) {
             <Head title="Employees - SpecMatch" />
 
             <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 shadow-xs overflow-hidden">
+                {/* Column Adjustment & Display Control Toolbar */}
+                <div className="px-4 py-2 bg-slate-50/70 dark:bg-zinc-800/40 border-b border-slate-200/70 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-400 text-[11px]">
+                        <span className="inline-flex items-center justify-center w-4 h-4 rounded bg-[#026eff]/10 text-[#026eff] font-bold text-[10px]">↔</span>
+                        <span>Drag column dividers to resize • Double-click divider to expand (+120px)</span>
+                    </div>
+                    <div className="flex items-center gap-2 ml-auto">
+                        <button
+                            type="button"
+                            onClick={() => setWrapText(!wrapText)}
+                            className={`px-2.5 py-1 rounded-lg border text-[11px] font-medium transition cursor-pointer flex items-center gap-1.5 ${
+                                wrapText
+                                    ? 'bg-[#026eff]/15 text-[#026eff] border-[#026eff]/30 dark:bg-[#026eff]/20 dark:text-sky-300'
+                                    : 'bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 border-slate-200 dark:border-zinc-750 hover:bg-slate-50 dark:hover:bg-zinc-700/60'
+                            }`}
+                            title="Toggle text wrapping to reveal long employee info without truncation"
+                        >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h10l-3-3m0 6l3-3m5 3H4" />
+                            </svg>
+                            <span>{wrapText ? 'Wrap Text: ON' : 'Wrap Text: OFF'}</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={resetWidths}
+                            className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-zinc-750 bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200 text-[11px] font-medium transition cursor-pointer"
+                            title="Reset column widths to default"
+                        >
+                            Reset Columns
+                        </button>
+                    </div>
+                </div>
+
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm">
+                    <table
+                        className="w-full text-left text-sm table-fixed"
+                        style={{ minWidth: `${Math.max(900, Object.values(widths).reduce((a, b) => a + b, 0))}px` }}
+                    >
                         <thead className="bg-slate-50/80 dark:bg-zinc-800/60 border-b border-slate-200 dark:border-zinc-800 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
                             <tr>
-                                <th className="py-3.5 px-4">Employee</th>
-                                <th className="py-3.5 px-4">Department</th>
-                                <th className="py-3.5 px-4">Role Profile</th>
-                                <th className="py-3.5 px-4">Assigned Hardware</th>
-                                <th className="py-3.5 px-4">Device Specs</th>
-                                <th className="py-3.5 px-4 text-right">Actions</th>
+                                <ResizableTh colKey="employee" width={widths.employee} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'employee'}>Employee</ResizableTh>
+                                <ResizableTh colKey="department" width={widths.department} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'department'}>Department</ResizableTh>
+                                <ResizableTh colKey="role_profile" width={widths.role_profile} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'role_profile'}>Role Profile</ResizableTh>
+                                <ResizableTh colKey="hardware" width={widths.hardware} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'hardware'}>Assigned Hardware</ResizableTh>
+                                <ResizableTh colKey="specs" width={widths.specs} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'specs'}>Device Specs</ResizableTh>
+                                <ResizableTh colKey="actions" width={widths.actions} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'actions'} align="right" resizable={false}>Actions</ResizableTh>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
@@ -95,14 +145,18 @@ export default function EmployeesIndex({ employees, role_profiles }) {
                                 return (
                                     <tr key={emp.id} className="hover:bg-slate-50/60 dark:hover:bg-zinc-800/40 transition">
                                         <td className="py-4 px-4 font-semibold text-slate-900 dark:text-zinc-100">
-                                            {emp.name}
+                                            <div className={wrapText ? 'break-words whitespace-normal' : 'truncate'} title={emp.name}>
+                                                {emp.name}
+                                            </div>
                                         </td>
                                         <td className="py-4 px-4 text-slate-500 dark:text-zinc-400">
-                                            {emp.department}
+                                            <div className={wrapText ? 'break-words whitespace-normal' : 'truncate'} title={emp.department}>
+                                                {emp.department}
+                                            </div>
                                         </td>
                                         <td className="py-4 px-4">
                                             {emp.role_profile ? (
-                                                <span className="text-xs px-2.5 py-1 rounded-full bg-[#026eff]/10 dark:bg-[#031a40]/60 border border-[#026eff]/15 dark:border-[#031a40]/50 text-[#026eff] dark:text-[#0b79ff] font-medium">
+                                                <span className={`text-xs px-2.5 py-1 rounded-full bg-[#026eff]/10 dark:bg-[#031a40]/60 border border-[#026eff]/15 dark:border-[#031a40]/50 text-[#026eff] dark:text-[#0b79ff] font-medium inline-block ${wrapText ? 'break-words whitespace-normal' : 'truncate max-w-full'}`} title={emp.role_profile.name}>
                                                     {emp.role_profile.name}
                                                 </span>
                                             ) : (
@@ -119,26 +173,26 @@ export default function EmployeesIndex({ employees, role_profiles }) {
                                                             className="w-full h-full object-contain"
                                                         />
                                                     </div>
-                                                    <div>
-                                                        <span className="font-mono text-xs font-bold text-slate-700 dark:text-zinc-300 bg-slate-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-zinc-700">
+                                                    <div className="min-w-0 flex-1">
+                                                        <span className="font-mono text-xs font-bold text-slate-700 dark:text-zinc-300 bg-slate-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-zinc-700 inline-block truncate" title={device.asset_tag}>
                                                             {device.asset_tag}
                                                         </span>
-                                                        <div className="font-medium text-slate-900 dark:text-zinc-100 text-xs mt-1">
+                                                        <div className={`font-medium text-slate-900 dark:text-zinc-100 text-xs mt-1 ${wrapText ? 'break-words whitespace-normal' : 'truncate'}`} title={`${device.brand} ${device.model}`}>
                                                             {device.brand} {device.model}
                                                         </div>
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <span className="text-xs text-amber-600 dark:text-amber-400 font-semibold bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded">
+                                                <span className="text-xs text-amber-600 dark:text-amber-400 font-semibold bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded inline-block">
                                                     No Device Assigned
                                                 </span>
                                             )}
                                         </td>
                                         <td className="py-4 px-4 text-xs text-slate-500 dark:text-zinc-400">
                                             {device ? (
-                                                <span>
+                                                <div className={wrapText ? 'break-words whitespace-normal leading-relaxed' : 'truncate'} title={`${device.ram_gb}GB • ${device.storage_gb}GB ${device.storage_type} • ${device.device_type}`}>
                                                     {device.ram_gb}GB • {device.storage_gb}GB {device.storage_type} • <span className="capitalize">{device.device_type}</span>
-                                                </span>
+                                                </div>
                                             ) : (
                                                 <span className="text-slate-400 dark:text-zinc-600">—</span>
                                             )}
@@ -153,14 +207,14 @@ export default function EmployeesIndex({ employees, role_profiles }) {
                                             {device && (
                                                 <button
                                                     onClick={() => handleUnassign(emp)}
-                                                    className="text-xs text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 font-medium"
+                                                    className="text-xs text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 font-medium cursor-pointer"
                                                 >
                                                     Unassign
                                                 </button>
                                             )}
                                             <button
                                                 onClick={() => openEdit(emp)}
-                                                className="text-xs text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300"
+                                                className="text-xs text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 cursor-pointer"
                                             >
                                                 Edit
                                             </button>
