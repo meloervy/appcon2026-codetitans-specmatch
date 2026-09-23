@@ -17,6 +17,37 @@ class GeminiService
      */
     public function extractRequirements(string $rawInput, ?int $employeeId = null): array
     {
+        // 1. Check for pre-cached demo templates
+        $templates = config('demo_templates.templates', []);
+        foreach ($templates as $prompt => $payload) {
+            if (str_starts_with($rawInput, substr($prompt, 0, 50))) {
+                $payload['source'] = 'cached_demo';
+                $payload['reasoning'] = 'Instantly extracted from pre-cached demo template.';
+                
+                MatchRequest::create([
+                    'employee_id' => $employeeId,
+                    'raw_input' => $rawInput,
+                    'extracted_requirements' => $payload,
+                    'extraction_failed' => false,
+                ]);
+                return $payload;
+            }
+        }
+
+        // 2. Check if forced offline
+        if (env('GEMINI_DEMO_OFFLINE', false)) {
+            $fallback = $this->heuristicFallback($rawInput);
+            $fallback['source'] = 'offline_heuristic';
+            
+            MatchRequest::create([
+                'employee_id' => $employeeId,
+                'raw_input' => $rawInput,
+                'extracted_requirements' => $fallback,
+                'extraction_failed' => true,
+            ]);
+            return $fallback;
+        }
+
         $apiKey = config('services.gemini.api_key', env('GEMINI_API_KEY'));
 
         if (!empty($apiKey)) {
