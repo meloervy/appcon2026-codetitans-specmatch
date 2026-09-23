@@ -1,27 +1,34 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 
-export default function Dashboard({ metrics, mismatches, recent_assignments, available_fleet }) {
+export default function Dashboard({ metrics, mismatches, recent_assignments, available_fleet, itam }) {
+    const stageBreakdown = metrics.stage_breakdown || {
+        acquisition: 0,
+        deployment: metrics.total_devices || 0,
+        maintenance: metrics.in_repair_devices || 0,
+        retirement: metrics.retired_devices || 0,
+    };
+
     return (
         <AuthenticatedLayout
             header={
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Fleet Operations Dashboard</h1>
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900">IT Asset Operations & Intelligence</h1>
                         <p className="text-sm text-slate-500 mt-1">
-                            Real-time device circulation, utilization rate, and allocation health.
+                            Hardware inventory tracking, straight-line depreciation, lifecycle phases, and smart workload matching.
                         </p>
                     </div>
                     <div className="flex items-center gap-3">
                         <Link
                             href={route('devices.create')}
-                            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50 shadow-xs transition"
+                            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50 shadow-xs transition"
                         >
-                            + Register Device
+                            + Register Asset
                         </Link>
                         <Link
                             href={route('match.index')}
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 shadow-sm transition"
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 shadow-sm transition"
                         >
                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -32,7 +39,198 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                 </div>
             }
         >
-            <Head title="Dashboard - SpecMatch" />
+            <Head title="ITAM Operations Dashboard - SpecMatch" />
+
+            {/* Lifecycle Stages Ribbon */}
+            <div className="mb-6 bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs">
+                <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Fleet Lifecycle Phase Distribution</span>
+                    <span className="text-xs text-slate-400">Total Authoritative Inventory: {metrics.total_devices + (metrics.retired_devices || 0)} Units</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="p-3 rounded-xl bg-sky-50/70 border border-sky-100 flex items-center justify-between">
+                        <div>
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-sky-700 block">1. Acquisition</span>
+                            <span className="text-xl font-black text-sky-950 mt-0.5 block">{stageBreakdown.acquisition || 0}</span>
+                            <span className="text-[11px] text-sky-600">Procurement & Staging</span>
+                        </div>
+                        <span className="p-2 rounded-lg bg-sky-100 text-sky-700 font-bold text-xs">NEW</span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-100 flex items-center justify-between">
+                        <div>
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 block">2. Deployment</span>
+                            <span className="text-xl font-black text-emerald-950 mt-0.5 block">{stageBreakdown.deployment || 0}</span>
+                            <span className="text-[11px] text-emerald-600">In Active Circulation</span>
+                        </div>
+                        <span className="p-2 rounded-lg bg-emerald-100 text-emerald-700 font-bold text-xs">LIVE</span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-100 flex items-center justify-between">
+                        <div>
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 block">3. Maintenance</span>
+                            <span className="text-xl font-black text-amber-950 mt-0.5 block">{stageBreakdown.maintenance || 0}</span>
+                            <span className="text-[11px] text-amber-600">Repair & Servicing</span>
+                        </div>
+                        <Link href={route('maintenance.index')} className="p-2 rounded-lg bg-amber-100 text-amber-800 font-bold text-xs hover:bg-amber-200">
+                            LOGS
+                        </Link>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-100/70 border border-slate-200 flex items-center justify-between">
+                        <div>
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block">4. Retirement</span>
+                            <span className="text-xl font-black text-slate-800 mt-0.5 block">{stageBreakdown.retirement || 0}</span>
+                            <span className="text-[11px] text-slate-500">Decommissioned / EOL</span>
+                        </div>
+                        <span className="p-2 rounded-lg bg-slate-200 text-slate-700 font-bold text-xs">EOL</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Financial Tracking & Capital Valuation Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+                {/* Initial Capital Invested */}
+                <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs relative overflow-hidden">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Fleet Acquisition Spend</span>
+                        <span className="p-2 rounded-xl bg-slate-100 text-slate-700">
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div className="mt-4 flex items-baseline gap-2">
+                        <span className="text-2xl font-black text-slate-900">
+                            ${Number(metrics.total_acquisition_cost || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        </span>
+                    </div>
+                    <p className="mt-3 text-xs text-slate-500">
+                        Total capital invested in active computer fleet.
+                    </p>
+                </div>
+
+                {/* Depreciated Residual Book Value */}
+                <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Residual Book Value</span>
+                        <span className="p-2 rounded-xl bg-emerald-50 text-emerald-600">
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div className="mt-4 flex items-baseline gap-2">
+                        <span className="text-2xl font-black text-emerald-600">
+                            ${Number(metrics.current_book_value || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        </span>
+                    </div>
+                    <p className="mt-3 text-xs text-slate-500">
+                        Depreciated straight-line asset balance across operational lifespan.
+                    </p>
+                </div>
+
+                {/* Maintenance Spend & Servicing */}
+                <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Maintenance & Servicing</span>
+                        <span className="p-2 rounded-xl bg-amber-50 text-amber-600">
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div className="mt-4 flex items-baseline gap-2">
+                        <span className="text-2xl font-black text-slate-900">
+                            ${Number(metrics.total_maintenance_spend || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        </span>
+                    </div>
+                    <div className="mt-3 text-xs text-slate-500 flex items-center justify-between">
+                        <span className="font-semibold text-amber-700">{metrics.active_maintenance_count} in servicing</span>
+                        <Link href={route('maintenance.index')} className="text-indigo-600 font-semibold hover:underline">
+                            Open Hub &rarr;
+                        </Link>
+                    </div>
+                </div>
+
+                {/* Procurement Avoidance Savings */}
+                <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Procurement Avoidance</span>
+                        <span className="p-2 rounded-xl bg-indigo-50 text-indigo-600">
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div className="mt-4 flex items-baseline gap-2">
+                        <span className="text-2xl font-black text-indigo-600">
+                            ${metrics.procurement_savings.toLocaleString()}
+                        </span>
+                        <span className="text-xs text-indigo-700 font-semibold bg-indigo-50 px-1.5 py-0.5 rounded">Saved</span>
+                    </div>
+                    <p className="mt-3 text-xs text-slate-500">
+                        Capital saved by matching idle fleet vs purchasing new units.
+                    </p>
+                </div>
+            </div>
+
+            {/* Critical ITAM Alerts Banner Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                {/* Warranty Alert */}
+                {metrics.expiring_warranties_count > 0 && (
+                    <div className="rounded-2xl bg-amber-500/10 border border-amber-300 p-5 flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-xl bg-amber-500 text-white shrink-0">
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-slate-900 text-sm">
+                                    {metrics.expiring_warranties_count} Warranties Expiring Soon (&le; 60 Days)
+                                </h4>
+                                <p className="text-xs text-slate-600 mt-0.5">
+                                    Service contracts approaching expiration. Review extended coverage options.
+                                </p>
+                            </div>
+                        </div>
+                        <Link
+                            href={route('devices.index')}
+                            className="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-bold hover:bg-amber-700 shrink-0"
+                        >
+                            View Assets
+                        </Link>
+                    </div>
+                )}
+
+                {/* Redundancy / Efficiency Optimization Alert */}
+                {metrics.idle_high_spec_count > 0 && (
+                    <div className="rounded-2xl bg-indigo-500/10 border border-indigo-200 p-5 flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-xl bg-indigo-600 text-white shrink-0">
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-slate-900 text-sm">
+                                    {metrics.idle_high_spec_count} Redundant High-Spec Assets Available
+                                </h4>
+                                <p className="text-xs text-slate-600 mt-0.5">
+                                    High-performance machines currently idle. Optimize fleet efficiency before procuring.
+                                </p>
+                            </div>
+                        </div>
+                        <Link
+                            href={route('match.index')}
+                            className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 shrink-0"
+                        >
+                            Assign Assets
+                        </Link>
+                    </div>
+                )}
+            </div>
 
             {/* Mismatch Alert Banner */}
             {metrics.mismatch_count > 0 && (
@@ -60,94 +258,6 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                     </Link>
                 </div>
             )}
-
-            {/* Metrics Overview Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-                {/* Total Devices */}
-                <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs relative overflow-hidden">
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Active Fleet</span>
-                        <span className="p-2 rounded-xl bg-slate-100 text-slate-700">
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                            </svg>
-                        </span>
-                    </div>
-                    <div className="mt-4 flex items-baseline gap-2">
-                        <span className="text-3xl font-extrabold text-slate-900">{metrics.total_devices}</span>
-                        <span className="text-xs text-slate-500 font-medium">units</span>
-                    </div>
-                    <div className="mt-3 text-xs text-slate-500 flex items-center gap-2">
-                        <span className="text-emerald-600 font-semibold">{metrics.idle_devices} idle</span>
-                        <span>•</span>
-                        <span>{metrics.in_repair_devices} in repair</span>
-                    </div>
-                </div>
-
-                {/* Utilization Rate */}
-                <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Utilization Rate</span>
-                        <span className="p-2 rounded-xl bg-indigo-50 text-indigo-600">
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                            </svg>
-                        </span>
-                    </div>
-                    <div className="mt-4 flex items-baseline gap-2">
-                        <span className="text-3xl font-extrabold text-indigo-600">{metrics.utilization_rate}%</span>
-                        <span className="text-xs text-slate-500 font-medium">{metrics.assigned_devices} / {metrics.total_devices} assigned</span>
-                    </div>
-                    <div className="w-full bg-slate-100 rounded-full h-2 mt-3 overflow-hidden">
-                        <div
-                            className="bg-indigo-600 h-2 rounded-full transition-all duration-500"
-                            style={{ width: `${Math.min(100, metrics.utilization_rate)}%` }}
-                        />
-                    </div>
-                </div>
-
-                {/* Mismatches */}
-                <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Flagged Mismatches</span>
-                        <span className="p-2 rounded-xl bg-amber-50 text-amber-600">
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </span>
-                    </div>
-                    <div className="mt-4 flex items-baseline gap-2">
-                        <span className="text-3xl font-extrabold text-amber-600">{metrics.mismatch_count}</span>
-                        <span className="text-xs text-slate-500 font-medium">requiring review</span>
-                    </div>
-                    <div className="mt-3 text-xs text-slate-500">
-                        <Link href={route('mismatches.index')} className="text-indigo-600 font-semibold hover:underline">
-                            Audit mismatch details &rarr;
-                        </Link>
-                    </div>
-                </div>
-
-                {/* Procurement Savings */}
-                <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Procurement Avoidance</span>
-                        <span className="p-2 rounded-xl bg-emerald-50 text-emerald-600">
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </span>
-                    </div>
-                    <div className="mt-4 flex items-baseline gap-2">
-                        <span className="text-3xl font-extrabold text-emerald-600">
-                            ${metrics.procurement_savings.toLocaleString()}
-                        </span>
-                        <span className="text-xs text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded">Saved</span>
-                    </div>
-                    <p className="mt-3 text-xs text-slate-500">
-                        Savings from optimal inventory reuse vs new purchases.
-                    </p>
-                </div>
-            </div>
 
             {/* Quick Actions & Available Fleet */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
@@ -195,7 +305,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                                     </div>
                                 </div>
                                 <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-between text-xs">
-                                    <span className="text-slate-400 capitalize">{device.device_type} • {device.condition}</span>
+                                    <span className="text-slate-400 capitalize">{device.device_type} &bull; {device.condition}</span>
                                     <Link href={route('devices.show', device.id)} className="font-semibold text-indigo-600 hover:text-indigo-800">
                                         Details &rarr;
                                     </Link>
@@ -213,23 +323,23 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
                             </svg>
                         </div>
-                        <h3 className="text-xl font-bold tracking-tight">Smart Match Engine</h3>
+                        <h3 className="text-xl font-bold tracking-tight">TechSpecs & AI Match</h3>
                         <p className="text-sm text-indigo-200/80 mt-2 leading-relaxed">
-                            Describe any employee requirement in free text. Gemini converts it to hardware parameters and deterministically ranks inventory.
+                            Continuous IT asset management with 1-click TechSpecs hardware lookup, straight-line depreciation, lifecycle transitions, and intelligent assignment.
                         </p>
 
                         <div className="mt-6 space-y-2.5">
                             <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-xs text-indigo-100 flex items-center justify-between">
-                                <span>Layer 1: AI Requirement Parser</span>
-                                <span className="font-semibold text-emerald-400">Gemini 2.5</span>
+                                <span>Hardware Identification</span>
+                                <span className="font-semibold text-emerald-400">TechSpecs API</span>
                             </div>
                             <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-xs text-indigo-100 flex items-center justify-between">
-                                <span>Layer 2: Objective Scoring</span>
-                                <span className="font-semibold text-indigo-300">Deterministic</span>
+                                <span>AI Extraction Engine</span>
+                                <span className="font-semibold text-indigo-300">Gemini 2.5</span>
                             </div>
                             <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-xs text-indigo-100 flex items-center justify-between">
-                                <span>Threshold Constraint</span>
-                                <span className="font-semibold text-amber-300">&ge; 0.65 Score</span>
+                                <span>Lifecycle Stages</span>
+                                <span className="font-semibold text-amber-300">4 Tracked Phases</span>
                             </div>
                         </div>
                     </div>
@@ -248,58 +358,61 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                 <div className="flex items-center justify-between mb-4">
                     <div>
                         <h2 className="font-bold text-slate-900 text-lg">Recent Fleet Assignments</h2>
-                        <p className="text-xs text-slate-500">Historical trail of hardware issuance</p>
+                        <p className="text-xs text-slate-500">Audit trail of equipment deployments and match scores</p>
                     </div>
                     <Link href={route('employees.index')} className="text-xs font-semibold text-indigo-600 hover:underline">
-                        Employee Directory &rarr;
+                        View All Employees &rarr;
                     </Link>
                 </div>
 
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
-                        <thead className="border-b border-slate-100 text-xs font-bold uppercase tracking-wider text-slate-400">
+                        <thead className="bg-slate-50/80 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500">
                             <tr>
-                                <th className="pb-3">Employee</th>
-                                <th className="pb-3">Department</th>
-                                <th className="pb-3">Role Profile</th>
-                                <th className="pb-3">Device Assigned</th>
-                                <th className="pb-3">Match Score</th>
-                                <th className="pb-3">Source</th>
-                                <th className="pb-3">Date</th>
+                                <th className="py-3 px-4">Device</th>
+                                <th className="py-3 px-4">Employee</th>
+                                <th className="py-3 px-4">Department / Profile</th>
+                                <th className="py-3 px-4">Match Fit</th>
+                                <th className="py-3 px-4">Source</th>
+                                <th className="py-3 px-4">Assigned Date</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {recent_assignments.map((item) => (
-                                <tr key={item.id} className="hover:bg-slate-50/60">
-                                    <td className="py-3.5 font-semibold text-slate-900">{item.employee?.name}</td>
-                                    <td className="py-3.5 text-slate-500">{item.employee?.department}</td>
-                                    <td className="py-3.5">
-                                        <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-medium">
-                                            {item.employee?.role_profile?.name || 'Unspecified'}
-                                        </span>
+                            {recent_assignments.map((asg) => (
+                                <tr key={asg.id} className="hover:bg-slate-50/60 transition">
+                                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
+                                        <Link href={route('devices.show', asg.device.id)} className="text-indigo-600 hover:underline">
+                                            {asg.device.asset_tag}
+                                        </Link>
+                                        <div className="text-xs text-slate-400 font-normal">{asg.device.brand} {asg.device.model}</div>
                                     </td>
-                                    <td className="py-3.5">
-                                        <div className="font-medium text-slate-900">{item.device?.brand} {item.device?.model}</div>
-                                        <div className="text-xs font-mono text-slate-400">{item.device?.asset_tag}</div>
+                                    <td className="py-3.5 px-4 font-semibold text-slate-900">
+                                        {asg.employee.name}
                                     </td>
-                                    <td className="py-3.5">
-                                        {item.match_score ? (
+                                    <td className="py-3.5 px-4 text-xs text-slate-600">
+                                        <div>{asg.employee.department}</div>
+                                        <div className="text-slate-400">{asg.employee.role_profile?.name || 'Custom Role'}</div>
+                                    </td>
+                                    <td className="py-3.5 px-4">
+                                        {asg.match_score ? (
                                             <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                                                item.match_score >= 0.65 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+                                                asg.match_score >= 0.8 ? 'bg-emerald-100 text-emerald-800' :
+                                                asg.match_score >= 0.65 ? 'bg-indigo-100 text-indigo-800' :
+                                                'bg-rose-100 text-rose-800'
                                             }`}>
-                                                {Math.round(item.match_score * 100)}%
+                                                {Math.round(asg.match_score * 100)}%
                                             </span>
                                         ) : (
-                                            <span className="text-xs text-slate-400">—</span>
+                                            <span className="text-xs text-slate-400">N/A</span>
                                         )}
                                     </td>
-                                    <td className="py-3.5">
-                                        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                                            {item.assignment_source.replace('_', ' ')}
+                                    <td className="py-3.5 px-4">
+                                        <span className="text-[11px] uppercase font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                                            {asg.assignment_source.replace('_', ' ')}
                                         </span>
                                     </td>
-                                    <td className="py-3.5 text-xs text-slate-400">
-                                        {new Date(item.assigned_at).toLocaleDateString()}
+                                    <td className="py-3.5 px-4 text-xs text-slate-500">
+                                        {new Date(asg.assigned_at).toLocaleDateString()}
                                     </td>
                                 </tr>
                             ))}

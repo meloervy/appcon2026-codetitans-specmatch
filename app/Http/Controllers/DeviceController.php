@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Device;
+use App\Models\LifecycleEvent;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -18,14 +19,20 @@ class DeviceController extends Controller
             $s = $request->input('search');
             $query->where(function ($q) use ($s) {
                 $q->where('asset_tag', 'like', "%{$s}%")
+                  ->orWhere('serial_number', 'like', "%{$s}%")
                   ->orWhere('brand', 'like', "%{$s}%")
                   ->orWhere('model', 'like', "%{$s}%")
-                  ->orWhere('cpu', 'like', "%{$s}%");
+                  ->orWhere('cpu', 'like', "%{$s}%")
+                  ->orWhere('location', 'like', "%{$s}%");
             });
         }
 
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
+        }
+
+        if ($request->filled('lifecycle_stage')) {
+            $query->where('lifecycle_stage', $request->input('lifecycle_stage'));
         }
 
         if ($request->filled('device_type')) {
@@ -44,7 +51,7 @@ class DeviceController extends Controller
 
         return Inertia::render('Devices/Index', [
             'devices' => $devices,
-            'filters' => $request->only(['search', 'status', 'device_type', 'cpu_tier', 'condition']),
+            'filters' => $request->only(['search', 'status', 'lifecycle_stage', 'device_type', 'cpu_tier', 'condition']),
         ]);
     }
 
@@ -57,9 +64,13 @@ class DeviceController extends Controller
     {
         $validated = $request->validate([
             'asset_tag' => ['required', 'string', 'max:50', 'unique:devices,asset_tag'],
+            'serial_number' => ['nullable', 'string', 'max:100', 'unique:devices,serial_number'],
+            'barcode' => ['nullable', 'string', 'max:100'],
+            'techspecs_id' => ['nullable', 'string', 'max:100'],
             'device_type' => ['required', 'in:laptop,desktop'],
             'brand' => ['required', 'string', 'max:100'],
             'model' => ['required', 'string', 'max:100'],
+            'location' => ['nullable', 'string', 'max:150'],
             'cpu' => ['required', 'string', 'max:150'],
             'cpu_tier' => ['required', 'in:entry,mid,high,workstation'],
             'ram_gb' => ['required', 'integer', 'min:1'],
@@ -68,19 +79,43 @@ class DeviceController extends Controller
             'gpu' => ['nullable', 'string', 'max:150'],
             'gpu_tier' => ['required', 'in:none,integrated,dedicated-entry,dedicated-high'],
             'year_acquired' => ['required', 'integer', 'min:2000', 'max:' . (date('Y') + 1)],
+            'purchase_cost' => ['nullable', 'numeric', 'min:0'],
+            'purchase_date' => ['nullable', 'date'],
+            'depreciation_rate_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'vendor' => ['nullable', 'string', 'max:100'],
+            'warranty_start' => ['nullable', 'date'],
+            'warranty_expiry' => ['nullable', 'date'],
+            'contract_sla' => ['nullable', 'string', 'max:100'],
             'condition' => ['required', 'in:excellent,good,fair,needs_repair,retired'],
             'status' => ['required', 'in:available,assigned,in_repair,retired'],
+            'lifecycle_stage' => ['nullable', 'in:acquisition,deployment,maintenance,retirement'],
             'notes' => ['nullable', 'string'],
         ]);
 
-        Device::create($validated);
+        $validated['lifecycle_stage'] = $validated['lifecycle_stage'] ?? 'deployment';
+
+        $device = Device::create($validated);
+
+        // Record initial lifecycle event
+        LifecycleEvent::create([
+            'device_id' => $device->id,
+            'from_stage' => 'new',
+            'to_stage' => $device->lifecycle_stage,
+            'changed_by_user_id' => auth()->id(),
+            'notes' => 'Asset registered into ITAM inventory.',
+        ]);
 
         return redirect()->route('devices.index')->with('success', "Device {$validated['asset_tag']} successfully registered.");
     }
 
     public function show(int $id): Response
     {
-        $device = Device::with(['assignments.employee', 'activeAssignment.employee'])->findOrFail($id);
+        $device = Device::with([
+            'assignments.employee',
+            'activeAssignment.employee',
+            'maintenanceLogs',
+            'lifecycleEvents.user'
+        ])->findOrFail($id);
 
         return Inertia::render('Devices/Show', [
             'device' => $device,
@@ -93,9 +128,13 @@ class DeviceController extends Controller
 
         $validated = $request->validate([
             'asset_tag' => ['required', 'string', 'max:50', 'unique:devices,asset_tag,' . $device->id],
+            'serial_number' => ['nullable', 'string', 'max:100', 'unique:devices,serial_number,' . $device->id],
+            'barcode' => ['nullable', 'string', 'max:100'],
+            'techspecs_id' => ['nullable', 'string', 'max:100'],
             'device_type' => ['required', 'in:laptop,desktop'],
             'brand' => ['required', 'string', 'max:100'],
             'model' => ['required', 'string', 'max:100'],
+            'location' => ['nullable', 'string', 'max:150'],
             'cpu' => ['required', 'string', 'max:150'],
             'cpu_tier' => ['required', 'in:entry,mid,high,workstation'],
             'ram_gb' => ['required', 'integer', 'min:1'],
@@ -104,28 +143,101 @@ class DeviceController extends Controller
             'gpu' => ['nullable', 'string', 'max:150'],
             'gpu_tier' => ['required', 'in:none,integrated,dedicated-entry,dedicated-high'],
             'year_acquired' => ['required', 'integer', 'min:2000', 'max:' . (date('Y') + 1)],
+            'purchase_cost' => ['nullable', 'numeric', 'min:0'],
+            'purchase_date' => ['nullable', 'date'],
+            'depreciation_rate_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'vendor' => ['nullable', 'string', 'max:100'],
+            'warranty_start' => ['nullable', 'date'],
+            'warranty_expiry' => ['nullable', 'date'],
+            'contract_sla' => ['nullable', 'string', 'max:100'],
             'condition' => ['required', 'in:excellent,good,fair,needs_repair,retired'],
             'status' => ['required', 'in:available,assigned,in_repair,retired'],
+            'lifecycle_stage' => ['required', 'in:acquisition,deployment,maintenance,retirement'],
             'notes' => ['nullable', 'string'],
         ]);
 
+        $oldStage = $device->lifecycle_stage;
         $device->update($validated);
 
+        if ($oldStage !== $validated['lifecycle_stage']) {
+            LifecycleEvent::create([
+                'device_id' => $device->id,
+                'from_stage' => $oldStage,
+                'to_stage' => $validated['lifecycle_stage'],
+                'changed_by_user_id' => auth()->id(),
+                'notes' => 'Lifecycle stage updated via asset edit.',
+            ]);
+        }
+
         return back()->with('success', "Device {$device->asset_tag} updated successfully.");
+    }
+
+    /**
+     * Transition asset lifecycle stage with audit notes.
+     */
+    public function updateLifecycle(Request $request, int $id): RedirectResponse
+    {
+        $device = Device::findOrFail($id);
+
+        $validated = $request->validate([
+            'to_stage' => ['required', 'in:acquisition,deployment,maintenance,retirement'],
+            'notes' => ['nullable', 'string'],
+        ]);
+
+        $fromStage = $device->lifecycle_stage;
+        $toStage = $validated['to_stage'];
+
+        // Synchronize device status
+        $newStatus = $device->status;
+        if ($toStage === 'maintenance') {
+            $newStatus = 'in_repair';
+        } elseif ($toStage === 'retirement') {
+            $newStatus = 'retired';
+            if ($device->activeAssignment) {
+                $device->activeAssignment->update(['unassigned_at' => now()]);
+            }
+        } elseif ($toStage === 'deployment' && $device->status === 'in_repair') {
+            $newStatus = $device->activeAssignment ? 'assigned' : 'available';
+        }
+
+        $device->update([
+            'lifecycle_stage' => $toStage,
+            'status' => $newStatus,
+            'condition' => ($toStage === 'retirement') ? 'retired' : $device->condition,
+        ]);
+
+        LifecycleEvent::create([
+            'device_id' => $device->id,
+            'from_stage' => $fromStage,
+            'to_stage' => $toStage,
+            'changed_by_user_id' => auth()->id(),
+            'notes' => $validated['notes'] ?? 'Stage transitioned by IT Staff.',
+        ]);
+
+        return back()->with('success', "Asset {$device->asset_tag} transitioned to {$toStage} stage.");
     }
 
     public function retire(int $id): RedirectResponse
     {
         $device = Device::findOrFail($id);
 
-        // Unassign if currently assigned
         if ($device->activeAssignment) {
             $device->activeAssignment->update(['unassigned_at' => now()]);
         }
 
+        $oldStage = $device->lifecycle_stage;
         $device->update([
             'status' => 'retired',
             'condition' => 'retired',
+            'lifecycle_stage' => 'retirement',
+        ]);
+
+        LifecycleEvent::create([
+            'device_id' => $device->id,
+            'from_stage' => $oldStage,
+            'to_stage' => 'retirement',
+            'changed_by_user_id' => auth()->id(),
+            'notes' => 'Asset decommissioned and retired from active fleet.',
         ]);
 
         return back()->with('success', "Device {$device->asset_tag} has been retired.");

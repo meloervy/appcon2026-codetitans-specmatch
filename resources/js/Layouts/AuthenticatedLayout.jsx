@@ -41,6 +41,9 @@ export default function AuthenticatedLayout({ header, children }) {
                                 <NavLink href={route('devices.index')} active={route().current('devices.*')}>
                                     Inventory
                                 </NavLink>
+                                <NavLink href={route('maintenance.index')} active={route().current('maintenance.*')}>
+                                    Maintenance
+                                </NavLink>
                                 <NavLink href={route('role-profiles.index')} active={route().current('role-profiles.*')}>
                                     Role Profiles
                                 </NavLink>
@@ -127,6 +130,9 @@ export default function AuthenticatedLayout({ header, children }) {
                         </ResponsiveNavLink>
                         <ResponsiveNavLink href={route('devices.index')} active={route().current('devices.*')}>
                             Inventory
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink href={route('maintenance.index')} active={route().current('maintenance.*')}>
+                            Maintenance
                         </ResponsiveNavLink>
                         <ResponsiveNavLink href={route('role-profiles.index')} active={route().current('role-profiles.*')}>
                             Role Profiles

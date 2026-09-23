@@ -5,13 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Assignment;
 use App\Models\Device;
 use App\Models\Employee;
+use App\Services\ItamTrackingService;
 use App\Services\MatchingService;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index(MatchingService $matchingService): Response
+    public function index(MatchingService $matchingService, ItamTrackingService $itamService): Response
     {
         $totalDevices = Device::where('status', '!=', 'retired')->count();
         $idleDevices = Device::where('status', 'available')->count();
@@ -39,6 +40,11 @@ class DashboardController extends Controller
             ->take(6)
             ->get();
 
+        $itamFinancials = $itamService->getFinancialSummary();
+        $itamWarranties = $itamService->getWarrantyAlerts();
+        $itamMaintenance = $itamService->getMaintenanceSummary();
+        $itamRedundancy = $itamService->detectRedundantAssets();
+
         return Inertia::render('Dashboard/Index', [
             'metrics' => [
                 'total_devices' => $totalDevices,
@@ -50,10 +56,25 @@ class DashboardController extends Controller
                 'mismatch_count' => $mismatchCount,
                 'procurement_savings' => $procurementSavings,
                 'total_employees' => Employee::count(),
+                // ITAM metrics
+                'total_acquisition_cost' => $itamFinancials['total_acquisition_cost'],
+                'current_book_value' => $itamFinancials['current_book_value'],
+                'total_depreciation' => $itamFinancials['total_depreciation'],
+                'expiring_warranties_count' => $itamWarranties['expiring_soon_count'],
+                'active_maintenance_count' => $itamMaintenance['active_maintenance_count'],
+                'total_maintenance_spend' => $itamMaintenance['total_maintenance_spend'],
+                'idle_high_spec_count' => $itamRedundancy['idle_high_spec_count'],
+                'stage_breakdown' => $itamFinancials['stage_breakdown'],
             ],
             'mismatches' => array_slice($mismatches, 0, 3),
             'recent_assignments' => $recentAssignments,
             'available_fleet' => $availableFleet,
+            'itam' => [
+                'financials' => $itamFinancials,
+                'warranties' => $itamWarranties,
+                'maintenance' => $itamMaintenance,
+                'redundancy' => $itamRedundancy,
+            ],
         ]);
     }
 }

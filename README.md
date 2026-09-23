@@ -62,6 +62,10 @@ DB_PASSWORD=
 
 # Optional: Add your Gemini API key (the system has an automatic heuristic fallback if left empty)
 GEMINI_API_KEY=your_gemini_api_key_here
+
+# TechSpecs API v5 Hardware Identification
+TECHSPECS_API_ID=6ab3a324d8b5670e642fe0f6
+TECHSPECS_API_KEY=d09e1ee9-bc37-4086-9112-a623323ff78f
 ```
 
 ### 3. Install PHP Dependencies
@@ -141,15 +145,38 @@ The database seeder creates an IT Administrator account:
 - **Register New Unit** (`/devices/create`): Add new laptops or desktops to the fleet with full specifications.
 - **Device Details & History** (`/devices/{id}`): View hardware profile, current assignment, past assignment history, edit specifications, or retire a unit.
 
-### 3. Role & Workload Profiles (`/role-profiles`)
+### 2. IT Asset Identification & TechSpecs API Integration (`/devices/create`)
+- **Automated Catalog Lookup**: Connects directly to the TechSpecs v5 REST API with over 180,000+ consumer and enterprise laptops and desktops.
+- **1-Click Auto-Fill**: Automatically parses and fills brand, model, CPU, CPU tier, RAM, storage size/type, GPU, GPU tier, and release year.
+- **Redundancy Optimization**: Highlights unassigned high-spec devices in pool inventory to optimize utilization and avoid duplicate procurement.
+
+### 3. Continuous ITAM Tracking (Financial, Contractual, Inventory)
+- **Financial Tracking**: Tracks initial purchase cost, annual straight-line depreciation rate (%), and computes live residual book value for every machine.
+- **Contractual Data**: Tracks vendor sources, warranty start/expiration dates, and enterprise Service-Level Agreements (SLAs).
+- **Warranty Alert Radar**: Highlights warranties expiring in &le; 60 days on the dashboard.
+- **Physical Inventory**: Authoritative tracking for serial numbers, barcodes, QR tags, and physical room/office locations.
+
+### 4. IT Asset Lifecycle Stages (`/devices/{id}`)
+- **Visual Lifecycle Stepper**: Displays progressive asset journey across 4 distinct phases:
+  1. **Acquisition**: Procurement intake, imaging, and staging.
+  2. **Deployment**: Active in-service production fleet.
+  3. **Maintenance**: Scheduled servicing, diagnostics, and repairs.
+  4. **Retirement**: End-of-life decommissioned, sanitized, and recycled.
+- **Audit Event Logging**: Records an immutable audit trail whenever an asset transitions lifecycle stages, capturing the timestamp, authorized user, and justification notes.
+
+### 5. Maintenance & Servicing Management (`/maintenance`)
+- **Activity Logging**: Log repairs, hardware upgrades (e.g. RAM, SSD), preventive servicing, inspections, and replacements with vendor/technician info and costs.
+- **Performance Assessments**: Assess post-servicing asset performance (thermal dissipation improvements, PassMark scores, memory stability) to verify operational capability before returning to deployment.
+
+### 6. Role & Workload Profiles (`/role-profiles`)
 - Standardized templates defining hardware expectations for job roles (e.g. Software Engineer, Video Designer, Data Analyst, Admin Staff, Sales, AI Researcher).
 - Includes CPU tier, minimum RAM, minimum storage, GPU requirements, and portability need.
 
-### 4. Employee Directory (`/employees`)
+### 7. Employee Directory (`/employees`)
 - View all staff members, their departments, assigned role profiles, and currently issued devices.
 - Direct "Reassign" and "Unassign" actions.
 
-### 5. AI Matching Engine (`/match`)
+### 8. AI Matching Engine (`/match`)
 - **Layer 1 (AI Extraction)**: Enter a natural language request (e.g. *"New video editor needing to render 4K video and travel frequently"*). Click **Extract Requirements** to parse it into structured JSON with Gemini's reasoning.
 - **Manual Adjustments**: Refine CPU tier, RAM, storage, GPU, or portability before scoring.
 - **Layer 2 (Deterministic Scoring)**: Ranks eligible available devices using the weighted formula:
@@ -158,7 +185,7 @@ The database seeder creates an IT Administrator account:
 - **Procurement Recommendation**: If no existing unit achieves $\ge 0.65$ score, an alert banner recommends procurement, strictly adhering to Constraint #1 (inventory first).
 - **Assign Action**: One-click atomic assignment directly updates device and employee status.
 
-### 6. Assignment Mismatch Radar (`/mismatches`)
+### 9. Assignment Mismatch Radar (`/mismatches`)
 - Audits active assignments against their employee's role profile.
 - Flags mismatches into **Under-Provisioned** (insufficient specs) or **Over-Provisioned** (hardware fleet waste).
 - Includes 3 pre-seeded demo test cases:
@@ -177,7 +204,11 @@ php artisan test
 ```
 
 Current test suite status:
-- **40 tests passing (141 assertions)** covering:
+- **45 tests passing (163 assertions)** covering:
+  - ITAM tracking (financial depreciation calculations, residual book values, and warranty alerts)
+  - Lifecycle stage progression and audit event logging
+  - Maintenance servicing logs and post-repair performance assessment recording
+  - TechSpecs catalog search, detail retrieval, and attribute mapping
   - MatchingService scoring formula and subscores
   - Eligibility filters (GPU and availability checks)
   - Procurement threshold logic
@@ -195,29 +226,36 @@ Current test suite status:
 app/
 ├── Http/
 │   └── Controllers/
-│       ├── DashboardController.php   # Fleet stats & savings calculations
-│       ├── DeviceController.php      # Hardware inventory CRUD & lifecycle
+│       ├── DashboardController.php   # Fleet stats & ITAM financial valuations
+│       ├── DeviceController.php      # Hardware inventory CRUD & lifecycle transitions
 │       ├── EmployeeController.php    # Staff directory & unassign actions
+│       ├── MaintenanceController.php # Central servicing logs & performance assessments
 │       ├── MatchingController.php    # Layer 1 extraction & Layer 2 ranking
 │       ├── MismatchController.php    # Fleet audit & mismatch radar
-│       └── RoleProfileController.php # Workload specification templates
+│       ├── RoleProfileController.php # Workload specification templates
+│       └── TechSpecsController.php   # TechSpecs REST API search & spec auto-fill
 ├── Models/
 │   ├── Assignment.php                # Hardware-to-employee relationship
-│   ├── Device.php                    # Hardware specifications & state
+│   ├── Device.php                    # Hardware specifications & ITAM state
 │   ├── Employee.php                  # Staff member records
+│   ├── LifecycleEvent.php            # Audit trail of lifecycle transitions
+│   ├── MaintenanceLog.php            # Servicing, repairs, & performance assessments
 │   ├── MatchRequest.php              # Log of matching pipeline runs
 │   └── RoleProfile.php               # Workload template specifications
 └── Services/
     ├── GeminiService.php             # Layer 1: AI text-to-spec extractor
-    └── MatchingService.php           # Layer 2: Deterministic scoring & mismatch detector
+    ├── ItamTrackingService.php       # Straight-line depreciation, residual values, & warranty alerts
+    ├── MatchingService.php           # Layer 2: Deterministic scoring & mismatch detector
+    └── TechSpecsService.php          # TechSpecs v5 catalog client & attribute mapper
 
 resources/js/
 ├── Layouts/
 │   └── AuthenticatedLayout.jsx       # Global navbar, navigation, and flash alerts
 └── Pages/
-    ├── Dashboard/Index.jsx           # Operations dashboard & utilization gauge
+    ├── Dashboard/Index.jsx           # Operations dashboard & ITAM financial health
     ├── Devices/                      # Inventory data tables, creation, & show views
     ├── Employees/Index.jsx           # Staff directory & assignment status
+    ├── Maintenance/Index.jsx         # Central ITAM maintenance & repair tracking hub
     ├── Match/Request.jsx             # AI matching pipeline & recommendation cards
     ├── Mismatches/Index.jsx          # Mismatch radar & discrepancy audit
     └── RoleProfiles/Index.jsx        # Role profile templates & editor
