@@ -74,8 +74,8 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
             header={
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">IT Maintenance & Servicing</h1>
-                        <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1">
+                        <h1 className="text-2xl font-sans font-extrabold tracking-tight text-slate-900 dark:text-zinc-100">IT Maintenance & Servicing</h1>
+                        <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1 max-w-2xl">
                             Hardware repairs, component upgrades, preventive servicing, and performance assessments.
                         </p>
                     </div>
@@ -275,11 +275,11 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                                             </td>
                                             <td className="py-4 px-4">
                                                 <div className={`font-semibold text-slate-900 dark:text-zinc-100 ${wrapText ? 'break-words whitespace-normal' : 'truncate'}`} title={log.title}>{log.title}</div>
-                                                <span className={`inline-block mt-1 px-2 py-0.5 text-[10px] font-bold uppercase rounded ${
-                                                    log.type === 'repair' ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300' :
-                                                    log.type === 'upgrade' ? 'bg-[#026eff]/15 dark:bg-[#031a40]/60 text-[#026eff] dark:text-[#0b79ff]' :
-                                                    log.type === 'preventive' ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300' :
-                                                    'bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300'
+                                                <span className={`inline-block mt-1 px-2 py-0.5 text-[10px] font-bold uppercase rounded border shadow-xs ${
+                                                    log.type === 'repair' ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-200/50 dark:border-rose-900/50' :
+                                                    log.type === 'upgrade' ? 'bg-[#026eff]/10 dark:bg-[#031a40]/60 text-[#026eff] dark:text-[#0b79ff] border-[#026eff]/20 dark:border-[#031a40]/60' :
+                                                    log.type === 'preventive' ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200/50 dark:border-emerald-900/50' :
+                                                    'bg-slate-50 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 border-slate-200/50 dark:border-zinc-700/50'
                                                 }`}>
                                                     {log.type}
                                                 </span>
@@ -307,11 +307,11 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                                                 )}
                                             </td>
                                             <td className="py-4 px-4">
-                                                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider inline-block ${
-                                                    log.status === 'completed' ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300' :
-                                                    log.status === 'in_progress' ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300' :
-                                                    log.status === 'scheduled' ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300' :
-                                                    'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400'
+                                                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider inline-block border shadow-xs ${
+                                                    log.status === 'completed' ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200/50 dark:border-emerald-900/50' :
+                                                    log.status === 'in_progress' ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200/50 dark:border-amber-900/50' :
+                                                    log.status === 'scheduled' ? 'bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border-sky-200/50 dark:border-sky-900/50' :
+                                                    'bg-slate-50 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 border-slate-200/50 dark:border-zinc-700/50'
                                                 }`}>
                                                     {log.status.replace('_', ' ')}
                                                 </span>

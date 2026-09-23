@@ -157,8 +157,8 @@ export default function EmployeesIndex({ employees, role_profiles }) {
             header={
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">Company Staff Directory</h1>
-                        <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1">
+                        <h1 className="text-2xl font-sans font-extrabold tracking-tight text-slate-900 dark:text-zinc-100">Company Staff Directory</h1>
+                        <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1 max-w-2xl">
                             Staff profiles, role templates, and currently issued hardware.
                         </p>
                     </div>

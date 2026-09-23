@@ -15,8 +15,8 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
             header={
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">IT Asset Operations & Intelligence</h1>
-                        <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1">
+                        <h1 className="text-2xl font-sans font-extrabold tracking-tight text-slate-900 dark:text-zinc-100">IT Asset Operations & Intelligence</h1>
+                        <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1 max-w-2xl">
                             Hardware inventory tracking, straight-line depreciation, lifecycle phases, and smart workload matching.
                         </p>
                     </div>
@@ -43,7 +43,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
             <Head title="ITAM Operations Dashboard - SpecMatch" />
 
             {/* Lifecycle Stages Ribbon */}
-            <div className="mb-6 bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 p-4 shadow-xs">
+            <div className="mb-6 bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 p-6 shadow-xs">
                 <div className="flex items-center justify-between mb-3">
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Fleet Lifecycle Phase Distribution</span>
                     <span className="text-xs text-slate-400 dark:text-zinc-500">Total Authoritative Inventory: {metrics.total_devices + (metrics.retired_devices || 0)} Units</span>
@@ -55,7 +55,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                             <span className="text-xl font-black text-sky-950 dark:text-sky-200 mt-0.5 block">{stageBreakdown.acquisition || 0}</span>
                             <span className="text-[11px] text-sky-600 dark:text-sky-400/80">Procurement & Staging</span>
                         </div>
-                        <span className="p-2 rounded-lg bg-sky-100 dark:bg-sky-900/60 text-sky-700 dark:text-sky-300 font-bold text-xs">NEW</span>
+                        <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 text-[10px] font-bold shadow-xs"><span className="w-1.5 h-1.5 rounded-full bg-sky-500"></span>NEW</span>
                     </div>
 
                     <div className="p-3 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 flex items-center justify-between">
@@ -64,7 +64,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                             <span className="text-xl font-black text-emerald-950 dark:text-emerald-200 mt-0.5 block">{stageBreakdown.deployment || 0}</span>
                             <span className="text-[11px] text-emerald-600 dark:text-emerald-400/80">In Active Circulation</span>
                         </div>
-                        <span className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-bold text-xs">LIVE</span>
+                        <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 text-[10px] font-bold shadow-xs"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>LIVE</span>
                     </div>
 
                     <div className="p-3 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/50 flex items-center justify-between">
@@ -73,8 +73,8 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                             <span className="text-xl font-black text-amber-950 dark:text-amber-200 mt-0.5 block">{stageBreakdown.maintenance || 0}</span>
                             <span className="text-[11px] text-amber-600 dark:text-amber-400/80">Repair & Servicing</span>
                         </div>
-                        <Link href={route('maintenance.index')} className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 font-bold text-xs hover:bg-amber-200 dark:hover:bg-amber-800/80 transition">
-                            LOGS
+                        <Link href={route('maintenance.index')} className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 text-[10px] font-bold shadow-xs hover:bg-slate-50 dark:hover:bg-zinc-700 transition">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>LOGS
                         </Link>
                     </div>
 
@@ -84,7 +84,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                             <span className="text-xl font-black text-slate-800 dark:text-zinc-200 mt-0.5 block">{stageBreakdown.retirement || 0}</span>
                             <span className="text-[11px] text-slate-500 dark:text-zinc-500">Decommissioned / EOL</span>
                         </div>
-                        <span className="p-2 rounded-lg bg-slate-200 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300 font-bold text-xs">EOL</span>
+                        <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 text-[10px] font-bold shadow-xs"><span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>EOL</span>
                     </div>
                 </div>
             </div>
@@ -115,14 +115,14 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                 <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-slate-200/80 dark:border-zinc-800 shadow-xs">
                     <div className="flex items-center justify-between">
                         <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Residual Book Value</span>
-                        <span className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
+                        <span className="p-2 rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300">
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                             </svg>
                         </span>
                     </div>
                     <div className="mt-4 flex items-baseline gap-2">
-                        <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+                        <span className="text-2xl font-black text-slate-900 dark:text-zinc-100">
                             ₱{Number(metrics.current_book_value || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                         </span>
                     </div>
@@ -158,17 +158,17 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                 <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-slate-200/80 dark:border-zinc-800 shadow-xs">
                     <div className="flex items-center justify-between">
                         <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Procurement Avoidance</span>
-                        <span className="p-2 rounded-xl bg-[#026eff]/10 dark:bg-[#031a40]/40 text-[#026eff] dark:text-[#0b79ff]">
+                        <span className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                             </svg>
                         </span>
                     </div>
                     <div className="mt-4 flex items-baseline gap-2">
-                        <span className="text-2xl font-black text-[#026eff] dark:text-[#0b79ff]">
+                        <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
                             ₱{metrics.procurement_savings.toLocaleString()}
                         </span>
-                        <span className="text-xs text-[#026eff] dark:text-[#0b79ff] font-semibold bg-[#026eff]/10 dark:bg-[#031a40]/60 px-1.5 py-0.5 rounded">Saved</span>
+                        <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded">Saved</span>
                     </div>
                     <p className="mt-3 text-xs text-slate-500 dark:text-zinc-400">
                         Capital saved by matching idle fleet vs purchasing new units.
@@ -198,7 +198,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                         </div>
                         <Link
                             href={route('devices.index')}
-                            className="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-bold hover:bg-amber-700 shrink-0 transition"
+                            className="px-3 py-1.5 rounded-lg border border-amber-600 dark:border-amber-500 text-amber-700 dark:text-amber-400 text-xs font-bold hover:bg-amber-50 dark:hover:bg-amber-950/30 shrink-0 transition"
                         >
                             View Assets
                         </Link>
@@ -225,7 +225,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                         </div>
                         <Link
                             href={route('match.index')}
-                            className="px-3 py-1.5 rounded-lg bg-[#026eff] text-white text-xs font-bold hover:bg-[#0256cc] shrink-0 transition"
+                            className="px-3 py-1.5 rounded-lg border border-[#026eff] text-[#026eff] dark:text-[#0b79ff] text-xs font-bold hover:bg-[#026eff]/10 shrink-0 transition"
                         >
                             Assign Assets
                         </Link>
@@ -253,7 +253,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                     </div>
                     <Link
                         href={route('mismatches.index')}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600 text-white text-xs font-bold hover:bg-amber-700 transition shrink-0 self-start md:self-auto"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-amber-600 dark:border-amber-500 text-amber-700 dark:text-amber-400 text-xs font-bold hover:bg-amber-50 dark:hover:bg-amber-950/30 transition shrink-0 self-start md:self-auto"
                     >
                         Review Mismatches &rarr;
                     </Link>

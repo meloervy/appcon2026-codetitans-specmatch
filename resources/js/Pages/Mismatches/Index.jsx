@@ -11,8 +11,8 @@ export default function MismatchesIndex({ mismatches, threshold }) {
             header={
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">Assignment Mismatch Radar</h1>
-                        <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1">
+                        <h1 className="text-2xl font-sans font-extrabold tracking-tight text-slate-900 dark:text-zinc-100">Assignment Mismatch Radar</h1>
+                        <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1 max-w-2xl">
                             Continuous fleet audit detecting under-provisioned performance bottlenecks and over-provisioned fleet waste.
                         </p>
                     </div>
@@ -77,10 +77,10 @@ export default function MismatchesIndex({ mismatches, threshold }) {
                         return (
                             <div
                                 key={assignment.id}
-                                className={`bg-white dark:bg-zinc-900 rounded-2xl border p-6 shadow-xs transition ${
+                                className={`bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 border-l-4 p-6 shadow-xs transition hover:shadow-sm ${
                                     isUnder
-                                        ? 'border-rose-200/80 dark:border-rose-900/60 hover:border-rose-300 dark:hover:border-rose-800'
-                                        : 'border-amber-200/80 dark:border-amber-900/60 hover:border-amber-300 dark:hover:border-amber-800'
+                                        ? 'border-l-rose-500'
+                                        : 'border-l-amber-500'
                                 }`}
                             >
                                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-zinc-800">
