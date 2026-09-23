@@ -52,11 +52,6 @@ export default function SpecMatchLogo({
                     <span className={`text-2xl font-extrabold tracking-tight text-[#05183c] dark:text-white font-sans ${textClassName}`}>
                         specmatch
                     </span>
-                    {showBadge && (
-                        <span className="px-1.5 py-0.5 text-[9px] uppercase font-bold tracking-wider rounded bg-sky-50 dark:bg-sky-950/60 text-[#026eff] dark:text-sky-300 border border-[#026eff]/20">
-                            ITAM
-                        </span>
-                    )}
                 </div>
             </div>
         );
@@ -70,11 +65,6 @@ export default function SpecMatchLogo({
                 <span className={`text-base font-extrabold tracking-tight text-[#05183c] dark:text-white font-sans ${textClassName}`}>
                     specmatch
                 </span>
-                {showBadge && (
-                    <span className="px-1.5 py-0.5 text-[9px] uppercase font-bold tracking-wider rounded bg-sky-50 dark:bg-sky-950/60 text-[#026eff] dark:text-sky-300 border border-[#026eff]/20">
-                        ITAM
-                    </span>
-                )}
             </div>
         </div>
     );

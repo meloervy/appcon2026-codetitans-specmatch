@@ -203,6 +203,8 @@ class MatchingService
             'disqualified' => $disqualified,
             'disqualification_reason' => $disqualificationReason,
             'passes_threshold' => ! $disqualified && ($finalScore >= self::MATCH_THRESHOLD),
+            'is_available_for_deployment' => ($device->status === 'available'),
+            'deployment_readiness' => ($device->status === 'available' ? 'Stockroom Ready (Immediate Dispatch)' : 'Currently Assigned'),
         ];
     }
 

@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import HardwareImage from '@/Components/HardwareImage';
+import GooeyInput from '@/Components/ui/GooeyInput';
 import ResizableTh from '@/Components/ResizableTh';
 import { useResizableColumns } from '@/Hooks/useResizableColumns';
 import { Head, Link, router } from '@inertiajs/react';
@@ -16,16 +17,34 @@ export default function DevicesIndex({ devices, filters }) {
 
     const initialWidths = {
         tag: 150,
-        model: 240,
-        specs: 260,
-        location: 180,
-        lifecycle: 140,
-        warranty: 130,
-        user: 170,
+        model: 230,
+        specs: 230,
+        location: 160,
+        lifecycle: 130,
+        warranty: 120,
+        user: 160,
+        date: 120,
         action: 90,
     };
 
-    const { widths, startResize, autoExpandCol, resetWidths, isResizing, resizingCol } = useResizableColumns(initialWidths, 'devices_table');
+    const { widths, startResize, autoExpandCol, resetWidths, isResizing, resizingCol } = useResizableColumns(initialWidths, 'devices_table_v2');
+
+    const handleSort = (sortKey) => {
+        const currentSort = filters.sort || 'asset_tag';
+        const currentDirection = filters.direction || 'asc';
+        const nextDirection = (currentSort === sortKey && currentDirection === 'asc') ? 'desc' : 'asc';
+
+        router.get(route('devices.index'), {
+            search,
+            status,
+            lifecycle_stage: lifecycleStage,
+            device_type: deviceType,
+            cpu_tier: cpuTier,
+            condition,
+            sort: sortKey,
+            direction: nextDirection,
+        }, { preserveState: true, replace: true });
+    };
 
     const handleFilter = (e) => {
         e.preventDefault();
@@ -36,6 +55,8 @@ export default function DevicesIndex({ devices, filters }) {
             device_type: deviceType,
             cpu_tier: cpuTier,
             condition,
+            sort: filters.sort,
+            direction: filters.direction,
         }, { preserveState: true, replace: true });
     };
 
@@ -98,20 +119,21 @@ export default function DevicesIndex({ devices, filters }) {
             {/* Filter Bar */}
             <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 p-3.5 shadow-2xs mb-5">
                 <form onSubmit={handleFilter} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2.5">
-                    <div className="lg:col-span-2">
-                        <input
-                            type="text"
-                            placeholder="Search tag, serial, brand, model..."
+                    <div className="lg:col-span-2 flex items-center">
+                        <GooeyInput
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 bg-slate-50/50 dark:bg-zinc-800/60 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff]"
+                            onValueChange={(val) => setSearch(val)}
+                            placeholder="Search tag, serial, model..."
+                            collapsedWidth={140}
+                            expandedWidth={220}
+                            className="w-full justify-start"
                         />
                     </div>
                     <div>
                         <select
                             value={lifecycleStage}
                             onChange={(e) => setLifecycleStage(e.target.value)}
-                            className="w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 bg-slate-50/50 dark:bg-zinc-800/60 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
+                            className="w-full text-xs font-medium py-2 px-3 rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
                         >
                             <option value="">All Lifecycle Stages</option>
                             <option value="acquisition">Acquisition</option>
@@ -124,7 +146,7 @@ export default function DevicesIndex({ devices, filters }) {
                         <select
                             value={status}
                             onChange={(e) => setStatus(e.target.value)}
-                            className="w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 bg-slate-50/50 dark:bg-zinc-800/60 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
+                            className="w-full text-xs font-medium py-2 px-3 rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
                         >
                             <option value="">All Statuses</option>
                             <option value="available">Available (Idle)</option>
@@ -137,7 +159,7 @@ export default function DevicesIndex({ devices, filters }) {
                         <select
                             value={deviceType}
                             onChange={(e) => setDeviceType(e.target.value)}
-                            className="w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 bg-slate-50/50 dark:bg-zinc-800/60 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
+                            className="w-full text-xs font-medium py-2 px-3 rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
                         >
                             <option value="">All Types</option>
                             <option value="laptop">Laptop</option>
@@ -148,7 +170,7 @@ export default function DevicesIndex({ devices, filters }) {
                         <select
                             value={cpuTier}
                             onChange={(e) => setCpuTier(e.target.value)}
-                            className="w-full text-xs rounded-lg border-slate-200 dark:border-zinc-750 bg-slate-50/50 dark:bg-zinc-800/60 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
+                            className="w-full text-xs font-medium py-2 px-3 rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
                         >
                             <option value="">All CPU Tiers</option>
                             <option value="entry">Entry Tier</option>
@@ -160,7 +182,7 @@ export default function DevicesIndex({ devices, filters }) {
                     <div className="flex items-center gap-1.5">
                         <button
                             type="submit"
-                            className="w-full py-1.5 px-3 text-xs font-semibold rounded-lg bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-slate-800 dark:hover:bg-white transition"
+                            className="w-full py-1.5 px-3 text-xs font-semibold rounded-lg bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-slate-800 dark:hover:bg-white transition cursor-pointer"
                         >
                             Filter
                         </button>
@@ -168,7 +190,7 @@ export default function DevicesIndex({ devices, filters }) {
                             <button
                                 type="button"
                                 onClick={clearFilters}
-                                className="py-1.5 px-2.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-zinc-750 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 transition"
+                                className="py-1.5 px-2.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-zinc-750 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 transition cursor-pointer"
                             >
                                 Reset
                             </button>
@@ -182,10 +204,25 @@ export default function DevicesIndex({ devices, filters }) {
                 {/* Column Adjustment & Display Control Toolbar */}
                 <div className="px-4 py-2 bg-slate-50/70 dark:bg-zinc-800/40 border-b border-slate-200/70 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2 text-xs">
                     <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-400 text-[11px]">
-                        <span className="inline-flex items-center justify-center w-4 h-4 rounded bg-[#026eff]/10 text-[#026eff] font-bold text-[10px]">↔</span>
-                        <span>Drag column dividers to resize • Double-click divider to expand (+120px)</span>
+                        <span className="inline-flex items-center justify-center w-4 h-4 rounded bg-[#026eff]/10 text-[#026eff] font-bold text-[10px]">↕</span>
+                        <span>Click any header to sort • Drag dividers to resize</span>
                     </div>
                     <div className="flex items-center gap-2 ml-auto">
+                        <button
+                            type="button"
+                            onClick={() => handleSort('created_at')}
+                            className={`px-2.5 py-1 rounded-lg border text-[11px] font-medium transition cursor-pointer flex items-center gap-1.5 ${
+                                filters.sort === 'created_at' || filters.sort === 'date'
+                                    ? 'bg-[#026eff]/15 text-[#026eff] border-[#026eff]/30 dark:bg-[#026eff]/20 dark:text-sky-300'
+                                    : 'bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 border-slate-200 dark:border-zinc-750 hover:bg-slate-50 dark:hover:bg-zinc-700/60'
+                            }`}
+                            title="Sort hardware inventory chronologically by registration date"
+                        >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span>Sort Chronologically {(filters.sort === 'created_at' || filters.sort === 'date') ? (filters.direction === 'desc' ? '(Newest)' : '(Oldest)') : ''}</span>
+                        </button>
                         <button
                             type="button"
                             onClick={() => setWrapText(!wrapText)}
@@ -217,22 +254,125 @@ export default function DevicesIndex({ devices, filters }) {
                         className="w-full text-left text-xs table-fixed"
                         style={{ minWidth: `${Math.max(1000, Object.values(widths).reduce((a, b) => a + b, 0))}px` }}
                     >
-                        <thead className="bg-slate-50/70 dark:bg-zinc-800/50 border-b border-slate-200/80 dark:border-zinc-800 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+                        <thead className="bg-slate-50/70 dark:bg-zinc-800/50 border-b border-slate-200/80 dark:border-zinc-800 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap text-slate-500 dark:text-zinc-400">
                             <tr>
-                                <ResizableTh colKey="tag" width={widths.tag} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'tag'}>Asset Tag & Serial</ResizableTh>
-                                <ResizableTh colKey="model" width={widths.model} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'model'}>Device Clip & Model</ResizableTh>
-                                <ResizableTh colKey="specs" width={widths.specs} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'specs'}>Specifications</ResizableTh>
-                                <ResizableTh colKey="location" width={widths.location} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'location'}>Location</ResizableTh>
-                                <ResizableTh colKey="lifecycle" width={widths.lifecycle} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'lifecycle'}>Lifecycle Phase</ResizableTh>
-                                <ResizableTh colKey="warranty" width={widths.warranty} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'warranty'}>Warranty</ResizableTh>
-                                <ResizableTh colKey="user" width={widths.user} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'user'}>Current User</ResizableTh>
-                                <ResizableTh colKey="action" width={widths.action} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'action'} align="right" resizable={false}>Action</ResizableTh>
+                                <ResizableTh
+                                    colKey="tag"
+                                    sortKey="tag"
+                                    currentSort={filters.sort || 'asset_tag'}
+                                    sortDirection={filters.direction || 'asc'}
+                                    onSort={handleSort}
+                                    width={widths.tag}
+                                    onResizeStart={startResize}
+                                    onAutoExpand={autoExpandCol}
+                                    isResizing={resizingCol === 'tag'}
+                                >
+                                    Asset Tag & Serial
+                                </ResizableTh>
+                                <ResizableTh
+                                    colKey="model"
+                                    sortKey="model"
+                                    currentSort={filters.sort}
+                                    sortDirection={filters.direction || 'asc'}
+                                    onSort={handleSort}
+                                    width={widths.model}
+                                    onResizeStart={startResize}
+                                    onAutoExpand={autoExpandCol}
+                                    isResizing={resizingCol === 'model'}
+                                >
+                                    Device Clip & Model
+                                </ResizableTh>
+                                <ResizableTh
+                                    colKey="specs"
+                                    sortKey="specs"
+                                    currentSort={filters.sort}
+                                    sortDirection={filters.direction || 'asc'}
+                                    onSort={handleSort}
+                                    width={widths.specs}
+                                    onResizeStart={startResize}
+                                    onAutoExpand={autoExpandCol}
+                                    isResizing={resizingCol === 'specs'}
+                                >
+                                    Specifications
+                                </ResizableTh>
+                                <ResizableTh
+                                    colKey="location"
+                                    sortKey="location"
+                                    currentSort={filters.sort}
+                                    sortDirection={filters.direction || 'asc'}
+                                    onSort={handleSort}
+                                    width={widths.location}
+                                    onResizeStart={startResize}
+                                    onAutoExpand={autoExpandCol}
+                                    isResizing={resizingCol === 'location'}
+                                >
+                                    Location
+                                </ResizableTh>
+                                <ResizableTh
+                                    colKey="lifecycle"
+                                    sortKey="lifecycle"
+                                    currentSort={filters.sort}
+                                    sortDirection={filters.direction || 'asc'}
+                                    onSort={handleSort}
+                                    width={widths.lifecycle}
+                                    onResizeStart={startResize}
+                                    onAutoExpand={autoExpandCol}
+                                    isResizing={resizingCol === 'lifecycle'}
+                                >
+                                    Lifecycle Phase
+                                </ResizableTh>
+                                <ResizableTh
+                                    colKey="warranty"
+                                    sortKey="warranty"
+                                    currentSort={filters.sort}
+                                    sortDirection={filters.direction || 'asc'}
+                                    onSort={handleSort}
+                                    width={widths.warranty}
+                                    onResizeStart={startResize}
+                                    onAutoExpand={autoExpandCol}
+                                    isResizing={resizingCol === 'warranty'}
+                                >
+                                    Warranty
+                                </ResizableTh>
+                                <ResizableTh
+                                    colKey="user"
+                                    width={widths.user}
+                                    onResizeStart={startResize}
+                                    onAutoExpand={autoExpandCol}
+                                    isResizing={resizingCol === 'user'}
+                                >
+                                    Current User
+                                </ResizableTh>
+                                <ResizableTh
+                                    colKey="date"
+                                    sortKey="created_at"
+                                    currentSort={filters.sort}
+                                    sortDirection={filters.direction || 'asc'}
+                                    onSort={handleSort}
+                                    width={widths.date}
+                                    onResizeStart={startResize}
+                                    onAutoExpand={autoExpandCol}
+                                    isResizing={resizingCol === 'date'}
+                                >
+                                    Registered
+                                </ResizableTh>
+                                <ResizableTh
+                                    colKey="action"
+                                    width={widths.action}
+                                    onResizeStart={startResize}
+                                    onAutoExpand={autoExpandCol}
+                                    isResizing={resizingCol === 'action'}
+                                    align="right"
+                                    resizable={false}
+                                >
+                                    Action
+                                </ResizableTh>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/60">
                             {devices.data.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} className="py-12 text-center text-slate-400 dark:text-zinc-500">
+                                    <td colSpan={9} className="py-12 text-center text-slate-400 dark:text-zinc-500">
                                         No hardware assets found matching criteria.
                                     </td>
                                 </tr>
@@ -332,6 +472,16 @@ export default function DevicesIndex({ devices, filters }) {
                                             ) : (
                                                 <span className="text-slate-400 dark:text-zinc-500 italic">Unassigned (Pool)</span>
                                             )}
+                                        </td>
+
+                                        {/* Chronological Registration Date */}
+                                        <td className="py-3 px-4 text-xs text-slate-500 dark:text-zinc-400 whitespace-nowrap">
+                                            <div className="font-medium text-slate-700 dark:text-zinc-300">
+                                                {device.created_at ? new Date(device.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                                            </div>
+                                            <div className="text-[10px] text-slate-400 dark:text-zinc-500 font-mono">
+                                                {device.created_at ? new Date(device.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : ''}
+                                            </div>
                                         </td>
 
                                         {/* Action */}

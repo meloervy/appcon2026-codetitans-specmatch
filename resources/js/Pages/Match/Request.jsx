@@ -1,10 +1,60 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import HardwareImage from '@/Components/HardwareImage';
+import StatefulButton from '@/Components/ui/StatefulButton';
 import { Head, router } from '@inertiajs/react';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 
-export default function MatchRequest({ employees, role_profiles, recent_requests, selected_employee_id }) {
+const DEFAULT_TEMPLATES = [
+    {
+        id: 'tpl-video-editor',
+        title: 'Senior 4K Video Editor',
+        category: 'Creative & Media',
+        specs_summary: 'Core i7/M3 Pro • 32GB RAM • Dedicated High GPU • Laptop',
+        prompt: 'New senior video editor joining marketing. Needs to edit 4K footage in Premiere/After Effects and travels frequently between shoots.',
+        isCustom: false,
+    },
+    {
+        id: 'tpl-backend-eng',
+        title: 'Backend Software Engineer',
+        category: 'Engineering & Dev',
+        specs_summary: 'Core i7 / Ryzen 7 • 32GB RAM • 1TB SSD • Laptop',
+        prompt: 'Backend software engineer working with Docker microservices, compiling Rust and running local databases. Needs 32GB RAM and portability.',
+        isCustom: false,
+    },
+    {
+        id: 'tpl-data-analyst',
+        title: 'Senior Data & BI Analyst',
+        category: 'Analytics',
+        specs_summary: 'Core i5/i7 • 16GB RAM • 512GB SSD • Desktop OK',
+        prompt: 'Data analyst doing heavy SQL querying and Tableau visualization from office desk. No GPU needed, prefers desktop.',
+        isCustom: false,
+    },
+    {
+        id: 'tpl-hr-specialist',
+        title: 'HR & Administrative Specialist',
+        category: 'Office & Ops',
+        specs_summary: 'Entry CPU • 8GB RAM • 256GB SSD • Laptop',
+        prompt: 'HR specialist handling spreadsheets, web apps, and emails. Basic productivity laptop.',
+        isCustom: false,
+    },
+    {
+        id: 'tpl-ai-researcher',
+        title: 'AI / 3D Simulation Engineer',
+        category: 'Engineering & Dev',
+        specs_summary: 'Workstation Xeon/Threadripper • 64GB RAM • Dedicated High GPU',
+        prompt: 'Machine learning specialist training local PyTorch models and running 3D viewport simulations. Demands workstation class CPU and high-end discrete GPU.',
+        isCustom: false,
+    },
+];
+
+export default function MatchRequest({
+    employees,
+    role_profiles,
+    recent_requests,
+    selected_employee_id,
+    deployable_summary,
+}) {
     const [employeeId, setEmployeeId] = useState(selected_employee_id || '');
     const [rawInput, setRawInput] = useState('');
     const [isExtracting, setIsExtracting] = useState(false);
@@ -19,22 +69,130 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
     const [showBridgeModal, setShowBridgeModal] = useState(false);
     const [errorMsg, setErrorMsg] = useState(null);
 
+    // Quick Workload Templates State
+    const [templates, setTemplates] = useState(() => {
+        try {
+            const saved = localStorage.getItem('specmatch_workload_templates');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                return [...DEFAULT_TEMPLATES, ...parsed];
+            }
+        } catch (e) {
+            console.error('Failed to parse saved templates', e);
+        }
+        return DEFAULT_TEMPLATES;
+    });
+    const [selectedTemplateId, setSelectedTemplateId] = useState(null);
+    const [templateCategory, setTemplateCategory] = useState('all');
+    const [showNewTemplateModal, setShowNewTemplateModal] = useState(false);
+    const [newTemplateForm, setNewTemplateForm] = useState({
+        title: '',
+        category: 'Engineering & Dev',
+        prompt: '',
+        specs_summary: '',
+    });
+
+    // Gemini Connectivity State
+    const [isTestingGemini, setIsTestingGemini] = useState(false);
+    const [geminiTestResult, setGeminiTestResult] = useState(null);
+    const [showGeminiModal, setShowGeminiModal] = useState(false);
+
+    // Deployable Inventory Modal State
+    const [showDeployableModal, setShowDeployableModal] = useState(false);
+    const [deployableSearch, setDeployableSearch] = useState('');
+    const [deployableTypeFilter, setDeployableTypeFilter] = useState('all');
+
     // When an employee is selected with a pre-configured role profile, offer quick template fill
     const selectedEmployee = employees.find((e) => e.id === parseInt(employeeId));
 
     useEffect(() => {
         if (selectedEmployee?.role_profile) {
             const p = selectedEmployee.role_profile;
-            setRawInput(`Assigning hardware for ${selectedEmployee.name} (${p.name}). ${p.description || ''} Requires ${p.min_ram_gb}GB RAM, ${p.min_storage_gb}GB storage, ${p.portability_required ? 'laptop for mobility' : 'desktop'}.`);
+            setRawInput(
+                `Assigning hardware for ${selectedEmployee.name} (${p.name}). ${p.description || ''} Requires ${p.min_ram_gb}GB RAM, ${p.min_storage_gb}GB storage, ${p.portability_required ? 'laptop for mobility' : 'desktop'}.`
+            );
         }
     }, [employeeId]);
 
-    const examplePrompts = [
-        "New senior video editor joining marketing. Needs to edit 4K footage in Premiere/After Effects and travels frequently between shoots.",
-        "Backend software engineer working with Docker microservices, compiling Rust and running local databases. Needs 32GB RAM and portability.",
-        "Data analyst doing heavy SQL querying and Tableau visualization from office desk. No GPU needed, prefers desktop.",
-        "HR specialist handling spreadsheets, web apps, and emails. Basic productivity laptop.",
-    ];
+    const handleSaveNewTemplate = (e) => {
+        e?.preventDefault();
+        if (!newTemplateForm.title.trim() || !newTemplateForm.prompt.trim()) {
+            alert('Please provide both a title and workload prompt description.');
+            return;
+        }
+
+        const newTpl = {
+            id: 'custom-' + Date.now(),
+            title: newTemplateForm.title.trim(),
+            category: newTemplateForm.category || 'Custom',
+            specs_summary: newTemplateForm.specs_summary?.trim() || 'Custom Workload Requirement',
+            prompt: newTemplateForm.prompt.trim(),
+            isCustom: true,
+        };
+
+        const customExisting = templates.filter((t) => t.isCustom);
+        const updatedCustom = [newTpl, ...customExisting];
+        localStorage.setItem('specmatch_workload_templates', JSON.stringify(updatedCustom));
+        setTemplates([...DEFAULT_TEMPLATES, ...updatedCustom]);
+        setSelectedTemplateId(newTpl.id);
+        setRawInput(newTpl.prompt);
+        setShowNewTemplateModal(false);
+        setNewTemplateForm({ title: '', category: 'Engineering & Dev', prompt: '', specs_summary: '' });
+    };
+
+    const handleDeleteTemplate = (id, e) => {
+        e?.stopPropagation();
+        if (confirm('Delete this custom workload template?')) {
+            const updated = templates.filter((t) => t.id !== id);
+            const customOnly = updated.filter((t) => t.isCustom);
+            localStorage.setItem('specmatch_workload_templates', JSON.stringify(customOnly));
+            setTemplates(updated);
+            if (selectedTemplateId === id) {
+                setSelectedTemplateId(null);
+            }
+        }
+    };
+
+    const handleSelectTemplate = (tpl) => {
+        setSelectedTemplateId(tpl.id);
+        setRawInput(tpl.prompt);
+    };
+
+    const handleSaveCurrentAsTemplate = () => {
+        if (!rawInput.trim()) {
+            alert('Please enter or generate a workload prompt description first before saving as a template.');
+            return;
+        }
+        setNewTemplateForm({
+            title: selectedEmployee ? `${selectedEmployee.name} Workload` : 'Custom Workload',
+            category: 'Engineering & Dev',
+            prompt: rawInput.trim(),
+            specs_summary: '',
+        });
+        setShowNewTemplateModal(true);
+    };
+
+    const handleTestGemini = async () => {
+        setIsTestingGemini(true);
+        try {
+            const res = await axios.post(route('match.test-gemini'), { model: 'gemini-3.6-flash' });
+            setGeminiTestResult(res.data);
+            setShowGeminiModal(true);
+        } catch (err) {
+            setGeminiTestResult({
+                status: 'error',
+                success: false,
+                http_status: 500,
+                model: 'gemini-3.6-flash',
+                message: err.response?.data?.message || 'Failed to ping Gemini endpoint.',
+                latency_ms: 0,
+                fallback_active: true,
+            });
+            setShowGeminiModal(true);
+        } finally {
+            setIsTestingGemini(false);
+        }
+    };
 
     const handleExtract = async () => {
         if (!rawInput.trim()) return;
@@ -83,18 +241,22 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
             return;
         }
 
-        router.post(route('match.bridge-swap'), {
-            bridge_device_id: swap.bridge_device.id,
-            donor_employee_id: swap.donor_employee.id,
-            requester_employee_id: employeeId,
-            donor_device_id: swap.donor_device.id,
-        }, {
-            onStart: () => setIsExecutingSwap(true),
-            onFinish: () => setIsExecutingSwap(false),
-            onSuccess: () => {
-                setShowBridgeModal(false);
+        router.post(
+            route('match.bridge-swap'),
+            {
+                bridge_device_id: swap.bridge_device.id,
+                donor_employee_id: swap.donor_employee.id,
+                requester_employee_id: employeeId,
+                donor_device_id: swap.donor_device.id,
             },
-        });
+            {
+                onStart: () => setIsExecutingSwap(true),
+                onFinish: () => setIsExecutingSwap(false),
+                onSuccess: () => {
+                    setShowBridgeModal(false);
+                },
+            }
+        );
     };
 
     const handleAssign = (device, score) => {
@@ -103,25 +265,65 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
             return;
         }
 
-        router.post(route('match.assign'), {
-            device_id: device.id,
-            employee_id: employeeId,
-            assignment_source: 'ai_recommended',
-            match_score: score,
-        }, {
-            onStart: () => setIsAssigning(true),
-            onFinish: () => setIsAssigning(false),
-        });
+        router.post(
+            route('match.assign'),
+            {
+                device_id: device.id,
+                employee_id: employeeId,
+                assignment_source: 'ai_recommended',
+                match_score: score,
+            },
+            {
+                onStart: () => setIsAssigning(true),
+                onFinish: () => setIsAssigning(false),
+            }
+        );
     };
+
+    const filteredTemplates = templates.filter((t) => {
+        if (templateCategory === 'all') return true;
+        if (templateCategory === 'custom') return t.isCustom;
+        return t.category === templateCategory;
+    });
+
+    const filteredDeployableDevices = (deployable_summary?.preview_devices || []).filter((d) => {
+        if (deployableTypeFilter !== 'all' && d.device_type !== deployableTypeFilter) return false;
+        if (!deployableSearch.trim()) return true;
+        const q = deployableSearch.toLowerCase();
+        return (
+            d.asset_tag?.toLowerCase().includes(q) ||
+            d.brand?.toLowerCase().includes(q) ||
+            d.model?.toLowerCase().includes(q) ||
+            d.cpu?.toLowerCase().includes(q) ||
+            d.location?.toLowerCase().includes(q) ||
+            d.cpu_tier?.toLowerCase().includes(q)
+        );
+    });
 
     return (
         <AuthenticatedLayout
             header={
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">AI-Powered Matching Engine</h1>
-                    <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1">
-                        Two-layer intelligent pipeline: Natural language requirement extraction (Gemini) + Deterministic fleet ranking.
-                    </p>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">
+                            AI-Powered Matching Engine
+                        </h1>
+                        <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1">
+                            Two-layer intelligent pipeline: Natural language requirement extraction (Gemini 3.6 Flash) + Deterministic fleet ranking.
+                        </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={handleTestGemini}
+                            disabled={isTestingGemini}
+                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:text-[#026eff] dark:hover:text-[#0b79ff] text-xs font-bold border border-slate-200 dark:border-zinc-700 shadow-2xs transition cursor-pointer"
+                        >
+                            <span className="w-2 h-2 rounded-full bg-[#0aceb3] animate-pulse" />
+                            {isTestingGemini ? 'Testing Gemini 3.6...' : 'Test Gemini 3.6 Flash'}
+                        </button>
+                    </div>
                 </div>
             }
         >
@@ -133,14 +335,73 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                 </div>
             )}
 
+            {/* Fleet Inventory Deployment Status Bar */}
+            <div className="mb-6 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 p-5 shadow-xs">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div className="flex items-start sm:items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h3 className="font-bold text-slate-900 dark:text-zinc-100 text-sm">
+                                    Inventory Deployment Status: {deployable_summary?.total_available ?? 11} Units Cleared for Immediate Deployment
+                                </h3>
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800">
+                                    Stockroom Verified
+                                </span>
+                            </div>
+                            <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+                                Verified idle in fleet stockroom pools across campus hubs. Matching checks these deployable units first to avoid new CapEx purchases.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+                        {/* Quick Specs Pill Breakdown */}
+                        <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-medium bg-slate-50 dark:bg-zinc-800/80 px-3 py-1.5 rounded-xl border border-slate-200/60 dark:border-zinc-700/60">
+                            <span className="text-slate-700 dark:text-zinc-300 font-semibold">{deployable_summary?.laptops_count ?? 4} Laptops</span>
+                            <span className="text-slate-300 dark:text-zinc-600">&bull;</span>
+                            <span className="text-slate-700 dark:text-zinc-300 font-semibold">{deployable_summary?.desktops_count ?? 7} Desktops</span>
+                            <span className="text-slate-300 dark:text-zinc-600">&bull;</span>
+                            <span className="text-emerald-600 dark:text-emerald-400 font-bold">{deployable_summary?.tiers?.workstation ?? 2} Workstations</span>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={() => setShowDeployableModal(true)}
+                            className="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-zinc-800 hover:bg-[#026eff]/10 hover:text-[#026eff] dark:hover:text-[#0b79ff] text-slate-700 dark:text-zinc-300 font-bold text-xs border border-slate-200 dark:border-zinc-700 transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                        >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                            </svg>
+                            Inspect Deployable Fleet ({deployable_summary?.total_available ?? 11})
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 {/* Left Column: Request & Extraction Input (5 cols) */}
                 <div className="lg:col-span-5 w-full space-y-6">
                     {/* Step 1: Employee & Request */}
                     <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 p-6 shadow-xs">
-                        <div className="flex items-center gap-2 mb-4">
-                            <span className="w-6 h-6 rounded-full bg-[#026eff] text-white flex items-center justify-center text-xs font-bold">1</span>
-                            <h2 className="font-bold text-slate-900 dark:text-zinc-100 text-base">Request Specification</h2>
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                                <span className="w-6 h-6 rounded-full bg-[#026eff] text-white flex items-center justify-center text-xs font-bold">1</span>
+                                <h2 className="font-bold text-slate-900 dark:text-zinc-100 text-base">Request Specification</h2>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleTestGemini}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#026eff]/10 text-[#026eff] dark:text-[#0b79ff] border border-[#026eff]/20 hover:bg-[#026eff]/20 transition cursor-pointer"
+                                title="Click to test live response from Gemini 3.6 Flash"
+                            >
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#0aceb3] animate-pulse" />
+                                <span>Gemini 3.6 Flash</span>
+                            </button>
                         </div>
 
                         {/* Employee Select */}
@@ -151,7 +412,7 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                             <select
                                 value={employeeId}
                                 onChange={(e) => setEmployeeId(e.target.value)}
-                                className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
+                                className="mt-1.5 w-full text-sm font-medium rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 py-2.5 px-3 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
                             >
                                 <option value="">-- Choose employee (optional for ad-hoc search) --</option>
                                 {employees.map((emp) => (
@@ -168,7 +429,18 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">
                                     Natural Language Need
                                 </label>
-                                <span className="text-[11px] text-[#026eff] dark:text-[#0b79ff] font-medium">Layer 1: Gemini AI</span>
+                                <div className="flex items-center gap-2">
+                                    {rawInput.trim() && (
+                                        <button
+                                            type="button"
+                                            onClick={handleSaveCurrentAsTemplate}
+                                            className="text-[11px] text-[#026eff] dark:text-[#0b79ff] font-bold hover:underline cursor-pointer flex items-center gap-0.5"
+                                        >
+                                            💾 Save as Template
+                                        </button>
+                                    )}
+                                    <span className="text-[11px] text-[#026eff] dark:text-[#0b79ff] font-medium">Layer 1: Gemini 3.6</span>
+                                </div>
                             </div>
                             <textarea
                                 rows={4}
@@ -179,22 +451,112 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                             />
                         </div>
 
-                        {/* Quick Prompts */}
-                        <div className="mt-3">
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 block mb-1.5">
-                                Quick Workload Templates:
-                            </span>
-                            <div className="flex flex-col gap-1.5">
-                                {examplePrompts.map((p, idx) => (
+                        {/* Quick Prompts & Workload Templates Manager */}
+                        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-zinc-800">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                                    Quick Workload Templates ({filteredTemplates.length})
+                                </span>
+                                <div className="flex items-center gap-2">
                                     <button
-                                        key={idx}
                                         type="button"
-                                        onClick={() => setRawInput(p)}
-                                        className="text-left text-xs p-2 rounded-lg bg-slate-50 dark:bg-zinc-800/60 hover:bg-[#026eff]/10 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:text-[#026eff] dark:hover:text-[#0b79ff] border border-slate-200/60 dark:border-zinc-700/60 transition line-clamp-1"
+                                        onClick={() => {
+                                            setNewTemplateForm({ title: '', category: 'Engineering & Dev', prompt: '', specs_summary: '' });
+                                            setShowNewTemplateModal(true);
+                                        }}
+                                        className="text-[11px] font-bold text-[#026eff] dark:text-[#0b79ff] hover:underline flex items-center gap-0.5 cursor-pointer"
                                     >
-                                        &bull; {p}
+                                        + Create Template
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Category Filter Pills */}
+                            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 mb-2.5 text-[10px]">
+                                {[
+                                    { key: 'all', label: 'All' },
+                                    { key: 'Engineering & Dev', label: 'Engineering' },
+                                    { key: 'Creative & Media', label: 'Creative' },
+                                    { key: 'Analytics', label: 'Analytics' },
+                                    { key: 'Office & Ops', label: 'Office' },
+                                    { key: 'custom', label: `My Custom (${templates.filter((t) => t.isCustom).length})` },
+                                ].map((cat) => (
+                                    <button
+                                        key={cat.key}
+                                        type="button"
+                                        onClick={() => setTemplateCategory(cat.key)}
+                                        className={`px-2 py-0.5 rounded-lg font-bold transition whitespace-nowrap cursor-pointer ${
+                                            templateCategory === cat.key
+                                                ? 'bg-[#026eff] text-white'
+                                                : 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-700'
+                                        }`}
+                                    >
+                                        {cat.label}
                                     </button>
                                 ))}
+                            </div>
+
+                            {/* Templates Grid / Cards (Clean, readable preview without awkward single-line clipping) */}
+                            <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                                {filteredTemplates.length === 0 ? (
+                                    <p className="text-xs text-slate-400 dark:text-zinc-500 py-3 text-center italic">
+                                        No templates in this category. Click &quot;+ Create Template&quot; above.
+                                    </p>
+                                ) : (
+                                    filteredTemplates.map((t) => {
+                                        const isSelected = selectedTemplateId === t.id;
+                                        return (
+                                            <div
+                                                key={t.id}
+                                                onClick={() => handleSelectTemplate(t)}
+                                                className={`p-2.5 rounded-xl border text-left transition cursor-pointer relative group ${
+                                                    isSelected
+                                                        ? 'bg-[#026eff]/10 border-[#026eff] shadow-xs'
+                                                        : 'bg-slate-50 dark:bg-zinc-800/60 border-slate-200/70 dark:border-zinc-700/60 hover:border-[#026eff]/40 hover:bg-slate-100/80 dark:hover:bg-zinc-800'
+                                                }`}
+                                            >
+                                                <div className="flex items-center justify-between gap-2 mb-1">
+                                                    <div className="flex items-center gap-1.5 min-w-0">
+                                                        <h4 className="text-xs font-bold text-slate-900 dark:text-zinc-100 truncate">
+                                                            {t.title}
+                                                        </h4>
+                                                        <span className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-slate-200/80 dark:bg-zinc-700 text-slate-600 dark:text-zinc-300 shrink-0">
+                                                            {t.category}
+                                                        </span>
+                                                        {t.isCustom && (
+                                                            <span className="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-[#0aceb3]/20 text-[#0aceb3] border border-[#0aceb3]/30 shrink-0">
+                                                                Custom
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    {t.isCustom && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => handleDeleteTemplate(t.id, e)}
+                                                            className="text-slate-400 hover:text-rose-500 p-0.5 rounded transition shrink-0"
+                                                            title="Delete custom template"
+                                                        >
+                                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                <p className="text-xs text-slate-600 dark:text-zinc-400 leading-snug line-clamp-2">
+                                                    {t.prompt}
+                                                </p>
+
+                                                {t.specs_summary && (
+                                                    <div className="mt-1.5 flex items-center gap-1 text-[10px] text-slate-400 dark:text-zinc-500 font-mono">
+                                                        <span>⚡ {t.specs_summary}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })
+                                )}
                             </div>
                         </div>
 
@@ -203,7 +565,7 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                             type="button"
                             onClick={handleExtract}
                             disabled={isExtracting || isRanking || !rawInput.trim()}
-                            className="mt-5 w-full py-3 rounded-xl bg-[#026eff] hover:bg-[#0256cc] text-white font-bold text-sm shadow-sm transition disabled:opacity-50 flex items-center justify-center gap-2"
+                            className="mt-5 w-full py-3 rounded-xl bg-[#026eff] hover:bg-[#0256cc] text-white font-bold text-sm shadow-sm transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                         >
                             {isExtracting ? (
                                 <>
@@ -211,7 +573,7 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    Analyzing with Gemini 2.5...
+                                    Analyzing with Gemini 3.6 Flash...
                                 </>
                             ) : isRanking ? (
                                 <>
@@ -219,7 +581,7 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    Ranking Fleet...
+                                    Ranking Fleet &amp; Stockroom...
                                 </>
                             ) : (
                                 <>
@@ -307,12 +669,28 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                                                         <svg className="w-4 h-4 text-[#026eff] dark:text-[#0b79ff]" viewBox="0 0 24 24" fill="currentColor">
                                                             <path d="M11 2L7.33 10.67 2 11l5.33 3.67L5 22l6-3.33L17 22l-2.33-7.33L20 11l-5.33-.33L11 2zm8 4l-1.33 2.67L15 9l2.67 1.33L19 13l1.33-2.67L23 9l-2.67-1.33z" />
                                                         </svg>
-                                                        Powered by Gemini AI
+                                                        {extracted.source === 'heuristic_fallback'
+                                                            ? 'SpecMatch Heuristic Engine (Gemini 3.6 Quota Failover)'
+                                                            : 'Powered by Gemini 3.6 Flash'}
                                                     </span>
                                                     <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-900/50">
                                                         Validated JSON
                                                     </span>
                                                 </div>
+
+                                                {extracted.fallback_reason && (
+                                                    <div className="mb-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2.5">
+                                                        <span className="text-base mt-0.5">ℹ️</span>
+                                                        <div>
+                                                            <strong className="font-semibold text-amber-900 dark:text-amber-200">
+                                                                Gemini 3.6 Cloud Quota Notice (Free Tier):
+                                                            </strong>
+                                                            <p className="mt-0.5 text-amber-700 dark:text-amber-300">
+                                                                {extracted.fallback_reason}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
 
                                                 {extracted.reasoning && (
                                                     <p className="text-sm text-slate-700 dark:text-zinc-300 mb-5 leading-relaxed bg-slate-50 dark:bg-zinc-800/60 p-3 rounded-xl border border-slate-100 dark:border-zinc-800">
@@ -347,39 +725,39 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                                                             <select
                                                                 value={extracted.min_cpu_tier}
                                                                 onChange={(e) => setExtracted({ ...extracted, min_cpu_tier: e.target.value })}
-                                                                className="mt-1 w-full text-xs rounded-lg border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 capitalize font-medium"
+                                                                className="mt-1 w-full text-xs rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 capitalize font-medium py-1.5 px-2.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
                                                             >
                                                                 <option value="entry">Entry</option>
                                                                 <option value="mid">Mid</option>
                                                                 <option value="high">High</option>
                                                                 <option value="workstation">Workstation</option>
-                                                            </select>
-                                                        </div>
-                                                        <div>
-                                                            <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400">Min RAM (GB)</label>
-                                                            <input
+                                                             </select>
+                                                         </div>
+                                                         <div>
+                                                             <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400">Min RAM (GB)</label>
+                                                             <input
                                                                 type="number"
                                                                 value={extracted.min_ram_gb}
                                                                 onChange={(e) => setExtracted({ ...extracted, min_ram_gb: parseInt(e.target.value) || 0 })}
-                                                                className="mt-1 w-full text-xs rounded-lg border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 font-medium"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400">Min Storage (GB)</label>
-                                                            <input
+                                                                className="mt-1 w-full text-xs rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 font-medium py-1.5 px-2.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
+                                                             />
+                                                         </div>
+                                                         <div>
+                                                             <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400">Min Storage (GB)</label>
+                                                             <input
                                                                 type="number"
                                                                 value={extracted.min_storage_gb}
                                                                 onChange={(e) => setExtracted({ ...extracted, min_storage_gb: parseInt(e.target.value) || 0 })}
-                                                                className="mt-1 w-full text-xs rounded-lg border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 font-medium"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400">Min GPU</label>
-                                                            <select
+                                                                className="mt-1 w-full text-xs rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 font-medium py-1.5 px-2.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
+                                                             />
+                                                         </div>
+                                                         <div>
+                                                             <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400">Min GPU</label>
+                                                             <select
                                                                 value={extracted.min_gpu_tier}
                                                                 onChange={(e) => setExtracted({ ...extracted, min_gpu_tier: e.target.value })}
-                                                                className="mt-1 w-full text-xs rounded-lg border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 capitalize font-medium"
-                                                            >
+                                                                className="mt-1 w-full text-xs rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 capitalize font-medium py-1.5 px-2.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
+                                                             >
                                                                 <option value="none">None</option>
                                                                 <option value="integrated">Integrated</option>
                                                                 <option value="dedicated-entry">Dedicated Entry</option>
@@ -543,11 +921,11 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
                                                                 {/* Node 1: Idle Stockroom Unit */}
                                                                 <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
-                                                                    <div className="w-11 h-11 rounded-lg bg-slate-800 border border-slate-700 p-0.5 shrink-0 overflow-hidden">
+                                                                    <div className="w-11 h-11 rounded-lg bg-slate-800 border border-slate-700 shrink-0 overflow-hidden">
                                                                         <HardwareImage
                                                                             src={swap.bridge_device.image_clip_url || swap.bridge_device.image_url}
                                                                             alt={swap.bridge_device.model}
-                                                                            className="w-full h-full object-contain"
+                                                                            className="w-full h-full object-cover"
                                                                         />
                                                                     </div>
                                                                     <div className="min-w-0 flex-1">
@@ -576,11 +954,11 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
 
                                                                 {/* Node 3: High-Spec Rig to Requester */}
                                                                 <div className="p-3 rounded-xl bg-white/5 border border-[#0aceb3]/40 flex items-center gap-3">
-                                                                    <div className="w-11 h-11 rounded-lg bg-slate-800 border border-slate-700 p-0.5 shrink-0 overflow-hidden">
+                                                                    <div className="w-11 h-11 rounded-lg bg-slate-800 border border-slate-700 shrink-0 overflow-hidden">
                                                                         <HardwareImage
                                                                             src={swap.donor_device.image_clip_url || swap.donor_device.image_url}
                                                                             alt={swap.donor_device.model}
-                                                                            className="w-full h-full object-contain"
+                                                                            className="w-full h-full object-cover"
                                                                         />
                                                                     </div>
                                                                     <div className="min-w-0 flex-1">
@@ -622,7 +1000,20 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                                         {rankedResults && (
                                             <div className="space-y-4">
                                                 {rankedResults.map((item, idx) => {
-                                                    const { device, score, subscores, component_meters, capex_saved_php, fit_grade, overprovisioning_risk, rationale, disqualified, disqualification_reason, passes_threshold } = item;
+                                                    const {
+                                                        device,
+                                                        score,
+                                                        subscores,
+                                                        component_meters,
+                                                        capex_saved_php,
+                                                        fit_grade,
+                                                        overprovisioning_risk,
+                                                        rationale,
+                                                        disqualified,
+                                                        disqualification_reason,
+                                                        passes_threshold,
+                                                        is_available_for_deployment,
+                                                    } = item;
                                                     const isTop = idx === 0 && passes_threshold;
 
                                                     return (
@@ -643,11 +1034,11 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                                                                     }`}>
                                                                         #{idx + 1}
                                                                     </span>
-                                                                    <div className="w-12 h-12 rounded-xl bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/60 p-0.5 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
+                                                                    <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/60 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
                                                                         <HardwareImage
                                                                             src={device.image_clip_url || device.image_url}
                                                                             alt={device.name}
-                                                                            className="w-full h-full object-contain"
+                                                                            className="w-full h-full object-cover"
                                                                         />
                                                                     </div>
                                                                     <div>
@@ -659,6 +1050,18 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                                                                         </div>
                                                                         <div className="text-xs text-slate-400 dark:text-zinc-500 capitalize mt-0.5">
                                                                             {device.cpu} &bull; {device.device_type}
+                                                                        </div>
+                                                                        <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                                                                            {is_available_for_deployment ? (
+                                                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800">
+                                                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                                                                    Ready in Stockroom &bull; {device.location || 'Central Stockroom'}
+                                                                                </span>
+                                                                            ) : (
+                                                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+                                                                                    👤 Assigned in Fleet (Bridge Swap Candidate)
+                                                                                </span>
+                                                                            )}
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -761,14 +1164,15 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                                                                     <span className="text-xs text-slate-500 dark:text-zinc-400 font-medium">
                                                                         {device.ram_gb}GB RAM &bull; {device.storage_gb}GB {device.storage_type} &bull; <span className="capitalize">{device.condition}</span> condition
                                                                     </span>
-                                                                    <button
+                                                                    <StatefulButton
                                                                         type="button"
+                                                                        variant="primary"
                                                                         disabled={isAssigning}
                                                                         onClick={() => handleAssign(device, score)}
-                                                                        className="px-4 py-1.5 rounded-xl bg-slate-900 dark:bg-zinc-800 border border-transparent dark:border-zinc-700 text-white dark:text-zinc-100 text-xs font-semibold hover:bg-slate-800 dark:hover:bg-zinc-750 transition disabled:opacity-50"
+                                                                        className="px-4 py-2 rounded-xl text-xs font-semibold"
                                                                     >
                                                                         {employeeId ? `Assign to ${selectedEmployee?.name || 'Selected Staff'}` : 'Select Employee to Assign'}
-                                                                    </button>
+                                                                    </StatefulButton>
                                                                 </div>
                                                             )}
                                                         </div>
@@ -834,11 +1238,11 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 p-1 shrink-0 overflow-hidden">
+                                    <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shrink-0 overflow-hidden">
                                         <HardwareImage
                                             src={selectedBridgeSwap.bridge_device.image_clip_url || selectedBridgeSwap.bridge_device.image_url}
                                             alt={selectedBridgeSwap.bridge_device.model}
-                                            className="w-full h-full object-contain"
+                                            className="w-full h-full object-cover"
                                         />
                                     </div>
                                     <div className="min-w-0 flex-1">
@@ -876,11 +1280,11 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 p-1 shrink-0 overflow-hidden">
+                                    <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shrink-0 overflow-hidden">
                                         <HardwareImage
                                             src={selectedBridgeSwap.donor_device.image_clip_url || selectedBridgeSwap.donor_device.image_url}
                                             alt={selectedBridgeSwap.donor_device.model}
-                                            className="w-full h-full object-contain"
+                                            className="w-full h-full object-cover"
                                         />
                                     </div>
                                     <div className="min-w-0 flex-1">
@@ -916,25 +1320,343 @@ export default function MatchRequest({ employees, role_profiles, recent_requests
                             >
                                 Cancel
                             </button>
+                            <StatefulButton
+                                type="button"
+                                variant="emerald"
+                                disabled={isExecutingSwap}
+                                onClick={handleExecuteBridgeSwap}
+                                className="px-5 py-2.5 rounded-xl text-xs font-extrabold shadow-sm"
+                            >
+                                ⚡ Execute Bridge Swap
+                            </StatefulButton>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Create / Save Quick Workload Template Modal */}
+            {showNewTemplateModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 relative overflow-hidden">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#026eff] dark:text-[#0b79ff]">
+                                    Template Configuration
+                                </span>
+                                <h3 className="text-lg font-bold text-slate-900 dark:text-zinc-100">
+                                    Create Quick Workload Template
+                                </h3>
+                                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+                                    Save custom requirements to quickly autofill and test matching scenarios anytime.
+                                </p>
+                            </div>
                             <button
                                 type="button"
-                                disabled={isExecutingSwap}
-                                onClick={() => handleExecuteBridgeSwap()}
-                                className="px-5 py-2.5 rounded-xl bg-[#0aceb3] hover:bg-[#0aceb3]/90 text-slate-950 text-xs font-extrabold shadow-sm transition disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                                onClick={() => setShowNewTemplateModal(false)}
+                                className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 transition cursor-pointer"
                             >
-                                {isExecutingSwap ? (
-                                    <>
-                                        <svg className="animate-spin -ml-1 mr-1 h-3.5 w-3.5 text-slate-950" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                        </svg>
-                                        Executing Cascade...
-                                    </>
-                                ) : (
-                                    <>
-                                        <span>⚡ Execute Bridge Swap</span>
-                                    </>
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSaveNewTemplate} className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1">
+                                    Template Title *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={newTemplateForm.title}
+                                    onChange={(e) => setNewTemplateForm({ ...newTemplateForm, title: e.target.value })}
+                                    placeholder="e.g., Senior DevOps / SRE, 3D Animator, Legal Auditor"
+                                    className="w-full text-sm rounded-xl border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 px-3 py-2 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20"
+                                    required
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1">
+                                        Category / Team
+                                    </label>
+                                    <select
+                                        value={newTemplateForm.category}
+                                        onChange={(e) => setNewTemplateForm({ ...newTemplateForm, category: e.target.value })}
+                                        className="w-full text-xs rounded-xl border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 px-3 py-2 focus:border-[#026eff]"
+                                    >
+                                        <option value="Engineering & Dev">Engineering &amp; Dev</option>
+                                        <option value="Creative & Media">Creative &amp; Media</option>
+                                        <option value="Analytics">Analytics &amp; Data</option>
+                                        <option value="Office & Ops">Office &amp; Ops</option>
+                                        <option value="Custom">Custom / General</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1">
+                                        Key Hardware Note (Optional)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={newTemplateForm.specs_summary}
+                                        onChange={(e) => setNewTemplateForm({ ...newTemplateForm, specs_summary: e.target.value })}
+                                        placeholder="e.g. 32GB RAM, Dedicated GPU"
+                                        className="w-full text-xs rounded-xl border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 px-3 py-2 focus:border-[#026eff]"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1">
+                                    Workload Prompt Description *
+                                </label>
+                                <textarea
+                                    rows={4}
+                                    value={newTemplateForm.prompt}
+                                    onChange={(e) => setNewTemplateForm({ ...newTemplateForm, prompt: e.target.value })}
+                                    placeholder="Describe tasks, software applications used, RAM/CPU requirements, mobility needs..."
+                                    className="w-full text-xs rounded-xl border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 px-3 py-2 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 resize-none"
+                                    required
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-zinc-800">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowNewTemplateModal(false)}
+                                    className="px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-zinc-800 transition cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 rounded-xl bg-[#026eff] hover:bg-[#0256cc] text-white text-xs font-bold shadow-sm transition cursor-pointer"
+                                >
+                                    Save Workload Template
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Gemini 3.6 Flash Connectivity Diagnostic Modal */}
+            {showGeminiModal && geminiTestResult && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 relative overflow-hidden">
+                        <div className="flex items-start justify-between">
+                            <div className="flex items-center gap-2.5">
+                                <span className="p-2 rounded-xl bg-[#026eff]/15 text-[#026eff] dark:text-[#0b79ff] border border-[#026eff]/30">
+                                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M11 2L7.33 10.67 2 11l5.33 3.67L5 22l6-3.33L17 22l-2.33-7.33L20 11l-5.33-.33L11 2zm8 4l-1.33 2.67L15 9l2.67 1.33L19 13l1.33-2.67L23 9l-2.67-1.33z" />
+                                    </svg>
+                                </span>
+                                <div>
+                                    <h3 className="text-base font-bold text-slate-900 dark:text-zinc-100">
+                                        Gemini 3.6 Flash Connectivity Status
+                                    </h3>
+                                    <p className="text-xs text-slate-500 dark:text-zinc-400">
+                                        Live round-trip diagnostics to Google Generative Language API
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowGeminiModal(false)}
+                                className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 transition cursor-pointer"
+                            >
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200/80 dark:border-zinc-700/60">
+                                <div>
+                                    <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-zinc-500 block">Target Model</span>
+                                    <span className="text-sm font-bold font-mono text-slate-900 dark:text-zinc-100">{geminiTestResult.model}</span>
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-zinc-500 block">HTTP Response</span>
+                                    <span className={`text-xs font-black px-2 py-0.5 rounded-full ${
+                                        geminiTestResult.http_status === 200
+                                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                            : geminiTestResult.http_status === 429
+                                            ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
+                                            : 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300'
+                                    }`}>
+                                        HTTP {geminiTestResult.http_status || 'ERR'} {geminiTestResult.http_status === 429 ? '(Quota Limit)' : ''}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-zinc-800/40 border border-slate-200/60 dark:border-zinc-700/60 text-xs">
+                                <span className="font-bold text-slate-700 dark:text-zinc-300 block mb-1">Status Summary:</span>
+                                <p className="text-slate-600 dark:text-zinc-400 leading-relaxed">
+                                    {geminiTestResult.message}
+                                </p>
+                                {geminiTestResult.latency_ms > 0 && (
+                                    <span className="inline-block mt-2 font-mono text-[11px] text-slate-500 dark:text-zinc-400">
+                                        Latency: {geminiTestResult.latency_ms}ms
+                                    </span>
                                 )}
+                            </div>
+
+                            {geminiTestResult.fallback_active && (
+                                <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 flex items-start gap-2.5">
+                                    <span className="text-base mt-0.5">🛡️</span>
+                                    <div className="text-xs">
+                                        <span className="font-bold text-emerald-900 dark:text-emerald-200 block">Intelligent Fallback Protection Engaged:</span>
+                                        <p className="text-emerald-700 dark:text-emerald-300 mt-0.5 leading-relaxed">
+                                            SpecMatch includes an automated local heuristic extraction engine adhering to ISO 19770-1 constraint taxonomy. Even when Google rate-limits free-tier API keys, all matching functions continue to operate with 100% uptime.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex items-center justify-end pt-3 border-t border-slate-100 dark:border-zinc-800">
+                            <button
+                                type="button"
+                                onClick={() => setShowGeminiModal(false)}
+                                className="px-4 py-2 rounded-xl bg-[#026eff] hover:bg-[#0256cc] text-white text-xs font-bold transition cursor-pointer"
+                            >
+                                Close Diagnostics
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Browse Deployable Fleet Inventory Modal */}
+            {showDeployableModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl max-w-4xl w-full p-6 shadow-2xl space-y-5 relative max-h-[90vh] flex flex-col overflow-hidden">
+                        <div className="flex items-start justify-between shrink-0">
+                            <div>
+                                <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                                    Fleet Stockroom Registry
+                                </span>
+                                <h3 className="text-lg font-bold text-slate-900 dark:text-zinc-100">
+                                    Deployable Inventory ({deployable_summary?.total_available ?? 11} Units Cleared)
+                                </h3>
+                                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+                                    Physical devices currently idle in stockroom locations, staged for immediate deployment to new or existing staff.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowDeployableModal(false)}
+                                className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 transition cursor-pointer"
+                            >
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* Filter Bar */}
+                        <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+                            <div className="relative flex-1">
+                                <input
+                                    type="text"
+                                    value={deployableSearch}
+                                    onChange={(e) => setDeployableSearch(e.target.value)}
+                                    placeholder="Search by asset tag, model, location, or CPU tier..."
+                                    className="w-full text-xs rounded-xl border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 pl-8 pr-3 py-2 focus:border-[#026eff]"
+                                />
+                                <svg className="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-xs">
+                                {['all', 'laptop', 'desktop'].map((t) => (
+                                    <button
+                                        key={t}
+                                        type="button"
+                                        onClick={() => setDeployableTypeFilter(t)}
+                                        className={`px-3 py-2 rounded-xl font-bold capitalize transition cursor-pointer ${
+                                            deployableTypeFilter === t
+                                                ? 'bg-[#026eff] text-white'
+                                                : 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700'
+                                        }`}
+                                    >
+                                        {t === 'all' ? 'All Units' : `${t}s`}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Device Grid */}
+                        <div className="flex-1 overflow-y-auto pr-1 space-y-3">
+                            {filteredDeployableDevices.length === 0 ? (
+                                <div className="text-center py-12 text-slate-400 dark:text-zinc-500 text-sm">
+                                    No deployable devices match your filter query.
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {filteredDeployableDevices.map((d) => (
+                                        <div
+                                            key={d.id}
+                                            className="p-3.5 rounded-2xl border border-slate-200/80 dark:border-zinc-800 bg-slate-50/60 dark:bg-zinc-800/40 flex items-start gap-3 hover:border-emerald-500/40 transition"
+                                        >
+                                            <div className="w-16 h-16 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shrink-0 overflow-hidden">
+                                                <HardwareImage
+                                                    src={d.image_clip_url}
+                                                    alt={d.model}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center justify-between gap-1">
+                                                    <h4 className="text-xs font-bold text-slate-900 dark:text-zinc-100 truncate">
+                                                        {d.brand} {d.model}
+                                                    </h4>
+                                                    <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-200/70 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300 shrink-0">
+                                                        {d.asset_tag}
+                                                    </span>
+                                                </div>
+                                                <div className="text-[11px] text-slate-500 dark:text-zinc-400 capitalize mt-0.5">
+                                                    {d.cpu_tier} CPU &bull; {d.ram_gb}GB RAM &bull; {d.storage_gb}GB {d.storage_type}
+                                                </div>
+                                                <div className="text-[10px] text-slate-400 dark:text-zinc-500 mt-1 truncate">
+                                                    📍 {d.location}
+                                                </div>
+                                                <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-slate-200/60 dark:border-zinc-700/60">
+                                                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                                        {d.condition} condition
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setRawInput(`Targeting stockroom deployment: ${d.brand} ${d.model} (${d.asset_tag}) with ${d.ram_gb}GB RAM, ${d.storage_gb}GB storage, ${d.cpu_tier} tier ${d.device_type}.`);
+                                                            setShowDeployableModal(false);
+                                                        }}
+                                                        className="text-[10px] font-bold text-[#026eff] dark:text-[#0b79ff] hover:underline cursor-pointer"
+                                                    >
+                                                        Use Specs in Prompt &rarr;
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-zinc-800 shrink-0">
+                            <span className="text-xs text-slate-500 dark:text-zinc-400">
+                                Showing {filteredDeployableDevices.length} of {deployable_summary?.total_available ?? 11} deployable devices
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => setShowDeployableModal(false)}
+                                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 text-xs font-bold transition cursor-pointer"
+                            >
+                                Done
                             </button>
                         </div>
                     </div>

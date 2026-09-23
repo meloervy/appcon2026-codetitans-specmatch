@@ -55,7 +55,7 @@ Route::middleware('auth')->group(function () {
     // Employees
     Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
     Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
-    Route::put('/employees/{id}', [EmployeeController::class, 'update'])->name('employees.update');
+    Route::match(['put', 'post'], '/employees/{id}', [EmployeeController::class, 'update'])->name('employees.update');
     Route::post('/employees/{id}/unassign', [EmployeeController::class, 'unassign'])->name('employees.unassign');
 
     // Match & Recommendation Engine
@@ -64,6 +64,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/match/rank', [MatchingController::class, 'rank'])->name('match.rank');
     Route::post('/match/assign', [MatchingController::class, 'assign'])->name('match.assign');
     Route::post('/match/bridge-swap', [MatchingController::class, 'executeBridgeSwap'])->name('match.bridge-swap');
+    Route::post('/match/test-gemini', [MatchingController::class, 'testGemini'])->name('match.test-gemini');
 
     // Mismatch Detection & Fleet Audit
     Route::get('/mismatches', [MismatchController::class, 'index'])->name('mismatches.index');

@@ -137,4 +137,50 @@ class MatchingPipelineTest extends TestCase
             'unassigned_at' => null,
         ]);
     }
+
+    public function test_match_page_provides_deployable_inventory_summary(): void
+    {
+        Device::create([
+            'asset_tag' => 'DEP-001',
+            'device_type' => 'laptop',
+            'brand' => 'Lenovo',
+            'model' => 'ThinkPad',
+            'cpu' => 'Intel i7',
+            'cpu_tier' => 'high',
+            'ram_gb' => 32,
+            'storage_type' => 'SSD',
+            'storage_gb' => 1024,
+            'gpu_tier' => 'integrated',
+            'year_acquired' => 2024,
+            'condition' => 'excellent',
+            'status' => 'available',
+            'lifecycle_stage' => 'deployment',
+        ]);
+
+        $response = $this->actingAs($this->user)->get('/match');
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Match/Request')
+            ->has('deployable_summary')
+            ->where('deployable_summary.total_available', 1)
+            ->where('deployable_summary.laptops_count', 1)
+        );
+    }
+
+    public function test_gemini_connectivity_endpoint_responds_with_diagnostic_structure(): void
+    {
+        $response = $this->actingAs($this->user)->postJson('/match/test-gemini', [
+            'model' => 'gemini-3.6-flash',
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonStructure([
+            'status',
+            'model',
+            'message',
+            'fallback_active',
+        ]);
+        $this->assertEquals('gemini-3.6-flash', $response->json('model'));
+    }
 }

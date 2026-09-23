@@ -22,12 +22,57 @@ class MatchingController extends Controller
         $profiles = RoleProfile::orderBy('name')->get();
         $recentRequests = MatchRequest::with('employee')->latest('id')->take(5)->get();
 
+        $availableDevices = Device::where('status', 'available')->orderBy('cpu_tier')->get();
+        $deployableSummary = [
+            'total_available' => $availableDevices->count(),
+            'laptops_count' => $availableDevices->where('device_type', 'laptop')->count(),
+            'desktops_count' => $availableDevices->where('device_type', 'desktop')->count(),
+            'tiers' => [
+                'entry' => $availableDevices->where('cpu_tier', 'entry')->count(),
+                'mid' => $availableDevices->where('cpu_tier', 'mid')->count(),
+                'high' => $availableDevices->where('cpu_tier', 'high')->count(),
+                'workstation' => $availableDevices->where('cpu_tier', 'workstation')->count(),
+            ],
+            'locations' => $availableDevices->pluck('location')->unique()->filter()->values(),
+            'preview_devices' => $availableDevices->map(fn ($d) => [
+                'id' => $d->id,
+                'asset_tag' => $d->asset_tag,
+                'brand' => $d->brand,
+                'model' => $d->model,
+                'device_type' => $d->device_type,
+                'cpu' => $d->cpu,
+                'cpu_tier' => $d->cpu_tier,
+                'ram_gb' => $d->ram_gb,
+                'storage_gb' => $d->storage_gb,
+                'storage_type' => $d->storage_type,
+                'gpu' => $d->gpu,
+                'gpu_tier' => $d->gpu_tier,
+                'location' => $d->location,
+                'condition' => $d->condition,
+                'lifecycle_stage' => $d->lifecycle_stage,
+                'status' => $d->status,
+                'image_clip_url' => $d->image_clip_url,
+            ]),
+        ];
+
         return Inertia::render('Match/Request', [
             'employees' => $employees,
             'role_profiles' => $profiles,
             'recent_requests' => $recentRequests,
             'selected_employee_id' => $request->integer('employee_id'),
+            'deployable_summary' => $deployableSummary,
         ]);
+    }
+
+    /**
+     * Test connectivity specifically to Gemini 3.6 Flash.
+     */
+    public function testGemini(Request $request, GeminiService $geminiService): JsonResponse
+    {
+        $model = $request->input('model', 'gemini-3.6-flash');
+        $result = $geminiService->testConnectivity($model);
+
+        return response()->json($result);
     }
 
     /**

@@ -48,11 +48,38 @@ class DeviceController extends Controller
             $query->where('condition', $request->input('condition'));
         }
 
-        $devices = $query->orderBy('asset_tag')->paginate(15)->withQueryString();
+        $allowedSorts = [
+            'created_at' => 'created_at',
+            'date' => 'created_at',
+            'tag' => 'asset_tag',
+            'asset_tag' => 'asset_tag',
+            'model' => 'model',
+            'brand' => 'brand',
+            'specs' => 'ram_gb',
+            'ram_gb' => 'ram_gb',
+            'storage_gb' => 'storage_gb',
+            'location' => 'location',
+            'lifecycle' => 'lifecycle_stage',
+            'lifecycle_stage' => 'lifecycle_stage',
+            'status' => 'status',
+            'warranty' => 'warranty_expiry',
+            'warranty_expiry' => 'warranty_expiry',
+            'year_acquired' => 'year_acquired',
+            'purchase_date' => 'purchase_date',
+        ];
+
+        $sort = $request->input('sort', 'asset_tag');
+        $direction = strtolower($request->input('direction', 'asc')) === 'desc' ? 'desc' : 'asc';
+        $sortColumn = $allowedSorts[$sort] ?? 'asset_tag';
+
+        $devices = $query->orderBy($sortColumn, $direction)->paginate(15)->withQueryString();
 
         return Inertia::render('Devices/Index', [
             'devices' => $devices,
-            'filters' => $request->only(['search', 'status', 'lifecycle_stage', 'device_type', 'cpu_tier', 'condition']),
+            'filters' => array_merge(
+                $request->only(['search', 'status', 'lifecycle_stage', 'device_type', 'cpu_tier', 'condition']),
+                ['sort' => $sort, 'direction' => $direction]
+            ),
         ]);
     }
 

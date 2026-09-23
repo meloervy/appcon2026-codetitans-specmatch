@@ -156,11 +156,11 @@ export default function MismatchesIndex({ mismatches, threshold }) {
                                             : 'bg-amber-50/40 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/60'
                                     }`}>
                                         <div className="flex items-center gap-3 mb-2">
-                                            <div className="w-12 h-12 rounded-xl bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/60 p-0.5 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
+                                            <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/60 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
                                                 <HardwareImage
                                                     src={device.image_clip_url || device.image_url}
                                                     alt={device.name}
-                                                    className="w-full h-full object-contain"
+                                                    className="w-full h-full object-cover"
                                                 />
                                             </div>
                                             <div className="flex-1 min-w-0">

@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import FileUpload from '@/Components/ui/FileUpload';
 import { Head, Link, useForm } from '@inertiajs/react';
 import axios from 'axios';
 import { useState } from 'react';
@@ -424,7 +425,7 @@ export default function DevicesCreate() {
                                         value={data.image_url}
                                         onChange={(e) => setData('image_url', e.target.value)}
                                         placeholder="https://... (Populated automatically via Wikimedia / TechSpecs or enter custom URL)"
-                                        className="mt-1.5 w-full text-xs rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff]"
+                                        className="mt-1.5 w-full text-xs rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 py-2 px-3 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
                                     />
                                     {photoNotice && (
                                         <p className={`text-[11px] mt-1 font-medium ${
@@ -435,8 +436,21 @@ export default function DevicesCreate() {
                                             {photoNotice.message}
                                         </p>
                                     )}
-                                    <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1">
-                                        Authentic hardware clip fetched via Wikimedia Commons REST API or TechSpecs API for clear inventory audit.
+
+                                    {/* Aceternity File Upload Dropzone */}
+                                    <div className="mt-3">
+                                        <FileUpload
+                                            onImageSelect={(dataUrl) => {
+                                                setData('image_url', dataUrl);
+                                                setPhotoNotice({
+                                                    type: 'success',
+                                                    message: 'Hardware image attached successfully from local upload!',
+                                                });
+                                            }}
+                                        />
+                                    </div>
+                                    <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-2">
+                                        Drag & drop local device photos, warranty PDFs, or spec sheets, or auto-fetch via Wikimedia Commons / TechSpecs API.
                                     </p>
                                 </div>
                             </div>

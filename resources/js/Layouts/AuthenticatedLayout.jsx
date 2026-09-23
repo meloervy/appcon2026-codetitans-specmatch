@@ -4,6 +4,15 @@ import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
 import SpecMatchLogo from '@/Components/SpecMatchLogo';
 import { Link, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
+import {
+    RiDashboard3Line,
+    RiComputerLine,
+    RiToolsLine,
+    RiShieldUserLine,
+    RiTeamLine,
+    RiSparklingLine,
+    RiAlertLine,
+} from 'react-icons/ri';
 
 export default function AuthenticatedLayout({ header, children }) {
     const { auth, flash } = usePage().props;
@@ -46,49 +55,44 @@ export default function AuthenticatedLayout({ header, children }) {
                     <div className="flex h-14 justify-between items-center">
                         <div className="flex items-center gap-7">
                             <Link href="/dashboard" className="flex items-center group">
-                                <SpecMatchLogo variant="full" size={26} showBadge={true} />
+                                <SpecMatchLogo variant="full" size={26} />
                             </Link>
 
                             <div className="hidden lg:flex items-center space-x-1">
                                 <NavLink href={route('dashboard')} active={route().current('dashboard')}>
+                                    <RiDashboard3Line className="w-4 h-4 mr-1.5 shrink-0" />
                                     Dashboard
                                 </NavLink>
                                 <NavLink href={route('devices.index')} active={route().current('devices.*')}>
+                                    <RiComputerLine className="w-4 h-4 mr-1.5 shrink-0" />
                                     Inventory
                                 </NavLink>
                                 <NavLink href={route('maintenance.index')} active={route().current('maintenance.*')}>
+                                    <RiToolsLine className="w-4 h-4 mr-1.5 shrink-0" />
                                     Maintenance
                                 </NavLink>
                                 <NavLink href={route('role-profiles.index')} active={route().current('role-profiles.*')}>
+                                    <RiShieldUserLine className="w-4 h-4 mr-1.5 shrink-0" />
                                     Role Profiles
                                 </NavLink>
                                 <NavLink href={route('employees.index')} active={route().current('employees.*')}>
+                                    <RiTeamLine className="w-4 h-4 mr-1.5 shrink-0" />
                                     Employees
                                 </NavLink>
                                 <NavLink href={route('match.index')} active={route().current('match.*')} className="text-[#026eff] dark:text-[#38bdf8]">
-                                    <span className="flex items-center gap-1 font-semibold">
-                                        <svg className="w-3.5 h-3.5 text-[#026eff] dark:text-[#38bdf8]" fill="currentColor" viewBox="0 0 20 20">
-                                            <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                        </svg>
+                                    <span className="flex items-center gap-1.5 font-semibold">
+                                        <RiSparklingLine className="w-4 h-4 shrink-0 text-[#026eff] dark:text-[#38bdf8]" />
                                         AI Match
                                     </span>
                                 </NavLink>
                                 <NavLink href={route('mismatches.index')} active={route().current('mismatches.*')}>
+                                    <RiAlertLine className="w-4 h-4 mr-1.5 shrink-0" />
                                     Mismatches
                                 </NavLink>
                             </div>
                         </div>
 
                         <div className="hidden lg:flex lg:items-center lg:gap-3">
-                            <Link
-                                href={route('match.index')}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#026eff] hover:bg-[#0b79ff] active:bg-[#025bd9] text-white shadow-xs transition"
-                            >
-                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                </svg>
-                                New Match
-                            </Link>
 
                             {/* Profile & Theme Toggle Dropdown */}
                             <Dropdown>
@@ -210,25 +214,46 @@ export default function AuthenticatedLayout({ header, children }) {
                 {showingNavigationDropdown && (
                     <div className="lg:hidden border-t border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 space-y-1">
                         <ResponsiveNavLink href={route('dashboard')} active={route().current('dashboard')}>
-                            Dashboard
+                            <span className="flex items-center gap-2">
+                                <RiDashboard3Line className="w-4 h-4 shrink-0" />
+                                Dashboard
+                            </span>
                         </ResponsiveNavLink>
                         <ResponsiveNavLink href={route('devices.index')} active={route().current('devices.*')}>
-                            Inventory
+                            <span className="flex items-center gap-2">
+                                <RiComputerLine className="w-4 h-4 shrink-0" />
+                                Inventory
+                            </span>
                         </ResponsiveNavLink>
                         <ResponsiveNavLink href={route('maintenance.index')} active={route().current('maintenance.*')}>
-                            Maintenance
+                            <span className="flex items-center gap-2">
+                                <RiToolsLine className="w-4 h-4 shrink-0" />
+                                Maintenance
+                            </span>
                         </ResponsiveNavLink>
                         <ResponsiveNavLink href={route('role-profiles.index')} active={route().current('role-profiles.*')}>
-                            Role Profiles
+                            <span className="flex items-center gap-2">
+                                <RiShieldUserLine className="w-4 h-4 shrink-0" />
+                                Role Profiles
+                            </span>
                         </ResponsiveNavLink>
                         <ResponsiveNavLink href={route('employees.index')} active={route().current('employees.*')}>
-                            Employees
+                            <span className="flex items-center gap-2">
+                                <RiTeamLine className="w-4 h-4 shrink-0" />
+                                Employees
+                            </span>
                         </ResponsiveNavLink>
                         <ResponsiveNavLink href={route('match.index')} active={route().current('match.*')}>
-                            AI Match Engine
+                            <span className="flex items-center gap-2 font-semibold text-[#026eff] dark:text-[#38bdf8]">
+                                <RiSparklingLine className="w-4 h-4 shrink-0 text-[#026eff] dark:text-[#38bdf8]" />
+                                AI Match
+                            </span>
                         </ResponsiveNavLink>
                         <ResponsiveNavLink href={route('mismatches.index')} active={route().current('mismatches.*')}>
-                            Mismatches
+                            <span className="flex items-center gap-2">
+                                <RiAlertLine className="w-4 h-4 shrink-0" />
+                                Mismatches
+                            </span>
                         </ResponsiveNavLink>
 
                         <div className="border-t border-slate-100 dark:border-zinc-800 pt-3 mt-3">

@@ -57,7 +57,7 @@ class HardwareImageService
     public static function resolveForDevice(Device $device): string
     {
         // 1. If explicit image_url exists on the device, return it
-        if (!empty($device->image_url)) {
+        if (! empty($device->image_url)) {
             return $device->image_url;
         }
 
@@ -78,8 +78,9 @@ class HardwareImageService
     /**
      * Resolve image URL for a brand and model string.
      */
-    public static function resolveModelImage(?string $brand, ?string $model, string $deviceType = 'laptop'): ?string
+    public static function resolveModelImage(?string $brand, ?string $model, ?string $deviceType = 'laptop'): ?string
     {
+        $deviceType = $deviceType ?: 'laptop';
         $brandLower = strtolower(trim($brand ?? ''));
         $modelLower = strtolower(trim($model ?? ''));
         $combined = "{$brandLower} {$modelLower}";
@@ -89,7 +90,7 @@ class HardwareImageService
             $keyParts = explode('-', $key);
             $matched = true;
             foreach ($keyParts as $part) {
-                if (!str_contains($combined, $part)) {
+                if (! str_contains($combined, $part)) {
                     $matched = false;
                     break;
                 }
@@ -110,6 +111,7 @@ class HardwareImageService
             if (str_contains($modelLower, 'studio')) {
                 return self::$canonicalImages['apple-mac-studio'];
             }
+
             return self::$canonicalImages['apple-macbook-pro-16'];
         }
 
@@ -117,6 +119,7 @@ class HardwareImageService
             if (str_contains($combined, 'x1')) {
                 return self::$canonicalImages['lenovo-thinkpad-x1'];
             }
+
             return self::$canonicalImages['lenovo-thinkpad-t14'];
         }
 
@@ -140,6 +143,7 @@ class HardwareImageService
             if ($deviceType === 'desktop') {
                 return self::$canonicalImages['hp-z8'];
             }
+
             return self::$canonicalImages['hp-elitebook'];
         }
 
@@ -189,15 +193,16 @@ class HardwareImageService
 
                 if ($response->successful()) {
                     $data = $response->json();
-                    if (!empty($data['thumbnail']['source'])) {
+                    if (! empty($data['thumbnail']['source'])) {
                         $src = $data['thumbnail']['source'];
                         // Request high-res version if available in Wikimedia thumb format
                         $highRes = preg_replace('/\/[0-9]+px-/', '/960px-', $src);
+
                         return $highRes ?: $src;
                     }
                 }
             } catch (\Exception $e) {
-                Log::debug("Wikimedia fetch failed for term {$term}: " . $e->getMessage());
+                Log::debug("Wikimedia fetch failed for term {$term}: ".$e->getMessage());
             }
         }
 
@@ -215,7 +220,7 @@ class HardwareImageService
         $canonical = self::resolveModelImage($brand, $model ?? $query);
         if ($canonical) {
             $results[] = [
-                'title' => trim(($brand ? $brand . ' ' : '') . ($model ?? $query)),
+                'title' => trim(($brand ? $brand.' ' : '').($model ?? $query)),
                 'image_url' => $canonical,
                 'source' => 'Verified Hardware Registry',
             ];
@@ -223,7 +228,7 @@ class HardwareImageService
 
         // 2. Fetch from Wikimedia REST API
         $wikimedia = self::fetchFromWikimedia($query);
-        if ($wikimedia && !in_array($wikimedia, array_column($results, 'image_url'))) {
+        if ($wikimedia && ! in_array($wikimedia, array_column($results, 'image_url'))) {
             $results[] = [
                 'title' => $query,
                 'image_url' => $wikimedia,
@@ -232,9 +237,9 @@ class HardwareImageService
         }
 
         // 3. Brand fallbacks if query yielded results
-        if (!empty($brand)) {
+        if (! empty($brand)) {
             $brandMatch = self::resolveModelImage($brand, '');
-            if ($brandMatch && !in_array($brandMatch, array_column($results, 'image_url'))) {
+            if ($brandMatch && ! in_array($brandMatch, array_column($results, 'image_url'))) {
                 $results[] = [
                     'title' => "{$brand} Standard Fleet Hardware",
                     'image_url' => $brandMatch,

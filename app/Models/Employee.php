@@ -16,8 +16,33 @@ class Employee extends Model
         'name',
         'department',
         'role_profile_id',
+        'profile_picture',
         'notes',
     ];
+
+    protected $attributes = [
+        'profile_picture' => 'public/user/default-profile-picture.png',
+    ];
+
+    protected $appends = [
+        'profile_picture_url',
+    ];
+
+    /**
+     * Resolve profile picture path for browser display.
+     */
+    public function getProfilePictureUrlAttribute(): string
+    {
+        $pic = $this->profile_picture;
+        if (empty($pic)) {
+            return '/user/default-profile-picture.png';
+        }
+        if (str_starts_with($pic, 'public/')) {
+            return '/'.substr($pic, 7);
+        }
+
+        return $pic;
+    }
 
     public function roleProfile(): BelongsTo
     {

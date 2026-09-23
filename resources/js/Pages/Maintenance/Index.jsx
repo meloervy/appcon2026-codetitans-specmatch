@@ -146,7 +146,7 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                             <select
                                 value={type}
                                 onChange={(e) => setType(e.target.value)}
-                                className="w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
+                                className="w-full text-sm font-medium rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 py-2.5 px-3 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
                             >
                                 <option value="">All Maintenance Types</option>
                                 <option value="repair">Repair</option>
@@ -159,7 +159,7 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                             <select
                                 value={status}
                                 onChange={(e) => setStatus(e.target.value)}
-                                className="w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
+                                className="w-full text-sm font-medium rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 py-2.5 px-3 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
                             >
                                 <option value="">All Statuses</option>
                                 <option value="scheduled">Scheduled</option>
@@ -252,11 +252,11 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                                         <tr key={log.id} className="hover:bg-slate-50/60 dark:hover:bg-zinc-800/40 transition">
                                             <td className="py-4 px-4 font-mono font-bold">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/60 p-0.5 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
+                                                    <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/60 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
                                                         <HardwareImage
                                                             src={log.device?.image_clip_url || log.device?.image_url}
                                                             alt={log.device?.name}
-                                                            className="w-full h-full object-contain"
+                                                            className="w-full h-full object-cover"
                                                         />
                                                     </div>
                                                     <div className="min-w-0 flex-1">
@@ -385,7 +385,7 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                                     <select
                                         value={updateData.status}
                                         onChange={(e) => setUpdateData('status', e.target.value)}
-                                        className="mt-1 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff] font-semibold"
+                                        className="mt-1 w-full text-sm font-semibold rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 py-2 px-3 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
                                     >
                                         <option value="in_progress">In Progress</option>
                                         <option value="completed">Completed</option>
@@ -400,7 +400,7 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                                     type="date"
                                     value={updateData.completed_at}
                                     onChange={(e) => setUpdateData('completed_at', e.target.value)}
-                                    className="mt-1 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
+                                    className="mt-1 w-full text-sm rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 py-2 px-3 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
                                 />
                             </div>
                             <div>
@@ -410,7 +410,7 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                                     value={updateData.performance_assessment}
                                     onChange={(e) => setUpdateData('performance_assessment', e.target.value)}
                                     placeholder="Assess asset performance post-servicing (e.g. stress test temperature, passmark scores, battery health, RAM stability)..."
-                                    className="mt-1 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff]"
+                                    className="mt-1 w-full text-sm rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 py-2 px-3 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
                                     required
                                 />
                                 <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1">

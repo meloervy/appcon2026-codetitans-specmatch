@@ -3,59 +3,145 @@ import HardwareImage from '@/Components/HardwareImage';
 import ResizableTh from '@/Components/ResizableTh';
 import { useResizableColumns } from '@/Hooks/useResizableColumns';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 export default function EmployeesIndex({ employees, role_profiles }) {
     const [showModal, setShowModal] = useState(false);
     const [editingEmp, setEditingEmp] = useState(null);
     const [wrapText, setWrapText] = useState(false);
+    const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'asc' });
+    const [filePreview, setFilePreview] = useState(null);
+    const fileInputRef = useRef(null);
 
     const initialWidths = {
-        employee: 170,
+        employee: 210,
         department: 140,
         role_profile: 160,
-        hardware: 240,
-        specs: 220,
-        actions: 160,
+        hardware: 220,
+        specs: 190,
+        date: 130,
+        actions: 230,
     };
 
-    const { widths, startResize, autoExpandCol, resetWidths, isResizing, resizingCol } = useResizableColumns(initialWidths, 'employees_table');
+    const { widths, startResize, autoExpandCol, resetWidths, isResizing, resizingCol } = useResizableColumns(initialWidths, 'employees_table_v3');
 
-    const { data, setData, post, put, processing, reset, errors } = useForm({
+    const { data, setData, post, processing, reset, errors } = useForm({
         name: '',
         department: '',
         role_profile_id: '',
+        profile_picture: '',
+        profile_picture_file: null,
         notes: '',
     });
 
     const { post: postUnassign } = useForm();
 
+    const handleSort = (key) => {
+        setSortConfig((prev) => ({
+            key,
+            direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc',
+        }));
+    };
+
+    const sortedEmployees = useMemo(() => {
+        const list = [...employees];
+        const { key, direction } = sortConfig;
+        const modifier = direction === 'asc' ? 1 : -1;
+
+        return list.sort((a, b) => {
+            let valA, valB;
+            switch (key) {
+                case 'name':
+                case 'employee':
+                    valA = (a.name || '').toLowerCase();
+                    valB = (b.name || '').toLowerCase();
+                    return valA.localeCompare(valB) * modifier;
+                case 'department':
+                    valA = (a.department || '').toLowerCase();
+                    valB = (b.department || '').toLowerCase();
+                    return valA.localeCompare(valB) * modifier;
+                case 'role_profile':
+                    valA = (a.role_profile?.name || '').toLowerCase();
+                    valB = (b.role_profile?.name || '').toLowerCase();
+                    return valA.localeCompare(valB) * modifier;
+                case 'hardware':
+                    valA = (a.active_assignment?.device?.brand ? `${a.active_assignment.device.brand} ${a.active_assignment.device.model}` : '').toLowerCase();
+                    valB = (b.active_assignment?.device?.brand ? `${b.active_assignment.device.brand} ${b.active_assignment.device.model}` : '').toLowerCase();
+                    return valA.localeCompare(valB) * modifier;
+                case 'specs':
+                    valA = a.active_assignment?.device?.ram_gb || 0;
+                    valB = b.active_assignment?.device?.ram_gb || 0;
+                    return (valA - valB) * modifier;
+                case 'created_at':
+                case 'date':
+                    valA = new Date(a.created_at || 0).getTime();
+                    valB = new Date(b.created_at || 0).getTime();
+                    return (valA - valB) * modifier;
+                default:
+                    return 0;
+            }
+        });
+    }, [employees, sortConfig]);
+
     const openCreate = () => {
         setEditingEmp(null);
+        setFilePreview(null);
         reset();
         setShowModal(true);
     };
 
     const openEdit = (emp) => {
         setEditingEmp(emp);
+        setFilePreview(null);
         setData({
             name: emp.name,
             department: emp.department,
             role_profile_id: emp.role_profile_id || '',
+            profile_picture: emp.profile_picture || '',
+            profile_picture_file: null,
             notes: emp.notes || '',
         });
         setShowModal(true);
     };
 
+    const handleFileChange = (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setData('profile_picture_file', file);
+            const previewUrl = URL.createObjectURL(file);
+            setFilePreview(previewUrl);
+        }
+    };
+
+    const handleClearPhoto = () => {
+        setData((prev) => ({
+            ...prev,
+            profile_picture: 'public/user/default-profile-picture.png',
+            profile_picture_file: null,
+        }));
+        setFilePreview(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
         if (editingEmp) {
-            put(route('employees.update', editingEmp.id), {
-                onSuccess: () => setShowModal(false),
+            post(route('employees.update', editingEmp.id), {
+                onSuccess: () => {
+                    setShowModal(false);
+                    setFilePreview(null);
+                },
+                forceFormData: true,
             });
         } else {
             post(route('employees.store'), {
-                onSuccess: () => setShowModal(false),
+                onSuccess: () => {
+                    setShowModal(false);
+                    setFilePreview(null);
+                },
+                forceFormData: true,
             });
         }
     };
@@ -78,7 +164,7 @@ export default function EmployeesIndex({ employees, role_profiles }) {
                     </div>
                     <button
                         onClick={openCreate}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#026eff] text-sm font-semibold text-white hover:bg-[#0256cc] shadow-sm transition self-start sm:self-auto"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#026eff] text-sm font-semibold text-white hover:bg-[#0256cc] shadow-sm transition self-start sm:self-auto cursor-pointer"
                     >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -94,10 +180,25 @@ export default function EmployeesIndex({ employees, role_profiles }) {
                 {/* Column Adjustment & Display Control Toolbar */}
                 <div className="px-4 py-2 bg-slate-50/70 dark:bg-zinc-800/40 border-b border-slate-200/70 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2 text-xs">
                     <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-400 text-[11px]">
-                        <span className="inline-flex items-center justify-center w-4 h-4 rounded bg-[#026eff]/10 text-[#026eff] font-bold text-[10px]">↔</span>
-                        <span>Drag column dividers to resize • Double-click divider to expand (+120px)</span>
+                        <span className="inline-flex items-center justify-center w-4 h-4 rounded bg-[#026eff]/10 text-[#026eff] font-bold text-[10px]">↕</span>
+                        <span>Click any header to sort • Drag dividers to resize</span>
                     </div>
                     <div className="flex items-center gap-2 ml-auto">
+                        <button
+                            type="button"
+                            onClick={() => handleSort('created_at')}
+                            className={`px-2.5 py-1 rounded-lg border text-[11px] font-medium transition cursor-pointer flex items-center gap-1.5 ${
+                                sortConfig.key === 'created_at'
+                                    ? 'bg-[#026eff]/15 text-[#026eff] border-[#026eff]/30 dark:bg-[#026eff]/20 dark:text-sky-300'
+                                    : 'bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 border-slate-200 dark:border-zinc-750 hover:bg-slate-50 dark:hover:bg-zinc-700/60'
+                            }`}
+                            title="Sort employees chronologically by registration date"
+                        >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span>Sort Chronologically {sortConfig.key === 'created_at' ? (sortConfig.direction === 'desc' ? '(Newest)' : '(Oldest)') : ''}</span>
+                        </button>
                         <button
                             type="button"
                             onClick={() => setWrapText(!wrapText)}
@@ -129,32 +230,143 @@ export default function EmployeesIndex({ employees, role_profiles }) {
                         className="w-full text-left text-sm table-fixed"
                         style={{ minWidth: `${Math.max(900, Object.values(widths).reduce((a, b) => a + b, 0))}px` }}
                     >
-                        <thead className="bg-slate-50/80 dark:bg-zinc-800/60 border-b border-slate-200 dark:border-zinc-800 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+                        <thead className="bg-slate-50/80 dark:bg-zinc-800/60 border-b border-slate-200 dark:border-zinc-800 text-xs font-bold uppercase tracking-wider whitespace-nowrap text-slate-500 dark:text-zinc-400">
                             <tr>
-                                <ResizableTh colKey="employee" width={widths.employee} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'employee'}>Employee</ResizableTh>
-                                <ResizableTh colKey="department" width={widths.department} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'department'}>Department</ResizableTh>
-                                <ResizableTh colKey="role_profile" width={widths.role_profile} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'role_profile'}>Role Profile</ResizableTh>
-                                <ResizableTh colKey="hardware" width={widths.hardware} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'hardware'}>Assigned Hardware</ResizableTh>
-                                <ResizableTh colKey="specs" width={widths.specs} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'specs'}>Device Specs</ResizableTh>
-                                <ResizableTh colKey="actions" width={widths.actions} onResizeStart={startResize} onAutoExpand={autoExpandCol} isResizing={resizingCol === 'actions'} align="right" resizable={false}>Actions</ResizableTh>
+                                <ResizableTh
+                                    colKey="employee"
+                                    sortKey="name"
+                                    currentSort={sortConfig.key}
+                                    sortDirection={sortConfig.direction}
+                                    onSort={handleSort}
+                                    width={widths.employee}
+                                    onResizeStart={startResize}
+                                    onAutoExpand={autoExpandCol}
+                                    isResizing={resizingCol === 'employee'}
+                                >
+                                    Employee
+                                </ResizableTh>
+                                <ResizableTh
+                                    colKey="department"
+                                    sortKey="department"
+                                    currentSort={sortConfig.key}
+                                    sortDirection={sortConfig.direction}
+                                    onSort={handleSort}
+                                    width={widths.department}
+                                    onResizeStart={startResize}
+                                    onAutoExpand={autoExpandCol}
+                                    isResizing={resizingCol === 'department'}
+                                >
+                                    Department
+                                </ResizableTh>
+                                <ResizableTh
+                                    colKey="role_profile"
+                                    sortKey="role_profile"
+                                    currentSort={sortConfig.key}
+                                    sortDirection={sortConfig.direction}
+                                    onSort={handleSort}
+                                    width={widths.role_profile}
+                                    onResizeStart={startResize}
+                                    onAutoExpand={autoExpandCol}
+                                    isResizing={resizingCol === 'role_profile'}
+                                >
+                                    Role Profile
+                                </ResizableTh>
+                                <ResizableTh
+                                    colKey="hardware"
+                                    sortKey="hardware"
+                                    currentSort={sortConfig.key}
+                                    sortDirection={sortConfig.direction}
+                                    onSort={handleSort}
+                                    width={widths.hardware}
+                                    onResizeStart={startResize}
+                                    onAutoExpand={autoExpandCol}
+                                    isResizing={resizingCol === 'hardware'}
+                                >
+                                    Assigned Hardware
+                                </ResizableTh>
+                                <ResizableTh
+                                    colKey="specs"
+                                    sortKey="specs"
+                                    currentSort={sortConfig.key}
+                                    sortDirection={sortConfig.direction}
+                                    onSort={handleSort}
+                                    width={widths.specs}
+                                    onResizeStart={startResize}
+                                    onAutoExpand={autoExpandCol}
+                                    isResizing={resizingCol === 'specs'}
+                                >
+                                    Device Specs
+                                </ResizableTh>
+                                <ResizableTh
+                                    colKey="date"
+                                    sortKey="created_at"
+                                    currentSort={sortConfig.key}
+                                    sortDirection={sortConfig.direction}
+                                    onSort={handleSort}
+                                    width={widths.date}
+                                    onResizeStart={startResize}
+                                    onAutoExpand={autoExpandCol}
+                                    isResizing={resizingCol === 'date'}
+                                >
+                                    Registered
+                                </ResizableTh>
+                                <ResizableTh
+                                    colKey="actions"
+                                    width={widths.actions}
+                                    onResizeStart={startResize}
+                                    onAutoExpand={autoExpandCol}
+                                    isResizing={resizingCol === 'actions'}
+                                    align="right"
+                                    resizable={false}
+                                >
+                                    Actions
+                                </ResizableTh>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
-                            {employees.map((emp) => {
+                            {sortedEmployees.map((emp) => {
                                 const device = emp.active_assignment?.device;
+                                const avatarSrc =
+                                    emp.profile_picture_url ||
+                                    (emp.profile_picture?.startsWith('public/')
+                                        ? `/${emp.profile_picture.slice(7)}`
+                                        : emp.profile_picture || '/user/default-profile-picture.png');
+
                                 return (
                                     <tr key={emp.id} className="hover:bg-slate-50/60 dark:hover:bg-zinc-800/40 transition">
-                                        <td className="py-4 px-4 font-semibold text-slate-900 dark:text-zinc-100">
-                                            <div className={wrapText ? 'break-words whitespace-normal' : 'truncate'} title={emp.name}>
-                                                {emp.name}
+                                        {/* Employee Profile & Avatar */}
+                                        <td className="py-3 px-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="relative w-9 h-9 rounded-full overflow-hidden bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shrink-0 shadow-2xs">
+                                                    <img
+                                                        src={avatarSrc}
+                                                        alt={emp.name}
+                                                        className="w-full h-full object-cover"
+                                                        onError={(e) => {
+                                                            e.currentTarget.src = '/user/default-profile-picture.png';
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <div className={`font-semibold text-slate-900 dark:text-zinc-100 ${wrapText ? 'break-words whitespace-normal' : 'truncate'}`} title={emp.name}>
+                                                        {emp.name}
+                                                    </div>
+                                                    <div className="text-[10px] text-slate-400 dark:text-zinc-500 font-mono">
+                                                        ID #{emp.id.toString().padStart(4, '0')}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </td>
-                                        <td className="py-4 px-4 text-slate-500 dark:text-zinc-400">
+
+                                        {/* Department */}
+                                        <td className="py-3 px-4 text-slate-500 dark:text-zinc-400">
                                             <div className={wrapText ? 'break-words whitespace-normal' : 'truncate'} title={emp.department}>
                                                 {emp.department}
                                             </div>
                                         </td>
-                                        <td className="py-4 px-4">
+
+                                        {/* Role Profile */}
+                                        <td className="py-3 px-4">
                                             {emp.role_profile ? (
                                                 <span className={`text-xs px-2.5 py-1 rounded-full bg-[#026eff]/10 dark:bg-[#031a40]/60 border border-[#026eff]/15 dark:border-[#031a40]/50 text-[#026eff] dark:text-[#0b79ff] font-medium inline-block ${wrapText ? 'break-words whitespace-normal' : 'truncate max-w-full'}`} title={emp.role_profile.name}>
                                                     {emp.role_profile.name}
@@ -163,14 +375,16 @@ export default function EmployeesIndex({ employees, role_profiles }) {
                                                 <span className="text-xs text-slate-400 dark:text-zinc-500 italic">No Profile Assigned</span>
                                             )}
                                         </td>
-                                        <td className="py-4 px-4">
+
+                                        {/* Assigned Hardware */}
+                                        <td className="py-3 px-4">
                                             {device ? (
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/60 p-0.5 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
+                                                    <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/60 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
                                                         <HardwareImage
                                                             src={device.image_clip_url || device.image_url}
                                                             alt={device.name}
-                                                            className="w-full h-full object-contain"
+                                                            className="w-full h-full object-cover"
                                                         />
                                                     </div>
                                                     <div className="min-w-0 flex-1">
@@ -188,7 +402,9 @@ export default function EmployeesIndex({ employees, role_profiles }) {
                                                 </span>
                                             )}
                                         </td>
-                                        <td className="py-4 px-4 text-xs text-slate-500 dark:text-zinc-400">
+
+                                        {/* Device Specs */}
+                                        <td className="py-3 px-4 text-xs text-slate-500 dark:text-zinc-400">
                                             {device ? (
                                                 <div className={wrapText ? 'break-words whitespace-normal leading-relaxed' : 'truncate'} title={`${device.ram_gb}GB • ${device.storage_gb}GB ${device.storage_type} • ${device.device_type}`}>
                                                     {device.ram_gb}GB • {device.storage_gb}GB {device.storage_type} • <span className="capitalize">{device.device_type}</span>
@@ -197,27 +413,44 @@ export default function EmployeesIndex({ employees, role_profiles }) {
                                                 <span className="text-slate-400 dark:text-zinc-600">—</span>
                                             )}
                                         </td>
-                                        <td className="py-4 px-4 text-right space-x-2">
-                                            <Link
-                                                href={route('match.index', { employee_id: emp.id })}
-                                                className="inline-flex items-center text-xs font-bold text-[#026eff] dark:text-[#0b79ff] hover:text-[#026eff] dark:hover:text-[#0b79ff]"
-                                            >
-                                                {device ? 'Reassign' : 'Match Device'} &rarr;
-                                            </Link>
-                                            {device && (
-                                                <button
-                                                    onClick={() => handleUnassign(emp)}
-                                                    className="text-xs text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 font-medium cursor-pointer"
+
+                                        {/* Chronological Registration Date */}
+                                        <td className="py-3 px-4 text-xs text-slate-500 dark:text-zinc-400 whitespace-nowrap">
+                                            <div className="font-medium text-slate-700 dark:text-zinc-300">
+                                                {emp.created_at ? new Date(emp.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                                            </div>
+                                            <div className="text-[10px] text-slate-400 dark:text-zinc-500 font-mono">
+                                                {emp.created_at ? new Date(emp.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : ''}
+                                            </div>
+                                        </td>
+
+                                        {/* Actions */}
+                                        <td className="py-3 px-4 text-right whitespace-nowrap">
+                                            <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
+                                                <Link
+                                                    href={route('match.index', { employee_id: emp.id })}
+                                                    className="inline-flex items-center gap-1 text-xs font-bold text-[#026eff] dark:text-[#0b79ff] hover:text-[#0256cc] dark:hover:text-[#3894ff] px-2 py-1 rounded-lg hover:bg-[#026eff]/10 dark:hover:bg-[#026eff]/20 transition shrink-0 whitespace-nowrap"
                                                 >
-                                                    Unassign
+                                                    <span>{device ? 'Reassign' : 'Match Device'}</span>
+                                                    <span aria-hidden="true">&rarr;</span>
+                                                </Link>
+                                                {device && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleUnassign(emp)}
+                                                        className="text-xs text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 font-medium px-2 py-1 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer shrink-0 whitespace-nowrap"
+                                                    >
+                                                        Unassign
+                                                    </button>
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openEdit(emp)}
+                                                    className="text-xs text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 font-medium px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition cursor-pointer shrink-0 whitespace-nowrap"
+                                                >
+                                                    Edit
                                                 </button>
-                                            )}
-                                            <button
-                                                onClick={() => openEdit(emp)}
-                                                className="text-xs text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 cursor-pointer"
-                                            >
-                                                Edit
-                                            </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 );
@@ -235,7 +468,7 @@ export default function EmployeesIndex({ employees, role_profiles }) {
                             <h3 className="text-lg font-bold text-slate-900 dark:text-zinc-100">
                                 {editingEmp ? 'Edit Employee' : 'Add Employee'}
                             </h3>
-                            <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 text-sm font-bold">
+                            <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 text-sm font-bold cursor-pointer">
                                 ✕
                             </button>
                         </div>
@@ -248,7 +481,7 @@ export default function EmployeesIndex({ employees, role_profiles }) {
                                     value={data.name}
                                     onChange={(e) => setData('name', e.target.value)}
                                     placeholder="e.g. Maya Lin"
-                                    className="mt-1 w-full rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
+                                    className="mt-1 w-full rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 text-sm py-2 px-3 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
                                     required
                                 />
                                 {errors.name && <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{errors.name}</p>}
@@ -261,10 +494,74 @@ export default function EmployeesIndex({ employees, role_profiles }) {
                                     value={data.department}
                                     onChange={(e) => setData('department', e.target.value)}
                                     placeholder="e.g. Engineering, Design, Finance"
-                                    className="mt-1 w-full rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
+                                    className="mt-1 w-full rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 text-sm py-2 px-3 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
                                     required
                                 />
                                 {errors.department && <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{errors.department}</p>}
+                            </div>
+
+                            {/* Profile Picture Upload & Preview */}
+                            <div>
+                                <label className="block text-xs font-bold uppercase text-slate-700 dark:text-zinc-300 mb-1.5">Profile Picture</label>
+                                
+                                <div className="flex items-center gap-4 p-3 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/30">
+                                    <div className="relative w-16 h-16 rounded-full overflow-hidden bg-slate-200 dark:bg-zinc-700 border-2 border-white dark:border-zinc-800 shrink-0 shadow-sm">
+                                        <img
+                                            src={
+                                                filePreview ||
+                                                (data.profile_picture?.startsWith('public/')
+                                                    ? `/${data.profile_picture.slice(7)}`
+                                                    : data.profile_picture || '/user/default-profile-picture.png')
+                                            }
+                                            alt="Avatar Preview"
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                e.currentTarget.src = '/user/default-profile-picture.png';
+                                            }}
+                                        />
+                                    </div>
+
+                                    <div className="flex-1 min-w-0">
+                                        <input
+                                            ref={fileInputRef}
+                                            type="file"
+                                            accept="image/png,image/jpeg,image/webp,image/gif"
+                                            onChange={handleFileChange}
+                                            className="hidden"
+                                            id="employee-avatar-upload"
+                                        />
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => fileInputRef.current?.click()}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-750 transition cursor-pointer shadow-2xs"
+                                            >
+                                                <svg className="w-3.5 h-3.5 text-[#026eff]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                <span>{data.profile_picture_file ? 'Change Photo' : 'Upload Photo'}</span>
+                                            </button>
+
+                                            {(data.profile_picture_file || (data.profile_picture && data.profile_picture !== 'public/user/default-profile-picture.png')) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleClearPhoto}
+                                                    className="text-xs text-rose-600 dark:text-rose-400 hover:underline cursor-pointer"
+                                                >
+                                                    Use Default
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1 truncate">
+                                            {data.profile_picture_file
+                                                ? `${data.profile_picture_file.name} (${(data.profile_picture_file.size / 1024).toFixed(1)} KB)`
+                                                : 'PNG, JPG, WEBP up to 5MB. Defaults to corporate icon.'}
+                                        </p>
+                                    </div>
+                                </div>
+                                {errors.profile_picture_file && <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{errors.profile_picture_file}</p>}
+                                {errors.profile_picture && <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{errors.profile_picture}</p>}
                             </div>
 
                             <div>
@@ -272,7 +569,7 @@ export default function EmployeesIndex({ employees, role_profiles }) {
                                 <select
                                     value={data.role_profile_id}
                                     onChange={(e) => setData('role_profile_id', e.target.value)}
-                                    className="mt-1 w-full rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
+                                    className="mt-1 w-full rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 text-sm py-2 px-3 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
                                 >
                                     <option value="">No Profile Assigned</option>
                                     {role_profiles.map((p) => (
@@ -288,7 +585,7 @@ export default function EmployeesIndex({ employees, role_profiles }) {
                                     value={data.notes}
                                     onChange={(e) => setData('notes', e.target.value)}
                                     placeholder="Special requirements or location..."
-                                    className="mt-1 w-full rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff]"
+                                    className="mt-1 w-full rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 text-sm py-2 px-3 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
                                 />
                             </div>
 
@@ -296,14 +593,14 @@ export default function EmployeesIndex({ employees, role_profiles }) {
                                 <button
                                     type="button"
                                     onClick={() => setShowModal(false)}
-                                    className="px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-750 transition"
+                                    className="px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-750 transition cursor-pointer"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="px-5 py-2 rounded-xl bg-[#026eff] text-white text-xs font-semibold hover:bg-[#0256cc] shadow-sm transition disabled:opacity-50"
+                                    className="px-5 py-2 rounded-xl bg-[#026eff] text-white text-xs font-semibold hover:bg-[#0256cc] shadow-sm transition disabled:opacity-50 cursor-pointer"
                                 >
                                     {editingEmp ? 'Save Changes' : 'Add Employee'}
                                 </button>

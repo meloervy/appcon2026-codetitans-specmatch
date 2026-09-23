@@ -279,11 +279,11 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                             <div key={device.id} className="p-4 rounded-xl border border-slate-200/80 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/40 hover:bg-slate-50 dark:hover:bg-zinc-800/70 transition flex flex-col justify-between">
                                 <div>
                                     <div className="flex items-start gap-3">
-                                        <div className="w-14 h-14 rounded-xl bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/60 p-1 flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
+                                        <div className="w-14 h-14 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/60 shrink-0 overflow-hidden shadow-xs">
                                             <HardwareImage
                                                 src={device.image_clip_url || device.image_url}
                                                 alt={`${device.brand} ${device.model}`}
-                                                className="w-full h-full object-contain"
+                                                className="w-full h-full object-cover"
                                             />
                                         </div>
                                         <div className="min-w-0 flex-1">
