@@ -38,17 +38,27 @@ const Trigger = ({ children }) => {
 const Content = ({
     align = 'right',
     width = '56',
+    placement = 'bottom',
     contentClasses = 'py-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800',
     children,
 }) => {
     const { open, setOpen } = useContext(DropDownContext);
 
-    let alignmentClasses = 'origin-top';
+    const isTop = placement === 'top' || align.startsWith('top');
 
-    if (align === 'left') {
-        alignmentClasses = 'ltr:origin-top-left rtl:origin-top-right start-0';
-    } else if (align === 'right') {
-        alignmentClasses = 'ltr:origin-top-right rtl:origin-top-left end-0';
+    let alignmentClasses = isTop ? 'origin-bottom' : 'origin-top';
+    let positionClasses = isTop ? 'bottom-full mb-2' : 'mt-2';
+
+    if (align === 'left' || align === 'top-left') {
+        alignmentClasses = isTop
+            ? 'ltr:origin-bottom-left rtl:origin-bottom-right start-0'
+            : 'ltr:origin-top-left rtl:origin-top-right start-0';
+    } else if (align === 'right' || align === 'top-right') {
+        alignmentClasses = isTop
+            ? 'ltr:origin-bottom-right rtl:origin-bottom-left end-0'
+            : 'ltr:origin-top-right rtl:origin-top-left end-0';
+    } else if (align === 'top' || align === 'center') {
+        alignmentClasses = isTop ? 'origin-bottom start-0 end-0' : 'origin-top start-0 end-0';
     }
 
     let widthClasses = 'w-56';
@@ -57,6 +67,8 @@ const Content = ({
         widthClasses = 'w-48';
     } else if (width === '64') {
         widthClasses = 'w-64';
+    } else if (width === 'full') {
+        widthClasses = 'w-full';
     }
 
     return (
@@ -71,7 +83,8 @@ const Content = ({
                 leaveTo="opacity-0 scale-95"
             >
                 <div
-                    className={`absolute z-50 mt-2 rounded-xl shadow-lg ${alignmentClasses} ${widthClasses}`}
+                    className={`absolute z-50 ${positionClasses} rounded-xl shadow-xl ${alignmentClasses} ${widthClasses}`}
+                    onClick={() => setOpen(false)}
                 >
                     <div
                         className={

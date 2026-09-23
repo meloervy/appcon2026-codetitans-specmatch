@@ -207,7 +207,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
 
                 {/* Redundancy / Efficiency Optimization Alert */}
                 {metrics.idle_high_spec_count > 0 && (
-                    <div className="rounded-2xl bg-[#026eff]/100/10 dark:bg-[#031a40]/20 border border-[#026eff]/20 dark:border-[#031a40]/60 p-5 flex items-center justify-between gap-4">
+                    <div className="rounded-2xl bg-[#026eff]/10 dark:bg-[#031a40]/20 border border-[#026eff]/20 dark:border-[#031a40]/60 p-5 flex items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
                             <div className="p-2 rounded-xl bg-[#026eff] text-white shrink-0">
                                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -253,9 +253,12 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                     </div>
                     <Link
                         href={route('mismatches.index')}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-amber-600 dark:border-amber-500 text-amber-700 dark:text-amber-400 text-xs font-bold hover:bg-amber-50 dark:hover:bg-amber-950/30 transition shrink-0 self-start md:self-auto"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-amber-600 dark:border-amber-500 text-amber-700 dark:text-amber-400 text-xs font-bold hover:bg-amber-50 dark:hover:bg-amber-950/30 transition shrink-0 self-start md:self-auto group"
                     >
-                        Review Mismatches &rarr;
+                        <span>Review Mismatches</span>
+                        <svg className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                        </svg>
                     </Link>
                 </div>
             )}
