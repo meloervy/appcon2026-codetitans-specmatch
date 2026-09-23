@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Assignment;
 use App\Models\Device;
 use App\Models\Employee;
+use App\Models\LifecycleEvent;
 use Illuminate\Support\Facades\DB;
 
 class MatchingService
@@ -488,6 +489,262 @@ class MatchingService
             if ($device && $device->status === 'assigned') {
                 $device->update(['status' => 'available']);
             }
+        });
+    }
+
+    /**
+     * Find dynamic bridge swap opportunities when direct matching cannot fulfill high-end requirements
+     * or to optimize overprovisioned active fleet units.
+     *
+     * @param  array  $requirements  Requirements requested by/for the requester
+     * @param  int|null  $requesterEmployeeId  The employee who will receive the high-end donor device
+     */
+    public function findBridgeSwaps(array $requirements, ?int $requesterEmployeeId = null): array
+    {
+        $requester = $requesterEmployeeId ? Employee::with('roleProfile')->find($requesterEmployeeId) : null;
+        $requesterLocation = $requester?->location;
+
+        // 1. Get available stockroom units that can serve as a bridge
+        $availableDevices = Device::available()
+            ->where('condition', '!=', 'poor')
+            ->where('condition', '!=', 'needs_repair')
+            ->get();
+
+        if ($availableDevices->isEmpty()) {
+            return [];
+        }
+
+        // 2. Find active assignments where the assigned device fulfills the requester's requirements
+        $activeAssignments = Assignment::with(['device', 'employee.roleProfile'])
+            ->whereNull('unassigned_at')
+            ->when($requesterEmployeeId, fn ($q) => $q->where('employee_id', '!=', $requesterEmployeeId))
+            ->get();
+
+        $candidates = [];
+
+        foreach ($activeAssignments as $assignment) {
+            $donor = $assignment->employee;
+            $donorDevice = $assignment->device;
+
+            if (! $donor || ! $donor->roleProfile || ! $donorDevice) {
+                continue;
+            }
+
+            // A. Evaluate donor device against Requester requirements
+            $requesterEval = $this->evaluateDevice($donorDevice, $requirements, false);
+            if ($requesterEval['disqualified'] || $requesterEval['score'] < self::MATCH_THRESHOLD) {
+                continue;
+            }
+
+            // B. Check if donor is overprovisioned for their actual role
+            $donorProfile = $donor->roleProfile;
+            $donorRequirements = [
+                'min_cpu_tier' => $donorProfile->min_cpu_tier,
+                'min_ram_gb' => $donorProfile->min_ram_gb,
+                'min_storage_gb' => $donorProfile->min_storage_gb,
+                'requires_gpu' => $donorProfile->requires_gpu,
+                'min_gpu_tier' => $donorProfile->min_gpu_tier ?? 'none',
+                'portability_required' => $donorProfile->portability_required,
+            ];
+
+            $donorCpuDiff = (self::CPU_TIERS[$donorDevice->cpu_tier] ?? 1) - (self::CPU_TIERS[$donorProfile->min_cpu_tier] ?? 1);
+            $donorRamDiff = $donorDevice->ram_gb - $donorProfile->min_ram_gb;
+
+            // Only consider donors whose device noticeably exceeds their required specs
+            $isOverprovisioned = ($donorCpuDiff > 0 || $donorRamDiff >= 8 || ($donorDevice->gpu_tier !== 'none' && ! $donorProfile->requires_gpu));
+            if (! $isOverprovisioned) {
+                continue;
+            }
+
+            // C. Find the best available stockroom device that satisfies the donor's role requirements
+            $bestBridgeDevice = null;
+            $bestBridgeScore = 0.0;
+
+            foreach ($availableDevices as $bridgeDevice) {
+                $bridgeEval = $this->evaluateDevice($bridgeDevice, $donorRequirements, true);
+
+                if (! $bridgeEval['disqualified'] && $bridgeEval['score'] >= self::MATCH_THRESHOLD) {
+                    if ($bridgeEval['score'] > $bestBridgeScore) {
+                        $bestBridgeScore = $bridgeEval['score'];
+                        $bestBridgeDevice = $bridgeDevice;
+                    }
+                }
+            }
+
+            if (! $bestBridgeDevice) {
+                continue;
+            }
+
+            // D. Calculate feasibility score & CapEx savings
+            $isSameLocation = ($donorDevice->location && $bestBridgeDevice->location && strtolower($donorDevice->location) === strtolower($bestBridgeDevice->location));
+            $locationBonus = $isSameLocation ? 0.08 : 0.0;
+            $conditionBonus = $donorDevice->condition === 'excellent' ? 0.05 : ($donorDevice->condition === 'good' ? 0.02 : 0.0);
+
+            $compositeScore = round(
+                (($requesterEval['score'] * 0.55) + ($bestBridgeScore * 0.45) + $locationBonus + $conditionBonus),
+                3
+            );
+            $compositeScore = min(0.99, max(0.65, $compositeScore));
+
+            $capexSavedPhp = $this->estimateDeviceValuePhp($donorDevice);
+
+            $rationale = sprintf(
+                'Dynamic Bridge Swap: %s (%s) is currently overprovisioned with a %dGB %s %s. Deploying stockroom unit %s (%dGB %s) to %s fulfills their baseline workflow (Score: %d%%), immediately freeing up %s for %s without purchasing new hardware (CapEx Avoided: ₱%s).',
+                $donor->name,
+                $donorProfile->name,
+                $donorDevice->ram_gb,
+                $donorDevice->brand,
+                $donorDevice->model,
+                $bestBridgeDevice->asset_tag,
+                $bestBridgeDevice->ram_gb,
+                $bestBridgeDevice->model,
+                $donor->name,
+                round($bestBridgeScore * 100),
+                $donorDevice->asset_tag,
+                $requester ? $requester->name : 'the requesting role',
+                number_format($capexSavedPhp, 2)
+            );
+
+            $candidates[] = [
+                'donor_employee' => [
+                    'id' => $donor->id,
+                    'name' => $donor->name,
+                    'department' => $donor->department,
+                    'location' => $donor->location,
+                    'role_profile' => [
+                        'name' => $donorProfile->name,
+                        'min_ram_gb' => $donorProfile->min_ram_gb,
+                        'min_cpu_tier' => $donorProfile->min_cpu_tier,
+                    ],
+                ],
+                'donor_device' => [
+                    'id' => $donorDevice->id,
+                    'asset_tag' => $donorDevice->asset_tag,
+                    'brand' => $donorDevice->brand,
+                    'model' => $donorDevice->model,
+                    'device_type' => $donorDevice->device_type,
+                    'ram_gb' => $donorDevice->ram_gb,
+                    'cpu' => $donorDevice->cpu,
+                    'cpu_tier' => $donorDevice->cpu_tier,
+                    'gpu' => $donorDevice->gpu,
+                    'condition' => $donorDevice->condition,
+                    'image_clip_url' => $donorDevice->image_clip_url,
+                    'image_url' => $donorDevice->image_url,
+                ],
+                'bridge_device' => [
+                    'id' => $bestBridgeDevice->id,
+                    'asset_tag' => $bestBridgeDevice->asset_tag,
+                    'brand' => $bestBridgeDevice->brand,
+                    'model' => $bestBridgeDevice->model,
+                    'device_type' => $bestBridgeDevice->device_type,
+                    'ram_gb' => $bestBridgeDevice->ram_gb,
+                    'cpu' => $bestBridgeDevice->cpu,
+                    'cpu_tier' => $bestBridgeDevice->cpu_tier,
+                    'condition' => $bestBridgeDevice->condition,
+                    'image_clip_url' => $bestBridgeDevice->image_clip_url,
+                    'image_url' => $bestBridgeDevice->image_url,
+                ],
+                'requester_score_on_donor_device' => round($requesterEval['score'], 3),
+                'donor_score_on_bridge_device' => round($bestBridgeScore, 3),
+                'feasibility_score' => $compositeScore,
+                'capex_saved_php' => $capexSavedPhp,
+                'same_location' => $isSameLocation,
+                'plan_steps' => [
+                    "Step 1: Deploy Stockroom Unit {$bestBridgeDevice->asset_tag} ({$bestBridgeDevice->brand} {$bestBridgeDevice->model}) to {$donor->name}",
+                    "Step 2: Retrieve and reassign {$donorDevice->asset_tag} ({$donorDevice->brand} {$donorDevice->model}) to Requester",
+                ],
+                'rationale' => $rationale,
+            ];
+        }
+
+        // Sort candidates by feasibility score descending
+        usort($candidates, fn ($a, $b) => $b['feasibility_score'] <=> $a['feasibility_score']);
+
+        return $candidates;
+    }
+
+    /**
+     * Atomically execute a 2-step bridge swap transaction with full lifecycle audit logs.
+     */
+    public function executeBridgeSwap(
+        int $bridgeDeviceId,
+        int $donorEmployeeId,
+        int $requesterEmployeeId,
+        int $donorDeviceId,
+        ?int $userId = null
+    ): array {
+        return DB::transaction(function () use ($bridgeDeviceId, $donorEmployeeId, $requesterEmployeeId, $donorDeviceId, $userId) {
+            $now = now();
+            $donor = Employee::findOrFail($donorEmployeeId);
+            $requester = Employee::findOrFail($requesterEmployeeId);
+            $bridgeDevice = Device::findOrFail($bridgeDeviceId);
+            $donorDevice = Device::findOrFail($donorDeviceId);
+
+            // 1. Unassign donor from donor device
+            Assignment::where('device_id', $donorDeviceId)
+                ->where('employee_id', $donorEmployeeId)
+                ->whereNull('unassigned_at')
+                ->update(['unassigned_at' => $now]);
+
+            // 2. Unassign requester from prior device if any
+            Assignment::where('employee_id', $requesterEmployeeId)
+                ->whereNull('unassigned_at')
+                ->update(['unassigned_at' => $now]);
+
+            // 3. Assign bridge device to donor employee
+            $bridgeDevice->update([
+                'status' => 'assigned',
+                'lifecycle_stage' => 'deployment',
+            ]);
+            $donorAssignment = Assignment::create([
+                'device_id' => $bridgeDeviceId,
+                'employee_id' => $donorEmployeeId,
+                'assigned_at' => $now,
+                'unassigned_at' => null,
+                'match_score' => 0.85,
+                'assignment_source' => 'ai_recommended',
+            ]);
+
+            // 4. Assign donor device to requester employee
+            $donorDevice->update([
+                'status' => 'assigned',
+                'lifecycle_stage' => 'deployment',
+            ]);
+            $requesterAssignment = Assignment::create([
+                'device_id' => $donorDeviceId,
+                'employee_id' => $requesterEmployeeId,
+                'assigned_at' => $now,
+                'unassigned_at' => null,
+                'match_score' => 0.95,
+                'assignment_source' => 'ai_recommended',
+            ]);
+
+            // 5. Create LifecycleEvent logs for both devices
+            LifecycleEvent::create([
+                'device_id' => $bridgeDeviceId,
+                'from_stage' => 'acquisition',
+                'to_stage' => 'deployment',
+                'changed_by_user_id' => $userId ?? auth()->id(),
+                'notes' => "Deployed as Bridge Unit to {$donor->name} in 2-step cascade swap with {$donorDevice->asset_tag}.",
+            ]);
+
+            LifecycleEvent::create([
+                'device_id' => $donorDeviceId,
+                'from_stage' => 'deployment',
+                'to_stage' => 'deployment',
+                'changed_by_user_id' => $userId ?? auth()->id(),
+                'notes' => "Cascade reallocated from {$donor->name} to {$requester->name} via Dynamic Inventory Bridge Swap (CapEx Avoided: ₱".number_format($this->estimateDeviceValuePhp($donorDevice), 2).').',
+            ]);
+
+            return [
+                'success' => true,
+                'donor_assignment' => $donorAssignment,
+                'requester_assignment' => $requesterAssignment,
+                'donor' => $donor,
+                'requester' => $requester,
+                'bridge_device' => $bridgeDevice,
+                'donor_device' => $donorDevice,
+            ];
         });
     }
 }

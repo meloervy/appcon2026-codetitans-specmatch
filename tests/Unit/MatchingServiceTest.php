@@ -5,7 +5,6 @@ namespace Tests\Unit;
 use App\Models\Assignment;
 use App\Models\Device;
 use App\Models\Employee;
-use App\Models\RoleProfile;
 use App\Services\MatchingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -19,7 +18,7 @@ class MatchingServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new MatchingService();
+        $this->service = new MatchingService;
     }
 
     public function test_device_with_no_gpu_is_disqualified_when_gpu_is_required(): void
@@ -177,5 +176,19 @@ class MatchingServiceTest extends TestCase
             ->whereNull('unassigned_at')
             ->count();
         $this->assertEquals(1, $activeCount);
+    }
+
+    public function test_find_bridge_swaps_returns_empty_when_no_stockroom_units_available(): void
+    {
+        $swaps = $this->service->findBridgeSwaps([
+            'min_cpu_tier' => 'high',
+            'min_ram_gb' => 32,
+            'min_storage_gb' => 512,
+            'requires_gpu' => false,
+            'portability_required' => true,
+        ]);
+
+        $this->assertIsArray($swaps);
+        $this->assertEmpty($swaps);
     }
 }

@@ -63,6 +63,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/match/extract', [MatchingController::class, 'extract'])->name('match.extract');
     Route::post('/match/rank', [MatchingController::class, 'rank'])->name('match.rank');
     Route::post('/match/assign', [MatchingController::class, 'assign'])->name('match.assign');
+    Route::post('/match/bridge-swap', [MatchingController::class, 'executeBridgeSwap'])->name('match.bridge-swap');
 
     // Mismatch Detection & Fleet Audit
     Route::get('/mismatches', [MismatchController::class, 'index'])->name('mismatches.index');

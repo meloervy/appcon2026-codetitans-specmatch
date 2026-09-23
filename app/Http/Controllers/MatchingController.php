@@ -65,12 +65,18 @@ class MatchingController extends Controller
             'requirements.min_gpu_tier' => ['nullable', 'in:none,integrated,dedicated-entry,dedicated-high'],
             'requirements.portability_required' => ['required', 'boolean'],
             'exclude_device_id' => ['nullable', 'integer'],
+            'employee_id' => ['nullable', 'integer', 'exists:employees,id'],
         ]);
 
         $results = $matchingService->rankDevices(
             $validated['requirements'],
             $validated['exclude_device_id'] ?? null,
             true // available only
+        );
+
+        $results['bridge_swaps'] = $matchingService->findBridgeSwaps(
+            $validated['requirements'],
+            $validated['employee_id'] ?? null
         );
 
         return response()->json($results);
@@ -101,6 +107,38 @@ class MatchingController extends Controller
         return redirect()->route('dashboard')->with(
             'success',
             "Device {$device->asset_tag} ({$device->brand} {$device->model}) assigned to {$employee->name}."
+        );
+    }
+
+    /**
+     * Atomically execute a 2-step bridge swap cascade transaction.
+     */
+    public function executeBridgeSwap(Request $request, MatchingService $matchingService): RedirectResponse
+    {
+        $validated = $request->validate([
+            'bridge_device_id' => ['required', 'exists:devices,id'],
+            'donor_employee_id' => ['required', 'exists:employees,id'],
+            'requester_employee_id' => ['required', 'exists:employees,id'],
+            'donor_device_id' => ['required', 'exists:devices,id'],
+        ]);
+
+        $result = $matchingService->executeBridgeSwap(
+            $validated['bridge_device_id'],
+            $validated['donor_employee_id'],
+            $validated['requester_employee_id'],
+            $validated['donor_device_id'],
+            auth()->id()
+        );
+
+        $donor = $result['donor'];
+        $requester = $result['requester'];
+        $bridgeDevice = $result['bridge_device'];
+        $donorDevice = $result['donor_device'];
+        $savings = number_format($matchingService->estimateDeviceValuePhp($donorDevice), 2);
+
+        return redirect()->route('dashboard')->with(
+            'success',
+            "⚡ Dynamic Bridge Swap executed! Deployed stockroom unit {$bridgeDevice->asset_tag} to {$donor->name}, freeing up {$donorDevice->asset_tag} for {$requester->name}. Avoided ₱{$savings} in new hardware CapEx!"
         );
     }
 }
