@@ -8,6 +8,7 @@ import { useState } from 'react';
 
 export default function Login({ status, canResetPassword }) {
     const [showPassword, setShowPassword] = useState(false);
+
     const { data, setData, post, processing, errors, reset } = useForm({
         email: '',
         password: '',
@@ -67,7 +68,7 @@ export default function Login({ status, canResetPassword }) {
                     <button
                         type="button"
                         disabled={processing}
-                        onClick={() => handleQuickLogin('admin@specmatch.local')}
+                        onClick={() => handleQuickLogin('admin@specmatch.local', 'password')}
                         className="flex flex-col items-center justify-center p-2 rounded-lg bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-700/70 hover:border-[#026eff] dark:hover:border-[#0b79ff] hover:shadow-xs transition-all duration-150 group text-center cursor-pointer disabled:opacity-50"
                     >
                         <span className="text-xs font-semibold text-slate-800 dark:text-zinc-200 group-hover:text-[#026eff] dark:group-hover:text-sky-400">
@@ -81,7 +82,7 @@ export default function Login({ status, canResetPassword }) {
                     <button
                         type="button"
                         disabled={processing}
-                        onClick={() => handleQuickLogin('manager@specmatch.local')}
+                        onClick={() => handleQuickLogin('manager@specmatch.local', 'password')}
                         className="flex flex-col items-center justify-center p-2 rounded-lg bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-700/70 hover:border-[#026eff] dark:hover:border-[#0b79ff] hover:shadow-xs transition-all duration-150 group text-center cursor-pointer disabled:opacity-50"
                     >
                         <span className="text-xs font-semibold text-slate-800 dark:text-zinc-200 group-hover:text-[#026eff] dark:group-hover:text-sky-400">
@@ -95,7 +96,7 @@ export default function Login({ status, canResetPassword }) {
                     <button
                         type="button"
                         disabled={processing}
-                        onClick={() => handleQuickLogin('tech@specmatch.local')}
+                        onClick={() => handleQuickLogin('tech@specmatch.local', 'password')}
                         className="flex flex-col items-center justify-center p-2 rounded-lg bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-700/70 hover:border-[#026eff] dark:hover:border-[#0b79ff] hover:shadow-xs transition-all duration-150 group text-center cursor-pointer disabled:opacity-50"
                     >
                         <span className="text-xs font-semibold text-slate-800 dark:text-zinc-200 group-hover:text-[#026eff] dark:group-hover:text-sky-400">

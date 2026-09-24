@@ -197,9 +197,12 @@ export default function Register() {
                 <div className="mt-6 flex items-center justify-between pt-4 border-t border-slate-100 dark:border-zinc-800">
                     <Link
                         href={route('login')}
-                        className="text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200"
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:text-[#026EFC] dark:hover:text-sky-400 transition-colors group"
                     >
-                        &larr; Back to sign in
+                        <svg className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                        </svg>
+                        <span>Back to sign in</span>
                     </Link>
 
                     <PrimaryButton className="px-5 py-2 text-xs font-semibold" disabled={processing}>

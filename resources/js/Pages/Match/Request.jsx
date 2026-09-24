@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import CustomSelect from '@/Components/CustomSelect';
 import HardwareImage from '@/Components/HardwareImage';
+import SpecMatchMascot from '@/Components/SpecMatchMascot';
 import StatefulButton from '@/Components/ui/StatefulButton';
 import { Head, router } from '@inertiajs/react';
 import axios from 'axios';
@@ -665,12 +666,25 @@ export default function MatchRequest({
                 {/* Right Column: AI Extraction & Recommendations (7 cols) */}
                 <div className="lg:col-span-7 w-full space-y-6">
                     {!extracted && !isExtracting && !isRanking ? (
-                        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 p-8 shadow-xs">
-                            <div className="text-center mb-8">
-                                <h3 className="font-bold text-slate-900 dark:text-zinc-100 text-lg">Two-Layer Matching Pipeline Idle</h3>
-                                <p className="text-sm text-slate-500 dark:text-zinc-400 mt-2 max-w-md mx-auto leading-relaxed">
-                                    Select a template or describe workload needs on the left. The engine will extract structured constraints via Gemini (Step 2) and deterministically rank available fleet devices (Step 3).
-                                </p>
+                        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 p-6 sm:p-8 shadow-xs">
+                            <div className="flex flex-col sm:flex-row items-center gap-6 mb-8 p-4 rounded-2xl bg-sky-50/60 dark:bg-zinc-800/50 border border-sky-100 dark:border-zinc-700/60">
+                                <SpecMatchMascot
+                                    pose="greeting"
+                                    variant="full"
+                                    size={100}
+                                    showGlow={true}
+                                    className="shrink-0"
+                                />
+                                <div className="text-center sm:text-left">
+                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#026EFC]/10 dark:bg-sky-950/60 text-[10px] font-extrabold text-[#026EFC] dark:text-sky-300 border border-[#026EFC]/20 mb-1.5">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                        SpecMatch AI Engine Ready
+                                    </div>
+                                    <h3 className="font-bold text-slate-900 dark:text-zinc-100 text-base">Two-Layer Matching Pipeline Idle</h3>
+                                    <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 leading-relaxed">
+                                        Pick a quick workload preset on the left or describe the employee's software needs in plain language. The AI will extract requirements and score your fleet instantly!
+                                    </p>
+                                </div>
                             </div>
                             <div className="space-y-6">
                                 {/* Skeleton for Step 2 */}
@@ -1693,12 +1707,14 @@ export default function MatchRequest({
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200">
                     <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 relative overflow-hidden max-h-[90vh] overflow-y-auto custom-scrollbar">
                         <div className="flex items-start justify-between">
-                            <div className="flex items-center gap-2.5">
-                                <span className="p-2 rounded-xl bg-[#026eff]/15 text-[#026eff] dark:text-[#0b79ff] border border-[#026eff]/30">
-                                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M11 2L7.33 10.67 2 11l5.33 3.67L5 22l6-3.33L17 22l-2.33-7.33L20 11l-5.33-.33L11 2zm8 4l-1.33 2.67L15 9l2.67 1.33L19 13l1.33-2.67L23 9l-2.67-1.33z" />
-                                    </svg>
-                                </span>
+                            <div className="flex items-center gap-3">
+                                <SpecMatchMascot
+                                    variant="avatar"
+                                    size={38}
+                                    pose="active"
+                                    showGlow={true}
+                                    isOnline={geminiTestResult?.http_status === 200}
+                                />
                                 <div>
                                     <h3 className="text-base font-bold text-slate-900 dark:text-zinc-100">
                                         Gemini 3.6 Flash Connectivity Status
