@@ -113,7 +113,7 @@ export default function MismatchesIndex({ mismatches, threshold }) {
                                             href={route('match.index', { employee_id: employee.id })}
                                             className="px-4 py-2 rounded-xl bg-[#026eff] text-white text-xs font-bold hover:bg-[#0256cc] shadow-sm transition"
                                         >
-                                            Find Replacement Device &rarr;
+                                            Find Replacement Device
                                         </Link>
                                     </div>
                                 </div>

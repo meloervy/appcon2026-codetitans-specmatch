@@ -17,6 +17,7 @@ import {
     RiMoonLine,
     RiUserLine,
     RiLogoutBoxRLine,
+    RiArrowDownSLine,
 } from 'react-icons/ri';
 
 export default function AuthenticatedLayout({ header, children }) {
@@ -115,24 +116,20 @@ export default function AuthenticatedLayout({ header, children }) {
                                 <Dropdown.Trigger>
                                     <button
                                         type="button"
-                                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800/80 transition shadow-2xs group cursor-pointer shrink-0"
+                                        className="group inline-flex items-center gap-2 rounded-xl border border-slate-200/90 dark:border-zinc-800/90 bg-white dark:bg-zinc-900/90 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-zinc-200 hover:border-[#026eff]/40 dark:hover:border-[#026eff]/40 hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-2xs transition shrink-0 cursor-pointer"
                                     >
-                                        <div className="w-7 h-7 rounded-full overflow-hidden bg-[#026eff]/15 dark:bg-[#031a40]/60 text-[#026eff] dark:text-[#0b79ff] flex items-center justify-center text-xs font-bold shrink-0 border border-slate-200/60 dark:border-zinc-700/60">
+                                        <div className="w-5 h-5 rounded-full overflow-hidden bg-gradient-to-tr from-[#026eff] to-sky-400 text-white flex items-center justify-center text-[10px] font-bold shadow-2xs ring-2 ring-white dark:ring-zinc-900 shrink-0">
                                             {user.avatar_url ? (
                                                 <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
                                             ) : (
                                                 <span>{user.name.charAt(0)}</span>
                                             )}
                                         </div>
-                                        <div className="flex flex-col text-left leading-tight min-w-0 max-w-[105px] xl:max-w-[130px]">
-                                            <span className="font-bold text-xs text-slate-800 dark:text-zinc-100 truncate">{user.name}</span>
-                                            <span className="text-[9px] font-extrabold uppercase tracking-wider text-[#026eff] dark:text-[#38bdf8] truncate">
-                                                {user.role === 'admin' ? 'Admin' : user.role === 'manager' ? 'Manager' : user.role === 'technician' ? 'Tech' : (user.role_title || 'Staff')}
-                                            </span>
-                                        </div>
-                                        <svg className="h-3.5 w-3.5 text-slate-400 group-hover:text-slate-600 dark:text-zinc-500 dark:group-hover:text-zinc-300 transition-colors shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                                        </svg>
+                                        <span className="font-semibold text-slate-800 dark:text-zinc-200 max-w-[120px] truncate">{user.name}</span>
+                                        <span className="hidden sm:inline-block px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 border border-slate-200/60 dark:border-zinc-700/60">
+                                            {user.role === 'admin' ? 'Admin' : user.role === 'manager' ? 'Manager' : user.role === 'technician' ? 'Tech' : (user.role_title || 'Staff')}
+                                        </span>
+                                        <RiArrowDownSLine className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500 group-hover:text-slate-600 dark:group-hover:text-zinc-300 transition shrink-0" />
                                     </button>
                                 </Dropdown.Trigger>
 

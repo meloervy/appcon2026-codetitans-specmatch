@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Employee;
 use App\Models\RoleProfile;
 use App\Services\MatchingService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,17 +15,86 @@ use Inertia\Response;
 
 class EmployeeController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $employees = Employee::with(['roleProfile', 'activeAssignment.device'])
-            ->orderBy('name')
-            ->get();
+        $query = Employee::with(['roleProfile', 'activeAssignment.device']);
+
+        if ($request->filled('search')) {
+            $s = $request->input('search');
+            $query->where(function ($q) use ($s) {
+                $q->where('name', 'like', "%{$s}%")
+                    ->orWhere('department', 'like', "%{$s}%")
+                    ->orWhereHas('roleProfile', function ($rq) use ($s) {
+                        $rq->where('name', 'like', "%{$s}%");
+                    })
+                    ->orWhereHas('activeAssignment.device', function ($dq) use ($s) {
+                        $dq->where('brand', 'like', "%{$s}%")
+                            ->orWhere('model', 'like', "%{$s}%")
+                            ->orWhere('asset_tag', 'like', "%{$s}%");
+                    });
+            });
+        }
+
+        if ($request->filled('department')) {
+            $query->where('department', $request->input('department'));
+        }
+
+        if ($request->filled('role_profile_id')) {
+            $query->where('role_profile_id', $request->input('role_profile_id'));
+        }
+
+        if ($request->filled('hardware_status')) {
+            $status = $request->input('hardware_status');
+            if ($status === 'assigned') {
+                $query->has('activeAssignment');
+            } elseif ($status === 'unassigned') {
+                $query->doesntHave('activeAssignment');
+            }
+        }
+
+        $allowedSorts = [
+            'name' => 'name',
+            'employee' => 'name',
+            'department' => 'department',
+            'created_at' => 'created_at',
+            'date' => 'created_at',
+        ];
+
+        $sort = $request->input('sort', 'name');
+        $direction = strtolower($request->input('direction', 'asc')) === 'desc' ? 'desc' : 'asc';
+        $sortColumn = $allowedSorts[$sort] ?? 'name';
+
+        $employees = $query->orderBy($sortColumn, $direction)->paginate(15)->withQueryString();
 
         $profiles = RoleProfile::orderBy('name')->get();
+        $departments = Employee::whereNotNull('department')
+            ->where('department', '!=', '')
+            ->distinct()
+            ->orderBy('department')
+            ->pluck('department');
+
+        $totalEmployees = Employee::count();
+        $assignedEmployees = Employee::has('activeAssignment')->count();
+        $unassignedEmployees = Employee::doesntHave('activeAssignment')->count();
+        $withProfileEmployees = Employee::whereNotNull('role_profile_id')->count();
+
+        $stats = [
+            'total' => $totalEmployees,
+            'assigned' => $assignedEmployees,
+            'unassigned' => $unassignedEmployees,
+            'with_profile' => $withProfileEmployees,
+            'assigned_percentage' => $totalEmployees > 0 ? (int) round(($assignedEmployees / $totalEmployees) * 100) : 0,
+        ];
 
         return Inertia::render('Employees/Index', [
             'employees' => $employees,
             'role_profiles' => $profiles,
+            'departments' => $departments,
+            'stats' => $stats,
+            'filters' => array_merge(
+                $request->only(['search', 'department', 'role_profile_id', 'hardware_status']),
+                ['sort' => $sort, 'direction' => $direction]
+            ),
         ]);
     }
 
@@ -149,5 +219,24 @@ class EmployeeController extends Controller
 
         return back()->with('success', $result['message'])
             ->with('reclaimed_details', $result);
+    }
+
+    /**
+     * Export complete company staff directory and hardware allocation audit as PDF report.
+     */
+    public function exportPdf(Request $request)
+    {
+        $employees = Employee::with(['roleProfile', 'activeAssignment.device'])
+            ->orderBy('name')
+            ->get();
+
+        $pdf = Pdf::loadView('reports.employees_directory', [
+            'employees' => $employees,
+            'generated_at' => now()->format('F j, Y, g:i A'),
+            'total_employees' => $employees->count(),
+            'assigned_count' => $employees->filter(fn ($e) => $e->activeAssignment !== null)->count(),
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->download('specmatch-staff-directory-'.date('Ymd-His').'.pdf');
     }
 }

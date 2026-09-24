@@ -27,10 +27,55 @@ class MaintenanceController extends Controller
             $query->where('status', $request->input('status'));
         }
 
-        $logs = $query->latest('started_at')->paginate(15)->withQueryString();
+        if ($request->filled('search')) {
+            $s = $request->input('search');
+            $query->where(function ($q) use ($s) {
+                $q->where('title', 'like', "%{$s}%")
+                    ->orWhere('description', 'like', "%{$s}%")
+                    ->orWhere('performed_by', 'like', "%{$s}%")
+                    ->orWhereHas('device', function ($dq) use ($s) {
+                        $dq->where('asset_tag', 'like', "%{$s}%")
+                            ->orWhere('model', 'like', "%{$s}%")
+                            ->orWhere('brand', 'like', "%{$s}%");
+                    });
+            });
+        }
+
+        $allowedSorts = [
+            'device' => 'device_id',
+            'asset_tag' => 'devices.asset_tag',
+            'activity' => 'title',
+            'title' => 'title',
+            'type' => 'type',
+            'scope' => 'description',
+            'description' => 'description',
+            'technician' => 'performed_by',
+            'performed_by' => 'performed_by',
+            'cost' => 'cost',
+            'timeline' => 'started_at',
+            'started_at' => 'started_at',
+            'completed_at' => 'completed_at',
+            'status' => 'status',
+            'created_at' => 'created_at',
+        ];
+
+        $sort = $request->input('sort', 'started_at');
+        $direction = strtolower($request->input('direction', 'desc')) === 'asc' ? 'asc' : 'desc';
+
+        if ($sort === 'device' || $sort === 'asset_tag') {
+            $query->join('devices', 'maintenance_logs.device_id', '=', 'devices.id')
+                ->orderBy('devices.asset_tag', $direction)
+                ->select('maintenance_logs.*');
+        } else {
+            $sortColumn = $allowedSorts[$sort] ?? 'started_at';
+            $query->orderBy($sortColumn, $direction);
+        }
+
+        $logs = $query->paginate(15)->withQueryString();
 
         $stats = [
             'total_spend' => MaintenanceLog::where('status', 'completed')->sum('cost'),
+            'active_count' => MaintenanceLog::whereIn('status', ['scheduled', 'in_progress'])->count(),
             'active_repairs' => MaintenanceLog::whereIn('status', ['scheduled', 'in_progress'])->count(),
             'completed_count' => MaintenanceLog::where('status', 'completed')->count(),
         ];
@@ -38,7 +83,13 @@ class MaintenanceController extends Controller
         return Inertia::render('Maintenance/Index', [
             'logs' => $logs,
             'stats' => $stats,
-            'filters' => $request->only(['type', 'status']),
+            'filters' => [
+                'type' => $request->input('type', ''),
+                'status' => $request->input('status', ''),
+                'search' => $request->input('search', ''),
+                'sort' => $sort,
+                'direction' => $direction,
+            ],
         ]);
     }
 

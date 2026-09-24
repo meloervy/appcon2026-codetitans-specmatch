@@ -56,6 +56,9 @@ Route::middleware('auth')->group(function () {
 
     // Employees
     Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
+    Route::get('/employees/export/pdf', [EmployeeController::class, 'exportPdf'])->name('employees.export.pdf');
+    Route::get('/employees/export/csv', [EmployeeController::class, 'exportCsv'])->name('employees.export.csv');
+    Route::post('/employees/import/csv', [EmployeeController::class, 'importCsv'])->name('employees.import.csv');
     Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
     Route::match(['put', 'post'], '/employees/{id}', [EmployeeController::class, 'update'])->name('employees.update');
     Route::post('/employees/{id}/unassign', [EmployeeController::class, 'unassign'])->name('employees.unassign');

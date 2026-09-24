@@ -2355,7 +2355,7 @@ export default function MatchRequest({
                                                         }}
                                                         className="text-[10px] font-bold text-[#026eff] dark:text-[#0b79ff] hover:underline cursor-pointer"
                                                     >
-                                                        Use Specs in Prompt &rarr;
+                                                        Use Specs in Prompt
                                                     </button>
                                                 </div>
                                             </div>

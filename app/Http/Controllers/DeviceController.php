@@ -16,7 +16,7 @@ class DeviceController extends Controller
 {
     public function index(Request $request): Response
     {
-        $query = Device::with('activeAssignment.employee');
+        $query = Device::with(['activeAssignment.employee.roleProfile', 'maintenanceLogs']);
 
         if ($request->filled('search')) {
             $s = $request->input('search');

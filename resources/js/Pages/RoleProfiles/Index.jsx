@@ -129,7 +129,7 @@ export default function RoleProfilesIndex({ profiles }) {
 
             <div className="mt-5 pt-3 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between text-xs">
                 <span className="text-[11px] font-medium text-slate-400 dark:text-zinc-500">
-                    Click to view workload matrix &rarr;
+                    Click to view workload matrix
                 </span>
                 <span className="text-xs font-bold text-[#026eff] dark:text-[#0b79ff] group-hover:underline">
                     Inspect
@@ -431,7 +431,7 @@ export default function RoleProfilesIndex({ profiles }) {
                                 <button
                                     type="button"
                                     onClick={() => setShowModal(false)}
-                                    className="px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-750 transition"
+                                    className="px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700 transition"
                                 >
                                     Cancel
                                 </button>
