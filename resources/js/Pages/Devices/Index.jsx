@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import CustomSelect from '@/Components/CustomSelect';
 import HardwareImage from '@/Components/HardwareImage';
 import ResizableTh from '@/Components/ResizableTh';
 import { useResizableColumns } from '@/Hooks/useResizableColumns';
@@ -140,47 +141,47 @@ export default function DevicesIndex({ devices, filters }) {
 
                         {/* Lifecycle Stage Filter */}
                         <div className="lg:col-span-2">
-                            <select
+                            <CustomSelect
                                 value={lifecycleStage}
-                                onChange={(e) => setLifecycleStage(e.target.value)}
-                                className="w-full text-xs font-medium py-2 px-3 rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
-                            >
-                                <option value="">All Lifecycle Stages</option>
-                                <option value="acquisition">1. Acquisition</option>
-                                <option value="deployment">2. Deployment</option>
-                                <option value="maintenance">3. Maintenance</option>
-                                <option value="retirement">4. Retirement</option>
-                            </select>
+                                onChange={(val) => setLifecycleStage(val)}
+                                placeholder="All Lifecycle Stages"
+                                options={[
+                                    { value: 'acquisition', label: 'Acquisition' },
+                                    { value: 'deployment', label: 'Deployment' },
+                                    { value: 'maintenance', label: 'Maintenance' },
+                                    { value: 'retirement', label: 'Retirement' },
+                                ]}
+                            />
                         </div>
 
                         {/* Status Filter */}
                         <div className="lg:col-span-2">
-                            <select
+                            <CustomSelect
                                 value={status}
-                                onChange={(e) => setStatus(e.target.value)}
-                                className="w-full text-xs font-medium py-2 px-3 rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
-                            >
-                                <option value="">All Statuses</option>
-                                <option value="available">Available (Pool)</option>
-                                <option value="assigned">Assigned</option>
-                                <option value="in_repair">In Repair</option>
-                                <option value="retired">Retired</option>
-                            </select>
+                                onChange={(val) => setStatus(val)}
+                                placeholder="All Statuses"
+                                options={[
+                                    { value: 'available', label: 'Available (Pool)' },
+                                    { value: 'assigned', label: 'Assigned' },
+                                    { value: 'in_repair', label: 'In Repair' },
+                                    { value: 'retired', label: 'Retired' },
+                                ]}
+                            />
                         </div>
 
                         {/* CPU Tier Filter */}
                         <div className="lg:col-span-2">
-                            <select
+                            <CustomSelect
                                 value={cpuTier}
-                                onChange={(e) => setCpuTier(e.target.value)}
-                                className="w-full text-xs font-medium py-2 px-3 rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
-                            >
-                                <option value="">All CPU Tiers</option>
-                                <option value="entry">Entry Tier</option>
-                                <option value="mid">Mid Tier</option>
-                                <option value="high">High Tier</option>
-                                <option value="workstation">Workstation Tier</option>
-                            </select>
+                                onChange={(val) => setCpuTier(val)}
+                                placeholder="All CPU Tiers"
+                                options={[
+                                    { value: 'entry', label: 'Entry Tier' },
+                                    { value: 'mid', label: 'Mid Tier' },
+                                    { value: 'high', label: 'High Tier' },
+                                    { value: 'workstation', label: 'Workstation Tier' },
+                                ]}
+                            />
                         </div>
 
                         {/* Filter & Reset Buttons */}

@@ -1,15 +1,19 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import CustomSelect from '@/Components/CustomSelect';
 import HardwareImage from '@/Components/HardwareImage';
 import ResizableTh from '@/Components/ResizableTh';
 import { useResizableColumns } from '@/Hooks/useResizableColumns';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
+import { RiFilter3Line, RiRefreshLine } from 'react-icons/ri';
 
 export default function MaintenanceIndex({ logs, stats, filters }) {
     const [type, setType] = useState(filters.type || '');
     const [status, setStatus] = useState(filters.status || '');
     const [selectedLogToUpdate, setSelectedLogToUpdate] = useState(null);
     const [wrapText, setWrapText] = useState(false);
+
+    const activeFilterCount = (type ? 1 : 0) + (status ? 1 : 0);
 
     const initialWidths = {
         device: 220,
@@ -141,51 +145,71 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
 
                 {/* Filters */}
                 <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 p-4 shadow-xs">
-                    <form onSubmit={handleFilter} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <form onSubmit={handleFilter} className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
                         <div>
-                            <select
+                            <CustomSelect
                                 value={type}
-                                onChange={(e) => setType(e.target.value)}
-                                className="w-full text-sm font-medium rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 py-2.5 px-3 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
-                            >
-                                <option value="">All Maintenance Types</option>
-                                <option value="repair">Repair</option>
-                                <option value="upgrade">Hardware Upgrade</option>
-                                <option value="preventive">Preventive Servicing</option>
-                                <option value="inspection">Inspection & Diagnostics</option>
-                            </select>
+                                onChange={(val) => setType(val)}
+                                placeholder="All Maintenance Types"
+                                options={[
+                                    { value: 'repair', label: 'Repair' },
+                                    { value: 'upgrade', label: 'Hardware Upgrade' },
+                                    { value: 'preventive', label: 'Preventive Servicing' },
+                                    { value: 'inspection', label: 'Inspection & Diagnostics' },
+                                ]}
+                            />
                         </div>
                         <div>
-                            <select
+                            <CustomSelect
                                 value={status}
-                                onChange={(e) => setStatus(e.target.value)}
-                                className="w-full text-sm font-medium rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 py-2.5 px-3 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
-                            >
-                                <option value="">All Statuses</option>
-                                <option value="scheduled">Scheduled</option>
-                                <option value="in_progress">In Progress</option>
-                                <option value="completed">Completed</option>
-                                <option value="cancelled">Cancelled</option>
-                            </select>
+                                onChange={(val) => setStatus(val)}
+                                placeholder="All Statuses"
+                                options={[
+                                    { value: 'scheduled', label: 'Scheduled' },
+                                    { value: 'in_progress', label: 'In Progress' },
+                                    { value: 'completed', label: 'Completed' },
+                                    { value: 'cancelled', label: 'Cancelled' },
+                                ]}
+                            />
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
                             <button
                                 type="submit"
-                                className="w-full py-2 px-3 text-sm font-semibold rounded-xl bg-slate-900 dark:bg-zinc-800 border border-transparent dark:border-zinc-700 text-white hover:bg-slate-800 dark:hover:bg-zinc-700 transition"
+                                className="flex-1 py-2 px-3 text-xs font-semibold rounded-xl bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-slate-800 dark:hover:bg-white transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
                             >
-                                Filter Logs
+                                <RiFilter3Line className="w-3.5 h-3.5" />
+                                <span>Filter Logs</span>
                             </button>
-                            {(type || status) && (
+                            {activeFilterCount > 0 && (
                                 <button
                                     type="button"
                                     onClick={clearFilters}
-                                    className="py-2 px-3 text-sm font-semibold rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700 transition"
+                                    className="py-2 px-2.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 transition cursor-pointer"
+                                    title="Reset all filters"
                                 >
-                                    Reset
+                                    <RiRefreshLine className="w-3.5 h-3.5" />
                                 </button>
                             )}
                         </div>
                     </form>
+
+                    <div className="mt-3 pt-3 border-t border-slate-100 dark:border-zinc-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-400 text-[11px]">
+                            <span className="font-semibold text-slate-800 dark:text-zinc-200">
+                                {logs.total || logs.data?.length || 0} Maintenance Records
+                            </span>
+                            {activeFilterCount > 0 && (
+                                <>
+                                    <span>&bull;</span>
+                                    <span>
+                                        Filtered by <strong className="text-slate-800 dark:text-zinc-200">{activeFilterCount}</strong> active criteria
+                                    </span>
+                                </>
+                            )}
+                            <span>&bull;</span>
+                            <span className="hidden sm:inline">Track status, upgrade history, and servicing expenses</span>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Maintenance Logs Table */}

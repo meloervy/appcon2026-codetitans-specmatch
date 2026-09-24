@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import CustomSelect from '@/Components/CustomSelect';
 import HardwareImage from '@/Components/HardwareImage';
 import ResizableTh from '@/Components/ResizableTh';
 import { useResizableColumns } from '@/Hooks/useResizableColumns';
@@ -19,7 +20,11 @@ import {
     RiUserStarLine,
     RiFilePdfLine,
     RiFilter3Line,
+    RiRefreshLine,
     RiCheckboxCircleLine,
+    RiArrowDownSLine,
+    RiCpuLine,
+    RiBuildingLine,
 } from 'react-icons/ri';
 
 export default function EmployeesIndex({ employees, role_profiles = [], departments = [], stats = {}, filters = {} }) {
@@ -64,10 +69,12 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
 
     const { post: postUnassign } = useForm();
 
-    const handleSort = (sortKey) => {
+    const handleSort = (sortKey, explicitDirection = null) => {
         const currentSort = filters?.sort || 'name';
         const currentDirection = filters?.direction || 'asc';
-        const nextDirection = currentSort === sortKey && currentDirection === 'asc' ? 'desc' : 'asc';
+        const nextDirection = explicitDirection !== null
+            ? explicitDirection
+            : (currentSort === sortKey && currentDirection === 'asc' ? 'desc' : 'asc');
 
         router.get(
             route('employees.index'),
@@ -308,10 +315,10 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
 
             {/* 2. Advanced Filter & Search Bar */}
             <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 p-4 shadow-2xs mb-5">
-                <form onSubmit={handleFilter} className="space-y-3">
+                <form onSubmit={handleFilter}>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5 items-center">
                         {/* Search Bar */}
-                        <div className="lg:col-span-4 relative">
+                        <div className="lg:col-span-3 relative">
                             <RiSearchLine className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
                             <input
                                 type="text"
@@ -324,80 +331,85 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
 
                         {/* Hardware Status Filter */}
                         <div className="lg:col-span-3">
-                            <select
+                            <CustomSelect
                                 value={hardwareStatus}
-                                onChange={(e) => setHardwareStatus(e.target.value)}
-                                className="w-full text-xs font-medium py-2 px-3 rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
-                            >
-                                <option value="">All Allocation Statuses</option>
-                                <option value="assigned">Equipped (Assigned)</option>
-                                <option value="unassigned">Needs Device (Unassigned)</option>
-                            </select>
+                                onChange={(val) => setHardwareStatus(val)}
+                                placeholder="All Allocation Statuses"
+                                options={[
+                                    { value: 'assigned', label: 'Equipped (Assigned)' },
+                                    { value: 'unassigned', label: 'Needs Device (Unassigned)' },
+                                ]}
+                            />
                         </div>
 
                         {/* Department Filter */}
-                        <div className="lg:col-span-3">
-                            <select
+                        <div className="lg:col-span-2">
+                            <CustomSelect
                                 value={department}
-                                onChange={(e) => setDepartment(e.target.value)}
-                                className="w-full text-xs font-medium py-2 px-3 rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
-                            >
-                                <option value="">All Departments</option>
-                                {departments.map((dept) => (
-                                    <option key={dept} value={dept}>
-                                        {dept}
-                                    </option>
-                                ))}
-                            </select>
+                                onChange={(val) => setDepartment(val)}
+                                placeholder="All Departments"
+                                icon={RiBuildingLine}
+                                options={departments.map((dept) => ({
+                                    value: dept,
+                                    label: dept,
+                                }))}
+                            />
                         </div>
 
                         {/* Role Profile Filter */}
                         <div className="lg:col-span-2">
-                            <select
+                            <CustomSelect
                                 value={roleProfileId}
-                                onChange={(e) => setRoleProfileId(e.target.value)}
-                                className="w-full text-xs font-medium py-2 px-3 rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
-                            >
-                                <option value="">All Role Profiles</option>
-                                {role_profiles.map((p) => (
-                                    <option key={p.id} value={p.id}>
-                                        {p.name}
-                                    </option>
-                                ))}
-                            </select>
+                                onChange={(val) => setRoleProfileId(val)}
+                                placeholder="All Role Profiles"
+                                options={role_profiles.map((p) => ({
+                                    value: p.id,
+                                    label: p.name,
+                                }))}
+                            />
                         </div>
-                    </div>
 
-                    <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-zinc-800/80 text-xs">
-                        <div className="text-slate-500 dark:text-zinc-400 text-[11px]">
-                            {activeFilterCount > 0 ? (
-                                <span>
-                                    Filtering by <strong className="text-slate-800 dark:text-zinc-200">{activeFilterCount}</strong> active criteria
-                                </span>
-                            ) : (
-                                <span>Showing all staff records</span>
-                            )}
-                        </div>
-                        <div className="flex items-center gap-2">
+                        {/* Filter & Reset Buttons */}
+                        <div className="lg:col-span-2 flex items-center gap-1.5">
+                            <button
+                                type="submit"
+                                className="flex-1 py-2 px-3 text-xs font-semibold rounded-xl bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-slate-800 dark:hover:bg-white transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
+                            >
+                                <RiFilter3Line className="w-3.5 h-3.5" />
+                                <span>Filter</span>
+                            </button>
                             {activeFilterCount > 0 && (
                                 <button
                                     type="button"
                                     onClick={clearFilters}
-                                    className="py-1.5 px-3 text-xs font-semibold rounded-xl border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 transition cursor-pointer"
+                                    className="py-2 px-2.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 transition cursor-pointer"
+                                    title="Reset all filters"
                                 >
-                                    Reset
+                                    <RiRefreshLine className="w-3.5 h-3.5" />
                                 </button>
                             )}
-                            <button
-                                type="submit"
-                                className="py-1.5 px-4 text-xs font-semibold rounded-xl bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-slate-800 dark:hover:bg-white transition cursor-pointer flex items-center gap-1.5 shadow-2xs"
-                            >
-                                <RiFilter3Line className="w-3.5 h-3.5" />
-                                <span>Apply Filters</span>
-                            </button>
                         </div>
                     </div>
                 </form>
+
+                {/* Toolbar: Total Count & Hint */}
+                <div className="mt-3 pt-3 border-t border-slate-100 dark:border-zinc-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-400 text-[11px]">
+                        <span className="font-semibold text-slate-800 dark:text-zinc-200">
+                            {employeeList.length} Staff Records
+                        </span>
+                        {activeFilterCount > 0 && (
+                            <>
+                                <span>&bull;</span>
+                                <span>
+                                    Filtered by <strong className="text-slate-800 dark:text-zinc-200">{activeFilterCount}</strong> criteria
+                                </span>
+                            </>
+                        )}
+                        <span>&bull;</span>
+                        <span className="hidden sm:inline">Click any row or &quot;Edit&quot; to update employee profile</span>
+                    </div>
+                </div>
             </div>
 
             <div ref={tableContainerRef} className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 shadow-xs overflow-visible">
@@ -423,6 +435,7 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
                             </svg>
                             <span>Sort Chronologically {filters?.sort === 'created_at' ? (filters?.direction === 'desc' ? '(Newest)' : '(Oldest)') : ''}</span>
                         </button>
+
                         <button
                             type="button"
                             onClick={() => setWrapText(!wrapText)}
@@ -436,7 +449,7 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h10l-3-3m0 6l3-3m5 3H4" />
                             </svg>
-                            <span>{wrapText ? 'Wrap Text: ON' : 'Wrap Text: OFF'}</span>
+                            <span>{wrapText ? 'Wrap: ON' : 'Wrap: OFF'}</span>
                         </button>
                         <button
                             type="button"
@@ -444,7 +457,7 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
                             className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200 text-[11px] font-medium transition cursor-pointer"
                             title="Reset column widths to default"
                         >
-                            Reset Columns
+                            Reset
                         </button>
                     </div>
                 </div>
@@ -582,17 +595,19 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
 
                                     const actions = [
                                         {
-                                            label: device ? 'Reassign' : 'Match Device',
-                                            menuLabel: device ? 'Reassign Hardware' : 'Match Device',
+                                            label: device ? 'Swap Device' : 'Match Device',
+                                            menuLabel: device ? 'Swap Device' : 'Match Device',
+                                            subtitle: device ? 'Switch assigned hardware' : 'Run AI hardware allocation',
                                             href: route('match.index', { employee_id: emp.id }),
-                                            icon: device ? RiExchangeLine : RiArrowRightLine,
-                                            variant: 'primary',
+                                            icon: device ? RiExchangeLine : RiCpuLine,
+                                            variant: device ? 'amber' : 'primary',
                                         },
                                         ...(device
                                             ? [
                                                   {
                                                       label: 'Unassign',
                                                       menuLabel: 'Unassign Hardware',
+                                                      subtitle: 'Return unit to available pool',
                                                       onClick: () => handleUnassign(emp),
                                                       icon: RiCloseCircleLine,
                                                       variant: 'danger',
@@ -602,6 +617,7 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
                                         {
                                             label: 'Edit',
                                             menuLabel: 'Edit Employee',
+                                            subtitle: 'Update staff details & role',
                                             onClick: () => openEdit(emp),
                                             icon: RiEditLine,
                                             variant: 'default',
@@ -712,7 +728,7 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
                                                             }}
                                                             className={`inline-flex items-center justify-center w-8 h-8 rounded-xl border transition cursor-pointer ${
                                                                 isMenuOpen
-                                                                    ? 'bg-[#026eff]/10 border-[#026eff]/30 text-[#026eff] dark:bg-[#026eff]/20 dark:text-[#0b79ff]'
+                                                                    ? 'bg-[#026eff]/10 border-[#026eff]/30 text-[#026eff] dark:bg-[#026eff]/20 dark:text-[#0b79ff] shadow-sm'
                                                                     : 'bg-white dark:bg-zinc-800/90 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100 hover:bg-slate-50 dark:hover:bg-zinc-700/60 shadow-2xs'
                                                             }`}
                                                             title="More Actions"
@@ -724,30 +740,58 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
 
                                                         {isMenuOpen && (
                                                             <div
-                                                                className={`absolute right-0 z-50 w-48 py-1.5 bg-white dark:bg-zinc-900 rounded-xl border border-slate-200/90 dark:border-zinc-800 shadow-xl ring-1 ring-black/5 dark:ring-white/5 ${
-                                                                    isNearBottom ? 'bottom-full mb-1.5 origin-bottom-right' : 'top-full mt-1.5 origin-top-right'
+                                                                className={`absolute right-0 z-50 w-56 p-1.5 backdrop-blur-xl bg-white/95 dark:bg-zinc-900/95 rounded-2xl border border-slate-200/90 dark:border-zinc-800/90 shadow-2xl shadow-slate-900/15 dark:shadow-black/70 ring-1 ring-black/5 dark:ring-white/10 ${
+                                                                    isNearBottom ? 'bottom-full mb-2 origin-bottom-right' : 'top-full mt-2 origin-top-right'
                                                                 }`}
                                                             >
-                                                                <div className="px-3 py-1 border-b border-slate-100 dark:border-zinc-800/80 mb-1 flex items-center justify-between">
-                                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-                                                                        Available Actions
-                                                                    </span>
-                                                                    <span className="text-[9px] font-mono text-slate-400 dark:text-zinc-500">
+                                                                <div className="px-3 py-2 bg-gradient-to-br from-slate-50 to-slate-100/60 dark:from-zinc-800/50 dark:to-zinc-900/50 rounded-xl border border-slate-100 dark:border-zinc-800/80 mb-1.5 flex items-center justify-between">
+                                                                    <div className="min-w-0 flex-1">
+                                                                        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                                                                            Quick Actions
+                                                                        </div>
+                                                                        <div className="text-[11px] font-bold text-slate-800 dark:text-zinc-200 truncate">
+                                                                            {emp.name}
+                                                                        </div>
+                                                                    </div>
+                                                                    <span className="shrink-0 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-200/70 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400">
                                                                         #{emp.id.toString().padStart(4, '0')}
                                                                     </span>
                                                                 </div>
 
-                                                                <div className="p-1 space-y-0.5">
-                                                                    {actions.map((act, actIdx) =>
-                                                                        act.href ? (
+                                                                <div className="space-y-0.5">
+                                                                    {actions.map((act, actIdx) => {
+                                                                        let badgeStyle = 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 group-hover:bg-[#026eff]/10 group-hover:text-[#026eff]';
+                                                                        let hoverStyle = 'text-slate-700 dark:text-zinc-200 hover:bg-slate-100/80 dark:hover:bg-zinc-800/70';
+
+                                                                        if (act.variant === 'primary') {
+                                                                            badgeStyle = 'bg-[#026eff]/10 dark:bg-[#026eff]/20 text-[#026eff] dark:text-[#38bdf8] group-hover:bg-[#026eff] group-hover:text-white';
+                                                                            hoverStyle = 'text-slate-800 dark:text-zinc-100 hover:bg-[#026eff]/10 dark:hover:bg-[#026eff]/20';
+                                                                        } else if (act.variant === 'amber') {
+                                                                            badgeStyle = 'bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 group-hover:bg-amber-500 group-hover:text-white';
+                                                                            hoverStyle = 'text-slate-800 dark:text-zinc-100 hover:bg-amber-500/10 dark:hover:bg-amber-500/20';
+                                                                        } else if (act.variant === 'danger') {
+                                                                            badgeStyle = 'bg-rose-50 dark:bg-rose-950/50 text-rose-500 dark:text-rose-400 group-hover:bg-rose-600 group-hover:text-white';
+                                                                            hoverStyle = 'text-rose-600 dark:text-rose-400 hover:bg-rose-50/80 dark:hover:bg-rose-950/40';
+                                                                        }
+
+                                                                        return act.href ? (
                                                                             <Link
                                                                                 key={actIdx}
                                                                                 href={act.href}
                                                                                 onClick={() => setOpenMenuId(null)}
-                                                                                className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs font-semibold rounded-lg text-[#026eff] dark:text-[#0b79ff] hover:bg-[#026eff]/10 dark:hover:bg-[#026eff]/20 transition text-left"
+                                                                                className={`group flex items-center gap-2.5 w-full px-2.5 py-2 text-xs font-medium rounded-xl transition text-left cursor-pointer ${hoverStyle}`}
                                                                             >
-                                                                                <act.icon className="w-3.5 h-3.5 shrink-0" />
-                                                                                <span>{act.menuLabel || act.label}</span>
+                                                                                <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition ${badgeStyle}`}>
+                                                                                    <act.icon className="w-3.5 h-3.5" />
+                                                                                </div>
+                                                                                <div className="min-w-0 flex-1">
+                                                                                    <div className="truncate font-semibold">{act.menuLabel || act.label}</div>
+                                                                                    {act.subtitle && (
+                                                                                        <div className="text-[10px] text-slate-400 dark:text-zinc-500 truncate leading-tight mt-0.5">
+                                                                                            {act.subtitle}
+                                                                                        </div>
+                                                                                    )}
+                                                                                </div>
                                                                             </Link>
                                                                         ) : (
                                                                             <button
@@ -757,17 +801,22 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
                                                                                     setOpenMenuId(null);
                                                                                     act.onClick();
                                                                                 }}
-                                                                                className={`flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs font-semibold rounded-lg transition text-left cursor-pointer ${
-                                                                                    act.variant === 'danger'
-                                                                                        ? 'text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40'
-                                                                                        : 'text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800'
-                                                                                }`}
+                                                                                className={`group flex items-center gap-2.5 w-full px-2.5 py-2 text-xs font-medium rounded-xl transition text-left cursor-pointer ${hoverStyle}`}
                                                                             >
-                                                                                <act.icon className={`w-3.5 h-3.5 shrink-0 ${act.variant === 'danger' ? 'text-rose-500' : 'text-slate-400 dark:text-zinc-400'}`} />
-                                                                                <span>{act.menuLabel || act.label}</span>
+                                                                                <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition ${badgeStyle}`}>
+                                                                                    <act.icon className="w-3.5 h-3.5" />
+                                                                                </div>
+                                                                                <div className="min-w-0 flex-1">
+                                                                                    <div className="truncate font-semibold">{act.menuLabel || act.label}</div>
+                                                                                    {act.subtitle && (
+                                                                                        <div className="text-[10px] text-slate-400 dark:text-zinc-500 truncate leading-tight mt-0.5">
+                                                                                            {act.subtitle}
+                                                                                        </div>
+                                                                                    )}
+                                                                                </div>
                                                                             </button>
-                                                                        )
-                                                                    )}
+                                                                        );
+                                                                    })}
                                                                 </div>
                                                             </div>
                                                         )}
@@ -940,16 +989,19 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
 
                             <div>
                                 <label className="block text-xs font-bold uppercase text-slate-700 dark:text-zinc-300">Role / Workload Profile</label>
-                                <select
-                                    value={data.role_profile_id}
-                                    onChange={(e) => setData('role_profile_id', e.target.value)}
-                                    className="mt-1 w-full rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 text-sm py-2 px-3 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
-                                >
-                                    <option value="">No Profile Assigned</option>
-                                    {role_profiles.map((p) => (
-                                        <option key={p.id} value={p.id}>{p.name}</option>
-                                    ))}
-                                </select>
+                                <div className="relative mt-1">
+                                    <select
+                                        value={data.role_profile_id}
+                                        onChange={(e) => setData('role_profile_id', e.target.value)}
+                                        className="w-full rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 text-sm py-2 pl-3 pr-8 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs appearance-none cursor-pointer"
+                                    >
+                                        <option value="">No Profile Assigned</option>
+                                        {role_profiles.map((p) => (
+                                            <option key={p.id} value={p.id}>{p.name}</option>
+                                        ))}
+                                    </select>
+                                    <RiArrowDownSLine className="w-4 h-4 text-slate-400 dark:text-zinc-500 pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" />
+                                </div>
                             </div>
 
                             <div>
