@@ -224,9 +224,7 @@ specmatch/
 ├── tests/
 │   └── Feature/                            # 134 passing PHPUnit tests
 ├── Dockerfile                              # Multi-stage production container
-├── docker-entrypoint.sh                   # Container startup + auto-migrate
-├── wasmer.toml                             # Wasmer Edge WASI manifest
-└── app.yaml                                # Wasmer Edge app config (instaboot)
+└── docker-entrypoint.sh                   # Container startup + auto-migrate
 ```
 
 ---
@@ -505,11 +503,11 @@ wasmer login
 wasmer deploy
 ```
 
-The `wasmer.toml` and `app.yaml` are pre-configured:
-- WASI runtime with PHP 8.3.
-- SQLite database at `/app/database/database.sqlite`.
-- Instaboot enabled for fast cold-starts.
-- Port 8080.
+The Wasmer Anybuild pipeline automatically builds and deploys:
+- Native Laravel preset with PHP 8.3 and phpix WebAssembly Edge runtime.
+- Pre-seeded SQLite database or managed Wasmer MySQL database.
+- Pre-compiled production React/Inertia/Tailwind assets.
+- Edge proxy routing on port 8080.
 
 ### Option C — Traditional Server (VPS / Shared Hosting)
 

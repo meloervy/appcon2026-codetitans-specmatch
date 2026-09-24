@@ -14,7 +14,8 @@ require __DIR__.'/vendor/autoload.php';
 $app = require_once __DIR__.'/bootstrap/app.php';
 
 // Auto-append --force if migrate or seed is invoked without it (e.g. automated Wasmer deployments)
-if (isset($_SERVER['argv'][1]) && (str_starts_with($_SERVER['argv'][1], 'migrate') || str_starts_with($_SERVER['argv'][1], 'db:seed')) && ! in_array('--force', $_SERVER['argv'], true)) {
+$forceCommands = ['migrate', 'migrate:fresh', 'migrate:install', 'migrate:refresh', 'migrate:reset', 'migrate:rollback', 'db:seed'];
+if (isset($_SERVER['argv'][1]) && in_array($_SERVER['argv'][1], $forceCommands, true) && ! in_array('--force', $_SERVER['argv'], true)) {
     $_SERVER['argv'][] = '--force';
     $argv[] = '--force';
 }
