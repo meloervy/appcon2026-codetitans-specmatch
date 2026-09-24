@@ -1458,7 +1458,9 @@ export default function DevicesShow({ device }) {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Cost (₱)</label>
+                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">
+                                        Cost (₱) <span className="text-rose-500 font-bold ml-0.5">*</span>
+                                    </label>
                                     <input
                                         type="number"
                                         step="0.01"
@@ -1471,7 +1473,9 @@ export default function DevicesShow({ device }) {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Title</label>
+                                <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">
+                                    Title <span className="text-rose-500 font-bold ml-0.5">*</span>
+                                </label>
                                 <input
                                     type="text"
                                     value={maintData.title}
@@ -1492,7 +1496,9 @@ export default function DevicesShow({ device }) {
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Description of Work</label>
+                                <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">
+                                    Description of Work <span className="text-rose-500 font-bold ml-0.5">*</span>
+                                </label>
                                 <textarea
                                     rows={2}
                                     value={maintData.description}
@@ -1566,7 +1572,9 @@ export default function DevicesShow({ device }) {
                         <form onSubmit={handleUpdateMaintenanceLog} className="mt-3.5 space-y-3">
                             <div className="grid grid-cols-2 gap-2.5">
                                 <div>
-                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Final Cost (₱)</label>
+                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">
+                                        Final Cost (₱) <span className="text-rose-500 font-bold ml-0.5">*</span>
+                                    </label>
                                     <input
                                         type="number"
                                         step="0.01"
@@ -1578,7 +1586,9 @@ export default function DevicesShow({ device }) {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Completion Date</label>
+                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">
+                                        Completion Date <span className="text-rose-500 font-bold ml-0.5">*</span>
+                                    </label>
                                     <input
                                         type="date"
                                         value={updateMaintData.completed_at}
@@ -1589,7 +1599,9 @@ export default function DevicesShow({ device }) {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Performance Assessment *</label>
+                                <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">
+                                    Performance Assessment <span className="text-rose-500 font-bold ml-0.5">*</span>
+                                </label>
                                 <textarea
                                     rows={3}
                                     value={updateMaintData.performance_assessment}

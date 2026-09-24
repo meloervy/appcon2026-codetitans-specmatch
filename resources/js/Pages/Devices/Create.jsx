@@ -1,8 +1,70 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import CustomSelect from '@/Components/CustomSelect';
 import FileUpload from '@/Components/ui/FileUpload';
 import { Head, Link, useForm } from '@inertiajs/react';
 import axios from 'axios';
 import { useState } from 'react';
+import {
+    RiArrowLeftLine,
+    RiBarcodeLine,
+    RiCheckLine,
+    RiCloseLine,
+    RiCpuLine,
+    RiImageAddLine,
+    RiLoader4Line,
+    RiMapPinLine,
+    RiMoneyDollarCircleLine,
+    RiPriceTag3Line,
+    RiPulseLine,
+    RiSearchLine,
+    RiSparklingLine,
+} from 'react-icons/ri';
+
+const deviceTypeOptions = [
+    { value: 'laptop', label: 'Laptop (Mobile Workstation / Portable)' },
+    { value: 'desktop', label: 'Desktop / Workstation (Stationary)' },
+];
+
+const cpuTierOptions = [
+    { value: 'entry', label: 'Entry (Celeron, Core i3, older quad-core)' },
+    { value: 'mid', label: 'Mid (Core i5, Ryzen 5, Apple base)' },
+    { value: 'high', label: 'High (Core i7/i9, Ryzen 7/9, M3 Pro/Max)' },
+    { value: 'workstation', label: 'Workstation (Xeon, Threadripper)' },
+];
+
+const storageTypeOptions = [
+    { value: 'SSD', label: 'SSD (NVMe / Solid State)' },
+    { value: 'HDD', label: 'HDD (Mechanical Hard Drive)' },
+];
+
+const gpuTierOptions = [
+    { value: 'none', label: 'None' },
+    { value: 'integrated', label: 'Integrated (Intel UHD/Iris, Radeon 780M)' },
+    { value: 'dedicated-entry', label: 'Dedicated Entry (GTX 1650, RTX 3050)' },
+    { value: 'dedicated-high', label: 'Dedicated High (RTX 4070+, Ada, A-series)' },
+];
+
+const lifecycleStageOptions = [
+    { value: 'acquisition', label: 'Acquisition (Procured / Staging / Intake)' },
+    { value: 'deployment', label: 'Deployment (Active In-Service)' },
+    { value: 'maintenance', label: 'Maintenance (Servicing / In-Repair)' },
+    { value: 'retirement', label: 'Retirement (Decommissioned / Recycled)' },
+];
+
+const conditionOptions = [
+    { value: 'excellent', label: 'Excellent (Like New / Minimal Wear)' },
+    { value: 'good', label: 'Good (Normal Operational Wear)' },
+    { value: 'fair', label: 'Fair (Noticeable Scratches / Moderate Wear)' },
+    { value: 'needs_repair', label: 'Needs Repair (Degraded Hardware)' },
+    { value: 'retired', label: 'Retired (Decommissioned)' },
+];
+
+const statusOptions = [
+    { value: 'available', label: 'Available (Pool Stockroom)' },
+    { value: 'assigned', label: 'Assigned to Staff' },
+    { value: 'in_repair', label: 'Under Servicing / In Repair' },
+    { value: 'retired', label: 'Retired / Archived' },
+];
 
 export default function DevicesCreate() {
     const { data, setData, post, processing, errors } = useForm({
@@ -55,7 +117,7 @@ export default function DevicesCreate() {
 
     const handleFetchHardwarePhoto = async () => {
         if (!data.brand && !data.model) {
-            setPhotoNotice({ type: 'error', message: 'Please enter or select a Brand and Model first.' });
+            setPhotoNotice({ type: 'error', message: 'Please enter Brand and Model first before fetching photo.' });
             return;
         }
         setFetchingPhoto(true);
@@ -75,7 +137,7 @@ export default function DevicesCreate() {
             } else {
                 setPhotoNotice({
                     type: 'info',
-                    message: 'No exact photo found in Wikimedia database. You may enter a custom URL.',
+                    message: 'No exact photo found in Wikimedia database. You may upload a local image or enter a URL.',
                 });
             }
         } catch (err) {
@@ -173,67 +235,69 @@ export default function DevicesCreate() {
     return (
         <AuthenticatedLayout
             header={
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">Register IT Asset</h1>
-                        <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1">
-                            Hardware enrollment with automated TechSpecs catalog identification & lifecycle tracking.
+                        <h1 className="text-2xl font-sans font-extrabold tracking-tight text-slate-900 dark:text-zinc-100">
+                            Register Hardware Asset
+                        </h1>
+                        <p className="text-sm text-slate-500 dark:text-zinc-400 mt-0.5 max-w-2xl">
+                            Hardware enrollment with TechSpecs v5 automated specification identification and enterprise ITAM lifecycle tracking.
                         </p>
                     </div>
                     <Link
                         href={route('devices.index')}
-                        className="text-sm font-semibold text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100 transition"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 text-xs sm:text-sm font-semibold transition shadow-2xs border border-slate-200/80 dark:border-zinc-700 self-start sm:self-auto"
                     >
-                        &larr; Back to Inventory
+                        <RiArrowLeftLine className="w-4 h-4" />
+                        <span>Back to Inventory</span>
                     </Link>
                 </div>
             }
         >
-            <Head title="Register IT Asset - SpecMatch" />
+            <Head title="Register Hardware Asset - SpecMatch" />
 
-            <div className="max-w-4xl mx-auto space-y-6">
-                {/* TechSpecs API Lookup Card */}
-                <div className="bg-gradient-to-br from-[#031a40] via-[#021230] to-[#031a40] dark:from-zinc-950 dark:via-zinc-900 dark:to-[#031a40] text-white rounded-2xl p-6 shadow-md border border-[#026eff]/30 dark:border-zinc-800">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="space-y-1">
+            <div className="max-w-5xl mx-auto space-y-6">
+                {/* TechSpecs API Identification Card */}
+                <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white rounded-3xl p-6 sm:p-7 shadow-md border border-slate-700/60 dark:border-zinc-800">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                        <div className="space-y-1.5 max-w-xl">
                             <div className="flex items-center gap-2">
-                                <span className="px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider bg-[#026eff]/20 text-[#0b79ff] rounded border border-[#0b79ff]/30">
-                                    TechSpecs v5 API
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider bg-[#026eff]/30 text-[#38bdf8] rounded-lg border border-[#026eff]/40">
+                                    <RiSparklingLine className="w-3.5 h-3.5" />
+                                    TechSpecs v5 Catalog API
                                 </span>
-                                <h2 className="text-base font-semibold text-white">Automated Asset Identification</h2>
                             </div>
-                            <p className="text-xs text-[#0b79ff]/60">
-                                Search 180,000+ verified hardware models to auto-fill CPU, RAM, GPU, storage architecture, and tiers.
+                            <h2 className="text-lg font-bold text-white tracking-tight">Automated Asset Identification</h2>
+                            <p className="text-xs text-slate-300 leading-relaxed">
+                                Search over 180,000+ verified hardware models to auto-fill CPU architecture, RAM, GPU tier, and storage specifications.
                             </p>
                         </div>
 
-                        <form onSubmit={handleTechSpecsSearch} className="flex gap-2 w-full sm:w-auto">
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="e.g. ThinkPad T14, MacBook Pro, XPS 15"
-                                className="w-full sm:w-64 text-xs rounded-xl bg-white/10 border-white/20 text-white placeholder-white/50 focus:bg-white/20 focus:ring-[#026eff] focus:border-[#026eff]"
-                            />
+                        <form onSubmit={handleTechSpecsSearch} className="flex gap-2 w-full lg:w-auto">
+                            <div className="relative flex-1 lg:w-72">
+                                <RiSearchLine className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="e.g. ThinkPad T14, MacBook Pro 16..."
+                                    className="w-full text-xs font-medium pl-9 pr-3.5 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:bg-white/15 focus:ring-2 focus:ring-[#026eff] focus:border-[#026eff] transition"
+                                />
+                            </div>
                             <button
                                 type="submit"
                                 disabled={searching || searchQuery.trim().length < 2}
-                                className="shrink-0 px-3.5 py-2 rounded-xl bg-[#026eff] hover:bg-[#026eff] text-white text-xs font-semibold shadow-xs disabled:opacity-50 transition flex items-center gap-1.5"
+                                className="shrink-0 px-4 py-2.5 rounded-xl bg-[#026eff] hover:bg-[#0256cc] text-white text-xs font-bold shadow-sm disabled:opacity-50 transition flex items-center gap-1.5 cursor-pointer"
                             >
                                 {searching ? (
                                     <>
-                                        <svg className="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24" fill="none">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                                        </svg>
-                                        Searching...
+                                        <RiLoader4Line className="animate-spin w-4 h-4" />
+                                        <span>Searching...</span>
                                     </>
                                 ) : (
                                     <>
-                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                        </svg>
-                                        Identify
+                                        <RiSparklingLine className="w-4 h-4" />
+                                        <span>Identify Specs</span>
                                     </>
                                 )}
                             </button>
@@ -241,42 +305,54 @@ export default function DevicesCreate() {
                     </div>
 
                     {apiError && (
-                        <div className="mt-4 p-3 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-200 text-xs flex items-center gap-2">
-                            <svg className="w-4 h-4 shrink-0 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
-                            {apiError}
+                        <div className="mt-4 p-3.5 rounded-2xl bg-rose-500/20 border border-rose-500/40 text-rose-200 text-xs flex items-center justify-between gap-2">
+                            <span>{apiError}</span>
+                            <button type="button" onClick={() => setApiError(null)} className="text-rose-300 hover:text-white font-bold p-1">
+                                <RiCloseLine className="w-4 h-4" />
+                            </button>
                         </div>
                     )}
 
                     {/* Search Results Dropdown List */}
                     {searchResults.length > 0 && (
-                        <div className="mt-4 bg-slate-900/90 dark:bg-zinc-900/95 border border-white/10 dark:border-zinc-800 rounded-xl overflow-hidden divide-y divide-white/5">
-                            <div className="px-3.5 py-2 bg-white/5 text-[11px] font-semibold text-[#0b79ff] flex justify-between">
-                                <span>TechSpecs Matches ({searchResults.length})</span>
-                                <button type="button" onClick={() => setSearchResults([])} className="hover:text-white">&times; Close</button>
+                        <div className="mt-4 bg-slate-950/95 border border-slate-700/80 rounded-2xl overflow-hidden divide-y divide-slate-800 shadow-xl">
+                            <div className="px-4 py-2.5 bg-white/5 text-xs font-semibold text-[#38bdf8] flex justify-between items-center">
+                                <span>Verified Catalog Matches ({searchResults.length})</span>
+                                <button type="button" onClick={() => setSearchResults([])} className="text-slate-400 hover:text-white text-xs font-medium">
+                                    Dismiss
+                                </button>
                             </div>
-                            <div className="max-h-60 overflow-y-auto divide-y divide-white/5">
+                            <div className="max-h-64 overflow-y-auto divide-y divide-slate-800/60">
                                 {searchResults.map((prod) => (
                                     <div
                                         key={prod.id}
-                                        className="p-3 hover:bg-white/10 transition flex items-center justify-between gap-4"
+                                        className="p-3.5 hover:bg-white/5 transition flex items-center justify-between gap-4"
                                     >
                                         <div>
-                                            <div className="text-xs font-semibold text-white">
+                                            <div className="text-xs font-bold text-white">
                                                 {prod.brand} {prod.model}
                                             </div>
-                                            <div className="text-[11px] text-[#0b79ff]/70">
-                                                Category: {prod.category || 'Laptop/PC'} &bull; Year: {prod.release_year || 'Recent'}
+                                            <div className="text-[11px] text-slate-400 mt-0.5">
+                                                Category: {prod.category || 'Laptop / Workstation'} &bull; Release Year: {prod.release_year || 'Recent'}
                                             </div>
                                         </div>
                                         <button
                                             type="button"
                                             onClick={() => handleSelectProduct(prod)}
                                             disabled={loadingDetails}
-                                            className="px-3 py-1.5 rounded-lg bg-[#026eff] hover:bg-[#0256cc] text-white text-xs font-semibold shrink-0 transition"
+                                            className="px-3.5 py-1.5 rounded-xl bg-[#026eff] hover:bg-[#0256cc] text-white text-xs font-bold shrink-0 transition flex items-center gap-1.5 cursor-pointer"
                                         >
-                                            {loadingDetails && selectedProduct?.id === prod.id ? 'Loading...' : 'Auto-Fill Specs'}
+                                            {loadingDetails && selectedProduct?.id === prod.id ? (
+                                                <>
+                                                    <RiLoader4Line className="animate-spin w-3.5 h-3.5" />
+                                                    <span>Populating...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <RiCheckLine className="w-3.5 h-3.5" />
+                                                    <span>Auto-Fill Specs</span>
+                                                </>
+                                            )}
                                         </button>
                                     </div>
                                 ))}
@@ -285,102 +361,114 @@ export default function DevicesCreate() {
                     )}
 
                     {autoFilledNotice && (
-                        <div className="mt-4 p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-200 text-xs flex items-center justify-between">
+                        <div className="mt-4 p-3.5 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-200 text-xs flex items-center justify-between">
                             <span className="flex items-center gap-2">
-                                <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                                {autoFilledNotice}
+                                <RiCheckLine className="w-4 h-4 text-emerald-400 shrink-0" />
+                                <span>{autoFilledNotice}</span>
                             </span>
                             <button
                                 type="button"
                                 onClick={() => setAutoFilledNotice(null)}
-                                className="text-emerald-300 hover:text-white font-bold"
+                                className="text-emerald-300 hover:text-white p-1"
                             >
-                                &times;
+                                <RiCloseLine className="w-4 h-4" />
                             </button>
                         </div>
                     )}
                 </div>
 
-                {/* Main Registration Form */}
-                <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 p-6 sm:p-8 shadow-xs">
+                {/* Main Registration Form Container */}
+                <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200/80 dark:border-zinc-800 p-6 sm:p-8 shadow-xs">
                     <form onSubmit={handleSubmit} className="space-y-8">
-                        {/* 1. Identification Section */}
-                        <div>
-                            <div className="border-b border-slate-100 dark:border-zinc-800 pb-2 mb-4">
-                                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-zinc-200 flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-[#026eff]"></span>
-                                    1. Asset Identification & Tagging
-                                </h3>
-                                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">Physical labeling, serial numbers, and barcode tracking.</p>
+                        {/* Section 1: Identification & Tagging */}
+                        <div className="p-6 sm:p-7 rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 bg-slate-50/40 dark:bg-zinc-900/40 space-y-5">
+                            <div className="flex items-start justify-between gap-4 pb-3 border-b border-slate-200/80 dark:border-zinc-800">
+                                <div>
+                                    <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-zinc-200 flex items-center gap-2">
+                                        <span className="w-6 h-6 rounded-lg bg-[#026eff]/10 text-[#026eff] font-bold text-xs flex items-center justify-center">1</span>
+                                        Asset Identification &amp; Tagging
+                                    </h3>
+                                    <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">Physical barcode tagging, serial identification, and site assignment.</p>
+                                </div>
+                                <RiPriceTag3Line className="w-5 h-5 text-slate-400 dark:text-zinc-500 shrink-0" />
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Asset Tag *</label>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+                                        Asset Tag <span className="text-rose-500 font-bold ml-0.5">*</span>
+                                    </label>
                                     <input
                                         type="text"
                                         value={data.asset_tag}
                                         onChange={(e) => setData('asset_tag', e.target.value.toUpperCase())}
-                                        placeholder="e.g. LAP-023"
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff] font-mono"
+                                        placeholder="e.g. LAP-042"
+                                        className="w-full text-sm font-mono uppercase rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 py-2.5 px-3.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
                                         required
                                     />
-                                    {errors.asset_tag && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{errors.asset_tag}</p>}
+                                    {errors.asset_tag && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400 font-medium">{errors.asset_tag}</p>}
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Serial Number</label>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+                                        Serial Number
+                                    </label>
                                     <input
                                         type="text"
                                         value={data.serial_number}
                                         onChange={(e) => setData('serial_number', e.target.value)}
                                         placeholder="e.g. C02G45XP19F3"
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff] font-mono"
+                                        className="w-full text-sm font-mono rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 py-2.5 px-3.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
                                     />
-                                    {errors.serial_number && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{errors.serial_number}</p>}
+                                    {errors.serial_number && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400 font-medium">{errors.serial_number}</p>}
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Barcode / QR</label>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+                                        Barcode / QR Tag
+                                    </label>
                                     <input
                                         type="text"
                                         value={data.barcode}
                                         onChange={(e) => setData('barcode', e.target.value)}
-                                        placeholder="e.g. BC-LAP-023"
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff] font-mono"
+                                        placeholder="e.g. BC-LAP-042"
+                                        className="w-full text-sm font-mono rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 py-2.5 px-3.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
                                     />
-                                    {errors.barcode && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{errors.barcode}</p>}
+                                    {errors.barcode && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400 font-medium">{errors.barcode}</p>}
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Physical Location</label>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+                                        Physical Location
+                                    </label>
                                     <input
                                         type="text"
                                         value={data.location}
                                         onChange={(e) => setData('location', e.target.value)}
-                                        placeholder="e.g. BGC, Taguig City - Level 12 HQ"
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff]"
+                                        placeholder="e.g. BGC HQ - Floor 12"
+                                        className="w-full text-sm rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 py-2.5 px-3.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
                                     />
-                                    {errors.location && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{errors.location}</p>}
+                                    {errors.location && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400 font-medium">{errors.location}</p>}
                                 </div>
                             </div>
                         </div>
 
-                        {/* 2. Hardware Specifications Section */}
-                        <div>
-                            <div className="border-b border-slate-100 dark:border-zinc-800 pb-2 mb-4">
-                                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-zinc-200 flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-violet-600"></span>
-                                    2. Hardware Specifications & Device Image
-                                </h3>
-                                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">Compute, memory, storage, graphics profile, and device photo clip.</p>
+                        {/* Section 2: Hardware Specifications & Media Clip */}
+                        <div className="p-6 sm:p-7 rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 bg-slate-50/40 dark:bg-zinc-900/40 space-y-5">
+                            <div className="flex items-start justify-between gap-4 pb-3 border-b border-slate-200/80 dark:border-zinc-800">
+                                <div>
+                                    <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-zinc-200 flex items-center gap-2">
+                                        <span className="w-6 h-6 rounded-lg bg-violet-500/10 text-violet-600 font-bold text-xs flex items-center justify-center">2</span>
+                                        Hardware Specifications &amp; Media Clip
+                                    </h3>
+                                    <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">Compute, memory, storage architecture, graphics profile, and device photo.</p>
+                                </div>
+                                <RiCpuLine className="w-5 h-5 text-violet-500 shrink-0" />
                             </div>
 
-                            {/* Image Clip Row */}
-                            <div className="mb-4 p-4 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/40 flex flex-col sm:flex-row items-center gap-4">
-                                <div className="w-20 h-20 rounded-xl bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 p-1 flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
+                            {/* Image Clip & Dropzone Row */}
+                            <div className="p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-800/60 flex flex-col md:flex-row items-start md:items-center gap-5 shadow-2xs">
+                                <div className="w-24 h-24 rounded-2xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 p-2 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
                                     <img
                                         src={previewImage}
                                         alt="Device clip preview"
@@ -391,31 +479,26 @@ export default function DevicesCreate() {
                                         }}
                                     />
                                 </div>
-                                <div className="flex-1 w-full">
-                                    <div className="flex items-center justify-between gap-2">
+                                <div className="flex-1 w-full space-y-3">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                         <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">
-                                            Hardware Image Clip URL
+                                            Hardware Media Clip URL
                                         </label>
                                         <button
                                             type="button"
                                             onClick={handleFetchHardwarePhoto}
                                             disabled={fetchingPhoto || (!data.brand && !data.model)}
-                                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#026eff]/10 dark:bg-[#031a40]/60 hover:bg-[#026eff]/15 dark:hover:bg-[#031a40]/60 text-[#026eff] dark:text-[#0b79ff] border border-[#026eff]/20 dark:border-[#031a40]/60 text-[11px] font-semibold transition disabled:opacity-50 disabled:pointer-events-none"
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#026eff]/10 hover:bg-[#026eff]/20 text-[#026eff] dark:text-[#38bdf8] text-xs font-bold transition disabled:opacity-40 disabled:pointer-events-none cursor-pointer self-start sm:self-auto"
                                         >
                                             {fetchingPhoto ? (
                                                 <>
-                                                    <svg className="animate-spin -ml-0.5 mr-1 h-3.5 w-3.5 text-[#026eff]" fill="none" viewBox="0 0 24 24">
-                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                    </svg>
-                                                    Looking up...
+                                                    <RiLoader4Line className="animate-spin w-3.5 h-3.5" />
+                                                    <span>Fetching Photo...</span>
                                                 </>
                                             ) : (
                                                 <>
-                                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                    </svg>
-                                                    Auto-Fetch Accurate Photo
+                                                    <RiImageAddLine className="w-3.5 h-3.5" />
+                                                    <span>Auto-Fetch Accurate Photo</span>
                                                 </>
                                             )}
                                         </button>
@@ -425,10 +508,10 @@ export default function DevicesCreate() {
                                         value={data.image_url}
                                         onChange={(e) => setData('image_url', e.target.value)}
                                         placeholder="https://... (Populated automatically via Wikimedia / TechSpecs or enter custom URL)"
-                                        className="mt-1.5 w-full text-xs rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 py-2 px-3 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
+                                        className="w-full text-xs rounded-xl border border-slate-300 dark:border-zinc-700 bg-slate-50/50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 py-2 px-3 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
                                     />
                                     {photoNotice && (
-                                        <p className={`text-[11px] mt-1 font-medium ${
+                                        <p className={`text-xs font-medium ${
                                             photoNotice.type === 'success' ? 'text-emerald-600 dark:text-emerald-400' :
                                             photoNotice.type === 'error' ? 'text-rose-600 dark:text-rose-400' :
                                             'text-amber-600 dark:text-amber-400'
@@ -438,7 +521,7 @@ export default function DevicesCreate() {
                                     )}
 
                                     {/* Aceternity File Upload Dropzone */}
-                                    <div className="mt-3">
+                                    <div className="pt-1">
                                         <FileUpload
                                             onImageSelect={(dataUrl) => {
                                                 setData('image_url', dataUrl);
@@ -449,158 +532,183 @@ export default function DevicesCreate() {
                                             }}
                                         />
                                     </div>
-                                    <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-2">
-                                        Drag & drop local device photos, warranty PDFs, or spec sheets, or auto-fetch via Wikimedia Commons / TechSpecs API.
-                                    </p>
                                 </div>
                             </div>
 
+                            {/* Specifications Grid */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Device Type *</label>
-                                    <select
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+                                        Device Type <span className="text-rose-500 font-bold ml-0.5">*</span>
+                                    </label>
+                                    <CustomSelect
                                         value={data.device_type}
-                                        onChange={(e) => setData('device_type', e.target.value)}
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
-                                    >
-                                        <option value="laptop">Laptop (Mobile)</option>
-                                        <option value="desktop">Desktop / Workstation (Stationary)</option>
-                                    </select>
-                                    {errors.device_type && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{errors.device_type}</p>}
+                                        onChange={(val) => setData('device_type', val)}
+                                        options={deviceTypeOptions}
+                                        placeholder="Select device type..."
+                                    />
+                                    {errors.device_type && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400 font-medium">{errors.device_type}</p>}
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Brand *</label>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+                                        Brand <span className="text-rose-500 font-bold ml-0.5">*</span>
+                                    </label>
                                     <input
                                         type="text"
                                         value={data.brand}
                                         onChange={(e) => setData('brand', e.target.value)}
                                         placeholder="e.g. Dell, Apple, Lenovo, HP"
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff]"
+                                        className="w-full text-sm rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 py-2.5 px-3.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
                                         required
                                     />
-                                    {errors.brand && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{errors.brand}</p>}
+                                    {errors.brand && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400 font-medium">{errors.brand}</p>}
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Model *</label>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+                                        Model <span className="text-rose-500 font-bold ml-0.5">*</span>
+                                    </label>
                                     <input
                                         type="text"
                                         value={data.model}
                                         onChange={(e) => setData('model', e.target.value)}
                                         placeholder="e.g. ThinkPad T14s, MacBook Pro 16"
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff]"
+                                        className="w-full text-sm rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 py-2.5 px-3.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
                                         required
                                     />
-                                    {errors.model && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{errors.model}</p>}
+                                    {errors.model && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400 font-medium">{errors.model}</p>}
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Processor (CPU) *</label>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+                                        Processor (CPU) <span className="text-rose-500 font-bold ml-0.5">*</span>
+                                    </label>
                                     <input
                                         type="text"
                                         value={data.cpu}
                                         onChange={(e) => setData('cpu', e.target.value)}
                                         placeholder="e.g. Intel Core i7-13700H, Apple M3 Max"
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff]"
+                                        className="w-full text-sm rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 py-2.5 px-3.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
                                         required
                                     />
-                                    {errors.cpu && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{errors.cpu}</p>}
+                                    {errors.cpu && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400 font-medium">{errors.cpu}</p>}
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">CPU Tier *</label>
-                                    <select
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+                                        CPU Tier <span className="text-rose-500 font-bold ml-0.5">*</span>
+                                    </label>
+                                    <CustomSelect
                                         value={data.cpu_tier}
-                                        onChange={(e) => setData('cpu_tier', e.target.value)}
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
-                                    >
-                                        <option value="entry">Entry (Celeron, Core i3, older quad-core)</option>
-                                        <option value="mid">Mid (Core i5, Ryzen 5, Apple base)</option>
-                                        <option value="high">High (Core i7/i9, Ryzen 7/9, M3 Pro/Max)</option>
-                                        <option value="workstation">Workstation (Xeon, Threadripper)</option>
-                                    </select>
-                                    {errors.cpu_tier && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{errors.cpu_tier}</p>}
+                                        onChange={(val) => setData('cpu_tier', val)}
+                                        options={cpuTierOptions}
+                                        placeholder="Select CPU tier..."
+                                    />
+                                    {errors.cpu_tier && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400 font-medium">{errors.cpu_tier}</p>}
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">RAM (GB) *</label>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+                                        RAM (GB) <span className="text-rose-500 font-bold ml-0.5">*</span>
+                                    </label>
                                     <input
                                         type="number"
                                         min="1"
                                         value={data.ram_gb}
                                         onChange={(e) => setData('ram_gb', parseInt(e.target.value) || 0)}
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
+                                        className="w-full text-sm rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 py-2.5 px-3.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
                                         required
                                     />
-                                    {errors.ram_gb && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{errors.ram_gb}</p>}
+                                    {errors.ram_gb && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400 font-medium">{errors.ram_gb}</p>}
                                 </div>
 
-                                <div className="flex gap-2">
+                                <div className="flex gap-3">
                                     <div className="w-1/2">
-                                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Storage (GB) *</label>
+                                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+                                            Storage (GB) <span className="text-rose-500 font-bold ml-0.5">*</span>
+                                        </label>
                                         <input
                                             type="number"
                                             min="1"
                                             value={data.storage_gb}
                                             onChange={(e) => setData('storage_gb', parseInt(e.target.value) || 0)}
-                                            className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
+                                            className="w-full text-sm rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 py-2.5 px-3.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
                                             required
                                         />
                                     </div>
                                     <div className="w-1/2">
-                                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Disk Type *</label>
-                                        <select
+                                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+                                            Disk Type <span className="text-rose-500 font-bold ml-0.5">*</span>
+                                        </label>
+                                        <CustomSelect
                                             value={data.storage_type}
-                                            onChange={(e) => setData('storage_type', e.target.value)}
-                                            className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
-                                        >
-                                            <option value="SSD">SSD</option>
-                                            <option value="HDD">HDD</option>
-                                        </select>
+                                            onChange={(val) => setData('storage_type', val)}
+                                            options={storageTypeOptions}
+                                            placeholder="Type..."
+                                        />
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Graphics (GPU)</label>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+                                        Graphics (GPU)
+                                    </label>
                                     <input
                                         type="text"
                                         value={data.gpu}
                                         onChange={(e) => setData('gpu', e.target.value)}
                                         placeholder="e.g. NVIDIA RTX 4070, Intel Iris Xe"
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff]"
+                                        className="w-full text-sm rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 py-2.5 px-3.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">GPU Tier *</label>
-                                    <select
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+                                        GPU Tier <span className="text-rose-500 font-bold ml-0.5">*</span>
+                                    </label>
+                                    <CustomSelect
                                         value={data.gpu_tier}
-                                        onChange={(e) => setData('gpu_tier', e.target.value)}
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
-                                    >
-                                        <option value="none">None</option>
-                                        <option value="integrated">Integrated (Intel UHD/Iris, Radeon 780M)</option>
-                                        <option value="dedicated-entry">Dedicated Entry (GTX 1650, RTX 3050)</option>
-                                        <option value="dedicated-high">Dedicated High (RTX 4070+, Ada, A-series)</option>
-                                    </select>
+                                        onChange={(val) => setData('gpu_tier', val)}
+                                        options={gpuTierOptions}
+                                        placeholder="Select GPU tier..."
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+                                        Acquisition Year
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="2010"
+                                        max="2035"
+                                        value={data.year_acquired}
+                                        onChange={(e) => setData('year_acquired', parseInt(e.target.value) || new Date().getFullYear())}
+                                        className="w-full text-sm rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 py-2.5 px-3.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
+                                    />
                                 </div>
                             </div>
                         </div>
 
-                        {/* 3. ITAM Financial & Contractual Tracking Section */}
-                        <div>
-                            <div className="border-b border-slate-100 dark:border-zinc-800 pb-2 mb-4">
-                                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-zinc-200 flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
-                                    3. Financial, Vendor & Warranty Tracking
-                                </h3>
-                                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">Continuous tracking of procurement investment, straight-line depreciation, and SLAs.</p>
+                        {/* Section 3: ITAM Financial & Contractual Tracking */}
+                        <div className="p-6 sm:p-7 rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 bg-slate-50/40 dark:bg-zinc-900/40 space-y-5">
+                            <div className="flex items-start justify-between gap-4 pb-3 border-b border-slate-200/80 dark:border-zinc-800">
+                                <div>
+                                    <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-zinc-200 flex items-center gap-2">
+                                        <span className="w-6 h-6 rounded-lg bg-emerald-500/10 text-emerald-600 font-bold text-xs flex items-center justify-center">3</span>
+                                        Financial, Vendor &amp; Warranty Tracking
+                                    </h3>
+                                    <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">Continuous tracking of procurement investment, straight-line depreciation, and SLAs.</p>
+                                </div>
+                                <RiMoneyDollarCircleLine className="w-5 h-5 text-emerald-500 shrink-0" />
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Purchase Cost (₱)</label>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+                                        Purchase Cost (₱)
+                                    </label>
                                     <input
                                         type="number"
                                         step="0.01"
@@ -608,22 +716,26 @@ export default function DevicesCreate() {
                                         value={data.purchase_cost}
                                         onChange={(e) => setData('purchase_cost', e.target.value)}
                                         placeholder="e.g. 75000.00"
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff]"
+                                        className="w-full text-sm rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 py-2.5 px-3.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Purchase Date</label>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+                                        Purchase Date
+                                    </label>
                                     <input
                                         type="date"
                                         value={data.purchase_date}
                                         onChange={(e) => setData('purchase_date', e.target.value)}
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
+                                        className="w-full text-sm rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 py-2.5 px-3.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Annual Depreciation (%)</label>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+                                        Annual Depreciation (%)
+                                    </label>
                                     <input
                                         type="number"
                                         step="0.1"
@@ -631,135 +743,151 @@ export default function DevicesCreate() {
                                         max="100"
                                         value={data.depreciation_rate_percent}
                                         onChange={(e) => setData('depreciation_rate_percent', e.target.value)}
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
+                                        className="w-full text-sm rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 py-2.5 px-3.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Vendor / Supplier</label>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+                                        Vendor / Supplier
+                                    </label>
                                     <input
                                         type="text"
                                         value={data.vendor}
                                         onChange={(e) => setData('vendor', e.target.value)}
                                         placeholder="e.g. Dell Direct, CDW, Apple"
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff]"
+                                        className="w-full text-sm rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 py-2.5 px-3.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Warranty Start</label>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+                                        Warranty Start Date
+                                    </label>
                                     <input
                                         type="date"
                                         value={data.warranty_start}
                                         onChange={(e) => setData('warranty_start', e.target.value)}
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
+                                        className="w-full text-sm rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 py-2.5 px-3.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Warranty Expiration</label>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+                                        Warranty Expiration Date
+                                    </label>
                                     <input
                                         type="date"
                                         value={data.warranty_expiry}
                                         onChange={(e) => setData('warranty_expiry', e.target.value)}
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
+                                        className="w-full text-sm rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 py-2.5 px-3.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
                                     />
                                 </div>
 
                                 <div className="sm:col-span-2">
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Contractual SLA / Coverage Tier</label>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+                                        Contractual SLA / Coverage Tier
+                                    </label>
                                     <input
                                         type="text"
                                         value={data.contract_sla}
                                         onChange={(e) => setData('contract_sla', e.target.value)}
                                         placeholder="e.g. ProSupport Plus NBD Onsite, AppleCare+ Enterprise"
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff]"
+                                        className="w-full text-sm rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 py-2.5 px-3.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
                                     />
                                 </div>
                             </div>
                         </div>
 
-                        {/* 4. Lifecycle & Operational Status Section */}
-                        <div>
-                            <div className="border-b border-slate-100 dark:border-zinc-800 pb-2 mb-4">
-                                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-zinc-200 flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-amber-600"></span>
-                                    4. Lifecycle Stage & Operational State
-                                </h3>
-                                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">Asset lifecycle positioning and physical health.</p>
+                        {/* Section 4: Lifecycle Stage & Fleet Operations */}
+                        <div className="p-6 sm:p-7 rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 bg-slate-50/40 dark:bg-zinc-900/40 space-y-5">
+                            <div className="flex items-start justify-between gap-4 pb-3 border-b border-slate-200/80 dark:border-zinc-800">
+                                <div>
+                                    <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-zinc-200 flex items-center gap-2">
+                                        <span className="w-6 h-6 rounded-lg bg-amber-500/10 text-amber-600 font-bold text-xs flex items-center justify-center">4</span>
+                                        Lifecycle Stage &amp; Operational State
+                                    </h3>
+                                    <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">Asset lifecycle positioning, physical health audit, and stock status.</p>
+                                </div>
+                                <RiPulseLine className="w-5 h-5 text-amber-500 shrink-0" />
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Lifecycle Stage *</label>
-                                    <select
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+                                        Lifecycle Stage <span className="text-rose-500 font-bold ml-0.5">*</span>
+                                    </label>
+                                    <CustomSelect
                                         value={data.lifecycle_stage}
-                                        onChange={(e) => setData('lifecycle_stage', e.target.value)}
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff] font-semibold"
-                                    >
-                                        <option value="acquisition">Acquisition (Procured / Staging)</option>
-                                        <option value="deployment">Deployment (Active In-Service)</option>
-                                        <option value="maintenance">Maintenance (Servicing / Repair)</option>
-                                        <option value="retirement">Retirement (Decommissioned)</option>
-                                    </select>
+                                        onChange={(val) => setData('lifecycle_stage', val)}
+                                        options={lifecycleStageOptions}
+                                        placeholder="Select lifecycle stage..."
+                                    />
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Physical Condition *</label>
-                                    <select
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+                                        Physical Condition <span className="text-rose-500 font-bold ml-0.5">*</span>
+                                    </label>
+                                    <CustomSelect
                                         value={data.condition}
-                                        onChange={(e) => setData('condition', e.target.value)}
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
-                                    >
-                                        <option value="excellent">Excellent</option>
-                                        <option value="good">Good</option>
-                                        <option value="fair">Fair</option>
-                                        <option value="needs_repair">Needs Repair</option>
-                                        <option value="retired">Retired</option>
-                                    </select>
+                                        onChange={(val) => setData('condition', val)}
+                                        options={conditionOptions}
+                                        placeholder="Select condition..."
+                                    />
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Fleet Availability Status *</label>
-                                    <select
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+                                        Fleet Availability Status <span className="text-rose-500 font-bold ml-0.5">*</span>
+                                    </label>
+                                    <CustomSelect
                                         value={data.status}
-                                        onChange={(e) => setData('status', e.target.value)}
-                                        className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 focus:border-[#026eff] focus:ring-[#026eff]"
-                                    >
-                                        <option value="available">Available (Pool Stock)</option>
-                                        <option value="assigned">Assigned</option>
-                                        <option value="in_repair">In Repair</option>
-                                        <option value="retired">Retired</option>
-                                    </select>
+                                        onChange={(val) => setData('status', val)}
+                                        options={statusOptions}
+                                        placeholder="Select status..."
+                                    />
                                 </div>
                             </div>
 
-                            <div className="mt-4">
-                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Internal Audit Notes</label>
+                            <div className="pt-2">
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+                                    Internal Audit Notes
+                                </label>
                                 <textarea
-                                    rows={2}
+                                    rows={3}
                                     value={data.notes}
                                     onChange={(e) => setData('notes', e.target.value)}
                                     placeholder="Serial numbers on peripherals, special BIOS configurations, or intake inspections..."
-                                    className="mt-1.5 w-full text-sm rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:border-[#026eff] focus:ring-[#026eff]"
+                                    className="w-full text-sm rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 py-2.5 px-3.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
                                 />
                             </div>
                         </div>
 
                         {/* Submit Actions */}
-                        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-zinc-800">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-end gap-3 pt-4 border-t border-slate-200/80 dark:border-zinc-800">
                             <Link
                                 href={route('devices.index')}
-                                className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-700 text-sm font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition"
+                                className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-700 text-sm font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition text-center"
                             >
                                 Cancel
                             </Link>
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="px-6 py-2.5 rounded-xl bg-[#026eff] text-sm font-semibold text-white hover:bg-[#0256cc] shadow-sm transition disabled:opacity-50"
+                                className="px-6 py-2.5 rounded-xl bg-[#026eff] hover:bg-[#0256cc] text-sm font-bold text-white shadow-sm transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                             >
-                                {processing ? 'Enrolling Asset...' : 'Enroll Asset into Inventory'}
+                                {processing ? (
+                                    <>
+                                        <RiLoader4Line className="animate-spin w-4 h-4" />
+                                        <span>Enrolling Asset...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <RiCheckLine className="w-4 h-4" />
+                                        <span>Enroll Asset into Fleet</span>
+                                    </>
+                                )}
                             </button>
                         </div>
                     </form>

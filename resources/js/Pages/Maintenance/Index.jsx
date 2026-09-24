@@ -4,7 +4,7 @@ import HardwareImage from '@/Components/HardwareImage';
 import ResizableTh from '@/Components/ResizableTh';
 import { useResizableColumns } from '@/Hooks/useResizableColumns';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
     RiCalendarLine,
     RiCheckLine,
@@ -13,6 +13,8 @@ import {
     RiRefreshLine,
     RiSearchLine,
     RiToolsLine,
+    RiArrowUpDownLine,
+    RiArrowLeftLine,
 } from 'react-icons/ri';
 
 export default function MaintenanceIndex({ logs, stats = {}, filters = {} }) {
@@ -42,6 +44,31 @@ export default function MaintenanceIndex({ logs, stats = {}, filters = {} }) {
         status: 'completed',
         restore_to_available: true,
     });
+
+    const isFirstRender = useRef(true);
+
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            router.get(
+                route('maintenance.index'),
+                {
+                    search,
+                    type,
+                    status,
+                    sort: filters?.sort,
+                    direction: filters?.direction,
+                },
+                { preserveState: true, replace: true, preserveScroll: true }
+            );
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [search, type, status]);
 
     const handleSort = (sortKey, explicitDirection = null) => {
         const currentSort = filters?.sort || 'timeline';
@@ -122,7 +149,8 @@ export default function MaintenanceIndex({ logs, stats = {}, filters = {} }) {
                         href={route('devices.index')}
                         className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 dark:bg-zinc-800 text-sm font-semibold text-white dark:text-zinc-100 hover:bg-slate-800 dark:hover:bg-zinc-700 shadow-sm transition self-start sm:self-auto border border-transparent dark:border-zinc-700"
                     >
-                        &larr; View Fleet Inventory
+                        <RiArrowLeftLine className="w-4 h-4" />
+                        <span>View Fleet Inventory</span>
                     </Link>
                 </div>
             }
@@ -272,8 +300,10 @@ export default function MaintenanceIndex({ logs, stats = {}, filters = {} }) {
                     {/* Column Adjustment & Display Control Toolbar */}
                     <div className="px-4 py-2 bg-slate-50/70 dark:bg-zinc-800/40 border-b border-slate-200/70 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2 text-xs">
                         <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-400 text-[11px]">
-                            <span className="inline-flex items-center justify-center w-4 h-4 rounded bg-[#026eff]/10 text-[#026eff] font-bold text-[10px]">↕</span>
-                            <span>Click any header to sort • Drag dividers to resize</span>
+                            <span className="inline-flex items-center justify-center w-4 h-4 rounded bg-[#026eff]/10 text-[#026eff]">
+                                <RiArrowUpDownLine className="w-3 h-3" />
+                            </span>
+                            <span>Click any header to sort &bull; Drag dividers to resize</span>
                         </div>
                         <div className="flex items-center gap-2 ml-auto">
                             <button

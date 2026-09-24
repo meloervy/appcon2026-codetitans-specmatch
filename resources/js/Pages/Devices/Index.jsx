@@ -4,7 +4,7 @@ import HardwareImage from '@/Components/HardwareImage';
 import ResizableTh from '@/Components/ResizableTh';
 import { useResizableColumns } from '@/Hooks/useResizableColumns';
 import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
     RiSearchLine,
     RiLayoutGridLine,
@@ -37,6 +37,34 @@ export default function DevicesIndex({ devices, filters }) {
     };
 
     const { widths, startResize, autoExpandCol, resetWidths, isResizing, resizingCol } = useResizableColumns(initialWidths, 'devices_table_v6');
+
+    const isFirstRender = useRef(true);
+
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            router.get(
+                route('devices.index'),
+                {
+                    search,
+                    status,
+                    lifecycle_stage: lifecycleStage,
+                    device_type: deviceType,
+                    cpu_tier: cpuTier,
+                    condition,
+                    sort: filters?.sort,
+                    direction: filters?.direction,
+                },
+                { preserveState: true, replace: true, preserveScroll: true }
+            );
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [search, status, lifecycleStage, deviceType, cpuTier, condition]);
 
     const handleSort = (sortKey) => {
         const currentSort = filters.sort || 'asset_tag';

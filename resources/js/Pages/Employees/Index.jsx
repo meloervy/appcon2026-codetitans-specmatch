@@ -5,7 +5,7 @@ import ResizableTh from '@/Components/ResizableTh';
 import { useResizableColumns } from '@/Hooks/useResizableColumns';
 import useOutsideClick from '@/hooks/useOutsideClick';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
     RiMoreFill,
     RiExchangeLine,
@@ -26,6 +26,7 @@ import {
     RiCpuLine,
     RiBuildingLine,
     RiCloseLine,
+    RiArrowUpDownLine,
 } from 'react-icons/ri';
 
 export default function EmployeesIndex({ employees, role_profiles = [], departments = [], stats = {}, filters = {} }) {
@@ -90,6 +91,32 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
             { preserveState: true, replace: true }
         );
     };
+
+    const isFirstRender = useRef(true);
+
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            router.get(
+                route('employees.index'),
+                {
+                    search,
+                    department,
+                    role_profile_id: roleProfileId,
+                    hardware_status: hardwareStatus,
+                    sort: filters?.sort,
+                    direction: filters?.direction,
+                },
+                { preserveState: true, replace: true, preserveScroll: true }
+            );
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [search, department, roleProfileId, hardwareStatus]);
 
     const handleFilter = (e) => {
         e?.preventDefault();
@@ -284,8 +311,9 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
                     </div>
                     <div className="mt-2 flex items-center gap-1.5 text-[11px]">
                         {stats?.unassigned > 0 ? (
-                            <span className="text-amber-600 dark:text-amber-400 font-medium">
-                                ● Ready for AI Match & Issue
+                            <span className="text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block"></span>
+                                <span>Ready for AI Match &amp; Issue</span>
                             </span>
                         ) : (
                             <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
@@ -417,8 +445,10 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
                 {/* Column Adjustment & Display Control Toolbar */}
                 <div className="px-4 py-2 bg-slate-50/70 dark:bg-zinc-800/40 border-b border-slate-200/70 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2 text-xs">
                     <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-400 text-[11px]">
-                        <span className="inline-flex items-center justify-center w-4 h-4 rounded bg-[#026eff]/10 text-[#026eff] font-bold text-[10px]">↕</span>
-                        <span>Click any header to sort • Drag dividers to resize</span>
+                        <span className="inline-flex items-center justify-center w-4 h-4 rounded bg-[#026eff]/10 text-[#026eff]">
+                            <RiArrowUpDownLine className="w-3 h-3" />
+                        </span>
+                        <span>Click any header to sort &bull; Drag dividers to resize</span>
                     </div>
                     <div className="flex items-center gap-2 ml-auto">
                         <button
@@ -902,7 +932,9 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
 
                         <form onSubmit={handleSubmit} className="space-y-4 text-sm">
                             <div>
-                                <label className="block text-xs font-bold uppercase text-slate-700 dark:text-zinc-300">Full Name *</label>
+                                <label className="block text-xs font-bold uppercase text-slate-700 dark:text-zinc-300">
+                                    Full Name <span className="text-rose-500 font-bold ml-0.5">*</span>
+                                </label>
                                 <input
                                     type="text"
                                     value={data.name}
@@ -915,7 +947,9 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold uppercase text-slate-700 dark:text-zinc-300">Department *</label>
+                                <label className="block text-xs font-bold uppercase text-slate-700 dark:text-zinc-300">
+                                    Department <span className="text-rose-500 font-bold ml-0.5">*</span>
+                                </label>
                                 <input
                                     type="text"
                                     value={data.department}

@@ -24,6 +24,20 @@ import {
     RiUserLine,
 } from 'react-icons/ri';
 
+const matchCpuTierOptions = [
+    { value: 'entry', label: 'Entry' },
+    { value: 'mid', label: 'Mid' },
+    { value: 'high', label: 'High' },
+    { value: 'workstation', label: 'Workstation' },
+];
+
+const matchGpuTierOptions = [
+    { value: 'none', label: 'None' },
+    { value: 'integrated', label: 'Integrated' },
+    { value: 'dedicated-entry', label: 'Dedicated Entry' },
+    { value: 'dedicated-high', label: 'Dedicated High' },
+];
+
 const DEFAULT_TEMPLATES = [
     {
         id: 'tpl-video-editor',
@@ -772,48 +786,40 @@ export default function MatchRequest({
                                                     <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 block mb-3">Adjust Parameters Prior to Ranking</span>
                                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                                                         <div>
-                                                            <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400">Min CPU</label>
-                                                            <select
+                                                            <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400 mb-1 block">Min CPU</label>
+                                                            <CustomSelect
                                                                 value={extracted.min_cpu_tier}
-                                                                onChange={(e) => setExtracted({ ...extracted, min_cpu_tier: e.target.value })}
-                                                                className="mt-1 w-full text-xs rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 capitalize font-medium py-2 px-2.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
-                                                            >
-                                                                <option value="entry">Entry</option>
-                                                                <option value="mid">Mid</option>
-                                                                <option value="high">High</option>
-                                                                <option value="workstation">Workstation</option>
-                                                            </select>
+                                                                onChange={(val) => setExtracted({ ...extracted, min_cpu_tier: val })}
+                                                                options={matchCpuTierOptions}
+                                                                placeholder="Min CPU"
+                                                            />
                                                         </div>
                                                         <div>
-                                                            <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400">Min RAM (GB)</label>
+                                                            <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400 mb-1 block">Min RAM (GB)</label>
                                                             <input
                                                                 type="number"
                                                                 value={extracted.min_ram_gb}
                                                                 onChange={(e) => setExtracted({ ...extracted, min_ram_gb: parseInt(e.target.value) || 0 })}
-                                                                className="mt-1 w-full text-xs rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 font-semibold py-2 px-2.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
+                                                                className="w-full text-xs rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 font-semibold py-2 px-2.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
                                                             />
                                                         </div>
                                                         <div>
-                                                            <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400">Min Storage (GB)</label>
+                                                            <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400 mb-1 block">Min Storage (GB)</label>
                                                             <input
                                                                 type="number"
                                                                 value={extracted.min_storage_gb}
                                                                 onChange={(e) => setExtracted({ ...extracted, min_storage_gb: parseInt(e.target.value) || 0 })}
-                                                                className="mt-1 w-full text-xs rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 font-semibold py-2 px-2.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
+                                                                className="w-full text-xs rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 font-semibold py-2 px-2.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
                                                             />
                                                         </div>
                                                         <div>
-                                                            <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400">Min GPU</label>
-                                                            <select
+                                                            <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400 mb-1 block">Min GPU</label>
+                                                            <CustomSelect
                                                                 value={extracted.min_gpu_tier}
-                                                                onChange={(e) => setExtracted({ ...extracted, min_gpu_tier: e.target.value })}
-                                                                className="mt-1 w-full text-xs rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 capitalize font-medium py-2 px-2.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
-                                                            >
-                                                                <option value="none">None</option>
-                                                                <option value="integrated">Integrated</option>
-                                                                <option value="dedicated-entry">Dedicated Entry</option>
-                                                                <option value="dedicated-high">Dedicated High</option>
-                                                            </select>
+                                                                onChange={(val) => setExtracted({ ...extracted, min_gpu_tier: val })}
+                                                                options={matchGpuTierOptions}
+                                                                placeholder="Min GPU"
+                                                            />
                                                         </div>
                                                     </div>
                                                     <div className="flex items-center justify-between gap-4 mt-3 pt-3 border-t border-slate-200/60 dark:border-zinc-700/60">
