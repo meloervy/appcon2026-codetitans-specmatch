@@ -1,1 +1,2 @@
-*.sqlite*
+# Allow database.sqlite to be tracked for standalone container and Wasmer edge deployment
+!database.sqlite

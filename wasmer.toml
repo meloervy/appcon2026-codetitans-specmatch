@@ -6,7 +6,7 @@ license = "MIT"
 readme = "README.md"
 
 [dependencies]
-"php/php" = "^8.3"
+"php/php" = "^8.4"
 
 [fs]
 "/app" = "."
