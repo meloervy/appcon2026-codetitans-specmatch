@@ -7,6 +7,7 @@ import { RiArrowDownSLine, RiCheckLine, RiCloseLine } from 'react-icons/ri';
  * Modern Custom Select Dropdown Component
  *
  * Clean, minimalist enterprise dropdown matching the SpecMatch UI system.
+ * Defaults to neutral form input style (bg-white / dark:bg-zinc-800) without blue background tints.
  */
 export default function CustomSelect({
     value,
@@ -15,7 +16,11 @@ export default function CustomSelect({
     placeholder = 'Select option...',
     icon: Icon,
     className = '',
+    btnClassName = '',
+    size = 'sm',
+    variant = 'form', // 'form' (neutral background) | 'filter' (blue tint on filter selection)
     clearable = false,
+    allowEmpty = false,
     disabled = false,
 }) {
     const [open, setOpen] = useState(false);
@@ -60,6 +65,15 @@ export default function CustomSelect({
         setOpen(false);
     };
 
+    const sizeClasses = size === 'md' ? 'text-sm font-medium py-2.5 px-3.5' : 'text-xs font-medium py-2 px-3';
+
+    // State styling: neutral form style by default, filter tint only if explicitly requested
+    const triggerBgClasses = open
+        ? 'border-[#026eff] ring-2 ring-[#026eff]/20 bg-white dark:bg-zinc-800'
+        : variant === 'filter' && isSelected
+        ? 'border-[#026eff]/40 bg-[#026eff]/5 dark:bg-[#026eff]/10 text-slate-900 dark:text-zinc-100'
+        : 'border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 hover:border-slate-400 dark:hover:border-zinc-600';
+
     return (
         <div ref={containerRef} className={`relative ${className}`}>
             {/* Trigger Button */}
@@ -67,27 +81,23 @@ export default function CustomSelect({
                 type="button"
                 disabled={disabled}
                 onClick={() => setOpen((prev) => !prev)}
-                className={`w-full text-xs font-medium py-2 px-3 rounded-xl border transition flex items-center justify-between gap-2 text-left cursor-pointer shadow-2xs ${
-                    open
-                        ? 'border-[#026eff] ring-2 ring-[#026eff]/20 bg-white dark:bg-zinc-800'
-                        : isSelected
-                        ? 'border-[#026eff]/40 bg-[#026eff]/5 dark:bg-[#026eff]/10 text-slate-900 dark:text-zinc-100'
-                        : 'border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:border-slate-400 dark:hover:border-zinc-600'
-                } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`w-full ${sizeClasses} rounded-xl border transition flex items-center justify-between gap-2 text-left cursor-pointer shadow-2xs ${triggerBgClasses} ${
+                    disabled ? 'opacity-50 cursor-not-allowed' : ''
+                } ${btnClassName}`}
             >
-                <div className="flex items-center gap-2 min-w-0 flex-1">
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
                     {/* Left Icon */}
                     {selectedOption?.icon ? (
-                        <selectedOption.icon className="w-3.5 h-3.5 text-[#026eff] dark:text-[#38bdf8] shrink-0" />
+                        <selectedOption.icon className="w-4 h-4 text-slate-500 dark:text-zinc-400 shrink-0" />
                     ) : Icon ? (
-                        <Icon className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-500 shrink-0" />
+                        <Icon className="w-4 h-4 text-slate-400 dark:text-zinc-500 shrink-0" />
                     ) : null}
 
                     <span
                         className={`truncate ${
                             isSelected
                                 ? 'font-semibold text-slate-900 dark:text-zinc-100'
-                                : 'text-slate-500 dark:text-zinc-400'
+                                : 'text-slate-400 dark:text-zinc-500'
                         }`}
                     >
                         {selectedOption ? selectedOption.label : placeholder}
@@ -125,24 +135,27 @@ export default function CustomSelect({
                 leaveTo="opacity-0 scale-95 -translate-y-1"
             >
                 <div className="absolute z-50 left-0 mt-1.5 w-full min-w-[200px] p-1.5 backdrop-blur-xl bg-white/95 dark:bg-zinc-900/95 border border-slate-200/90 dark:border-zinc-800/90 shadow-2xl shadow-slate-900/15 dark:shadow-black/70 ring-1 ring-black/5 dark:ring-white/10 rounded-2xl max-h-60 overflow-y-auto custom-scrollbar">
-                    {/* Default Placeholder / All Option */}
-                    <button
-                        type="button"
-                        onClick={() => handleSelect('')}
-                        className={`group flex items-center justify-between gap-2 w-full px-2.5 py-1.5 text-xs font-medium rounded-xl transition text-left cursor-pointer ${
-                            !isSelected
-                                ? 'bg-[#026eff]/10 dark:bg-[#026eff]/20 text-[#026eff] dark:text-[#38bdf8] font-semibold'
-                                : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100/80 dark:hover:bg-zinc-800/70'
-                        }`}
-                    >
-                        <span className="truncate">{placeholder}</span>
-                        {!isSelected && (
-                            <RiCheckLine className="w-3.5 h-3.5 text-[#026eff] dark:text-[#38bdf8] shrink-0" />
-                        )}
-                    </button>
-
-                    {normalizedOptions.length > 0 && (
-                        <div className="my-1 border-t border-slate-100 dark:border-zinc-800/80" />
+                    {/* Default Placeholder / All Option (if allowed/clearable) */}
+                    {(allowEmpty || clearable || !isSelected) && (
+                        <>
+                            <button
+                                type="button"
+                                onClick={() => handleSelect('')}
+                                className={`group flex items-center justify-between gap-2 w-full px-2.5 py-2 text-xs font-medium rounded-xl transition text-left cursor-pointer ${
+                                    !isSelected
+                                        ? 'bg-slate-100 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 font-bold'
+                                        : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100/80 dark:hover:bg-zinc-800/70'
+                                }`}
+                            >
+                                <span className="truncate">{placeholder}</span>
+                                {!isSelected && (
+                                    <RiCheckLine className="w-3.5 h-3.5 text-[#026eff] dark:text-[#38bdf8] shrink-0 font-bold" />
+                                )}
+                            </button>
+                            {normalizedOptions.length > 0 && (
+                                <div className="my-1 border-t border-slate-100 dark:border-zinc-800/80" />
+                            )}
+                        </>
                     )}
 
                     {/* Options List */}
@@ -156,18 +169,18 @@ export default function CustomSelect({
                                     key={`${opt.value}-${idx}`}
                                     type="button"
                                     onClick={() => handleSelect(opt.value)}
-                                    className={`group flex items-center justify-between gap-2 w-full px-2.5 py-1.5 text-xs font-medium rounded-xl transition text-left cursor-pointer ${
+                                    className={`group flex items-center justify-between gap-2 w-full px-2.5 py-2 text-xs font-medium rounded-xl transition text-left cursor-pointer ${
                                         optSelected
-                                            ? 'bg-[#026eff]/10 dark:bg-[#026eff]/20 text-[#026eff] dark:text-[#38bdf8] font-semibold'
+                                            ? 'bg-slate-100 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 font-bold'
                                             : 'text-slate-700 dark:text-zinc-200 hover:bg-slate-100/80 dark:hover:bg-zinc-800/70'
                                     }`}
                                 >
                                     <div className="flex items-center gap-2 min-w-0 flex-1">
                                         {ItemIcon && (
                                             <ItemIcon
-                                                className={`w-3.5 h-3.5 shrink-0 ${
+                                                className={`w-4 h-4 shrink-0 ${
                                                     optSelected
-                                                        ? 'text-[#026eff] dark:text-[#38bdf8]'
+                                                        ? 'text-slate-700 dark:text-zinc-200'
                                                         : 'text-slate-400 dark:text-zinc-500 group-hover:text-slate-600 dark:group-hover:text-zinc-300'
                                                 }`}
                                             />
@@ -176,14 +189,14 @@ export default function CustomSelect({
                                         <span className="truncate">{opt.label}</span>
                                     </div>
 
-                                    <div className="flex items-center gap-1 shrink-0">
+                                    <div className="flex items-center gap-1.5 shrink-0">
                                         {opt.badge && (
-                                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400">
+                                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-200/70 dark:bg-zinc-700/60 text-slate-600 dark:text-zinc-300">
                                                 {opt.badge}
                                             </span>
                                         )}
                                         {optSelected && (
-                                            <RiCheckLine className="w-3.5 h-3.5 text-[#026eff] dark:text-[#38bdf8] shrink-0" />
+                                            <RiCheckLine className="w-3.5 h-3.5 text-[#026eff] dark:text-[#38bdf8] shrink-0 font-bold" />
                                         )}
                                     </div>
                                 </button>
