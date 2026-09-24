@@ -226,7 +226,7 @@ const defaultWelcomeMessage = {
     id: 'welcome',
     sender: 'assistant',
     category: 'general_itam',
-    source: 'gemini-3.6-flash',
+    source: 'gemini-3.1-flash-lite',
     answer:
         "### SpecMatch ITAM Fleet Assistant\n\n" +
         "Kumusta! I am your conversational ITAM Fleet Assistant. Ask me any question regarding stockroom inventory, idle devices, employee spec tiers, or warranties in **English or Tagalog**.",
@@ -250,10 +250,10 @@ export default function GeminiFleetAssistant({ isOpen = false, onClose, onOpen }
     const [showScrollBottom, setShowScrollBottom] = useState(false);
     const [aiStatus, setAiStatus] = useState({
         state: 'online',
-        model: 'gemini-3.6-flash',
-        label: 'Gemini 3.6 Flash Active',
+        model: 'gemini-3.1-flash-lite',
+        label: 'Gemini 3.1 Flash-Lite Active',
         sublabel: 'Online',
-        tooltip: 'Gemini 3.6 Flash is online and grounded in real-time MySQL database context.',
+        tooltip: 'Gemini 3.1 Flash-Lite is online and grounded in real-time MySQL database context.',
         is_fallback: false,
     });
 
@@ -378,7 +378,7 @@ export default function GeminiFleetAssistant({ isOpen = false, onClose, onOpen }
                 id: 'welcome_reset_' + Date.now(),
                 sender: 'assistant',
                 category: 'general_itam',
-                source: 'gemini-3.6-flash',
+                source: 'gemini-3.1-flash-lite',
                 answer:
                     "Conversation reset. Ask me anything about our Metro Manila IT fleet, stockroom availability, who is using high-end computers, or warranties.",
                 data_cards: [],
@@ -442,7 +442,7 @@ export default function GeminiFleetAssistant({ isOpen = false, onClose, onOpen }
                 id: 'assistant_' + Date.now(),
                 sender: 'assistant',
                 category: data.category || 'general_itam',
-                source: data.source || 'gemini-3.6-flash',
+                source: data.source || 'gemini-3.1-flash-lite',
                 answer: data.answer || 'No response received from fleet assistant.',
                 data_cards: data.data_cards || [],
                 suggested_followups: data.suggested_followups || [],
@@ -620,7 +620,7 @@ export default function GeminiFleetAssistant({ isOpen = false, onClose, onOpen }
                                                 />
                                                 <span className="truncate max-w-[140px] sm:max-w-[220px]">
                                                     {aiStatus.state === 'online'
-                                                        ? 'Gemini 3.6 Flash Active'
+                                                        ? 'Gemini 3.1 Flash-Lite Active'
                                                         : aiStatus.state === 'quota_exceeded'
                                                         ? 'Gemini Quota Limit (Local DB Active)'
                                                         : aiStatus.state === 'credit_exhausted'
@@ -738,7 +738,7 @@ export default function GeminiFleetAssistant({ isOpen = false, onClose, onOpen }
                                                             <span className="flex items-center gap-1 font-medium">
                                                                 {msg.source && msg.source.includes('gemini') ? (
                                                                     <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                                                                        <RiCheckLine className="w-3 h-3" /> Gemini 3.6 Flash Active
+                                                                        <RiCheckLine className="w-3 h-3" /> Gemini 3.1 Flash-Lite Active
                                                                     </span>
                                                                 ) : (
                                                                     <span className="text-amber-700 dark:text-amber-400 flex items-center gap-1 font-medium">

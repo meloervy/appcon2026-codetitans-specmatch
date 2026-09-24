@@ -171,7 +171,7 @@ class MatchingPipelineTest extends TestCase
     public function test_gemini_connectivity_endpoint_responds_with_diagnostic_structure(): void
     {
         $response = $this->actingAs($this->user)->postJson('/match/test-gemini', [
-            'model' => 'gemini-3.6-flash',
+            'model' => 'gemini-3.1-flash-lite',
         ]);
 
         $response->assertOk();
@@ -181,6 +181,6 @@ class MatchingPipelineTest extends TestCase
             'message',
             'fallback_active',
         ]);
-        $this->assertEquals('gemini-3.6-flash', $response->json('model'));
+        $this->assertEquals('gemini-3.1-flash-lite', $response->json('model'));
     }
 }

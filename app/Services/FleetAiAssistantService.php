@@ -17,106 +17,58 @@ class FleetAiAssistantService
     ) {}
 
     /**
-     * Get the live status of the AI Fleet Assistant (Gemini 3.6 Flash vs Local DB Engine).
+     * Get the live status of the AI Fleet Assistant (Passive evaluation without active HTTP probing).
      */
     public function getAiStatus(): array
     {
-        $cachedStatus = Cache::get('gemini_assistant_status');
-        if ($cachedStatus) {
-            return $cachedStatus;
-        }
-
+        $targetModel = config('services.gemini.model', env('GEMINI_MODEL', 'gemini-3.1-flash-lite'));
         $apiKey = config('services.gemini.api_key', env('GEMINI_API_KEY'));
         $forceOffline = env('GEMINI_DEMO_OFFLINE', false);
 
         if (empty($apiKey) || $forceOffline) {
-            $status = [
+            return [
                 'state' => 'offline',
-                'model' => 'gemini-3.6-flash',
+                'model' => $targetModel,
                 'label' => 'Local DB Engine Active',
                 'sublabel' => 'Offline Mode',
                 'tooltip' => 'Gemini API key is not configured or set to offline mode. Real-time Local MySQL DB Engine is active.',
                 'is_fallback' => true,
             ];
-            Cache::put('gemini_assistant_status', $status, 300);
-
-            return $status;
         }
 
-        // Lightweight probe to verify quota status
-        try {
-            $model = 'gemini-3.6-flash';
-            $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
-            $response = Http::timeout(2.5)->post($endpoint, [
-                'contents' => [['parts' => [['text' => 'ping']]]],
-            ]);
+        // Circuit breaker 1: Quota exceeded
+        if (Cache::has('gemini_assistant_quota_exceeded')) {
+            return [
+                'state' => 'quota_exceeded',
+                'model' => $targetModel,
+                'label' => 'Gemini 3.1 Flash-Lite: Quota Exceeded',
+                'sublabel' => 'Local DB Engine Active',
+                'tooltip' => 'Google Gemini API free tier rate/quota limit reached. Real-time Local MySQL DB Engine is processing queries with 100% accuracy.',
+                'is_fallback' => true,
+            ];
+        }
 
-            if ($response->successful()) {
-                $status = [
-                    'state' => 'online',
-                    'model' => $model,
-                    'label' => 'Gemini 3.6 Flash Active',
-                    'sublabel' => 'Online',
-                    'tooltip' => 'Gemini 3.6 Flash is online and grounded in real-time MySQL database context.',
-                    'is_fallback' => false,
-                ];
-                Cache::put('gemini_assistant_status', $status, 300);
-
-                return $status;
-            }
-
-            if ($response->status() === 429) {
-                $status = [
-                    'state' => 'quota_exceeded',
-                    'model' => $model,
-                    'label' => 'Gemini 3.6 Flash: Quota Exceeded',
-                    'sublabel' => 'Local DB Engine Active',
-                    'tooltip' => 'Google Gemini 3.6 Flash API free tier quota limit exceeded. Real-time Local MySQL DB Engine is processing queries with 100% database accuracy.',
-                    'is_fallback' => true,
-                ];
-                Cache::put('gemini_assistant_status', $status, 180);
-
-                return $status;
-            }
-
-            if (in_array($response->status(), [401, 403])) {
-                $status = [
-                    'state' => 'credit_exhausted',
-                    'model' => $model,
-                    'label' => 'Gemini 3.6 Flash: Credit Exhausted',
-                    'sublabel' => 'Local DB Engine Active',
-                    'tooltip' => 'Gemini API credits exhausted or key expired. Real-time Local MySQL DB Engine is active.',
-                    'is_fallback' => true,
-                ];
-                Cache::put('gemini_assistant_status', $status, 300);
-
-                return $status;
-            }
-
-            $status = [
+        // Circuit breaker 2: Temporary Service Outage
+        if (Cache::has('gemini_assistant_service_error')) {
+            return [
                 'state' => 'service_unavailable',
-                'model' => $model,
-                'label' => 'Gemini 3.6 Flash: High Demand',
+                'model' => $targetModel,
+                'label' => 'Gemini 3.1 Flash-Lite: High Demand',
                 'sublabel' => 'Local DB Engine Active',
                 'tooltip' => 'Gemini service is temporarily unavailable. Real-time Local MySQL DB Engine is active.',
                 'is_fallback' => true,
             ];
-            Cache::put('gemini_assistant_status', $status, 60);
-
-            return $status;
-        } catch (\Throwable $e) {
-            $status = [
-                'state' => 'offline',
-                'model' => 'gemini-3.6-flash',
-                'label' => 'Local DB Engine Active',
-                'sublabel' => 'Network Fallback',
-                'tooltip' => 'Unable to reach Gemini API. Real-time Local MySQL DB Engine is active.',
-                'is_fallback' => true,
-            ];
-            Cache::put('gemini_assistant_status', $status, 60);
-
-            return $status;
         }
+
+        // Default state: Online and grounded in live DB context (Zero unprompted HTTP calls)
+        return [
+            'state' => 'online',
+            'model' => $targetModel,
+            'label' => 'Gemini 3.1 Flash-Lite Active',
+            'sublabel' => 'Online',
+            'tooltip' => 'Gemini 3.1 Flash-Lite is online and grounded in real-time database context.',
+            'is_fallback' => false,
+        ];
     }
 
     /**
@@ -270,12 +222,13 @@ class FleetAiAssistantService
         // 2. Attempt Google Gemini inference with multi-turn history if API key is configured
         $apiKey = config('services.gemini.api_key', env('GEMINI_API_KEY'));
         $forceOffline = env('GEMINI_DEMO_OFFLINE', false);
+        $circuitBreakerTripped = Cache::has('gemini_rate_limited') || Cache::has('gemini_assistant_quota_exceeded');
 
-        if (! empty($apiKey) && ! $forceOffline) {
+        if (! empty($apiKey) && ! $forceOffline && ! $circuitBreakerTripped) {
             try {
                 $geminiResponse = $this->callGeminiWithContext($prompt, $snapshot, $catalog, $apiKey, $history);
                 if ($geminiResponse && ! empty($geminiResponse['answer'])) {
-                    $model = config('services.gemini.model', env('GEMINI_MODEL', 'gemini-3.6-flash'));
+                    $model = config('services.gemini.model', env('GEMINI_MODEL', 'gemini-3.1-flash-lite'));
                     $geminiResponse['source'] = $model;
                     $geminiResponse['ai_status'] = $this->getAiStatus();
 
@@ -527,9 +480,9 @@ INSTRUCTION;
             'complete_catalog' => $catalog,
         ], JSON_UNESCAPED_SLASHES);
 
-        $model = config('services.gemini.model', env('GEMINI_MODEL', 'gemini-3.6-flash'));
-        if ($model === 'gemini-2.5-flash') {
-            $model = 'gemini-3.6-flash';
+        $model = config('services.gemini.model', env('GEMINI_MODEL', 'gemini-3.1-flash-lite'));
+        if (in_array($model, ['gemini-2.5-flash', 'gemini-3.6-flash', 'gemini-3.8-flash'])) {
+            $model = 'gemini-3.1-flash-lite';
         }
 
         $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
@@ -573,45 +526,16 @@ INSTRUCTION;
             Log::warning('Gemini API call returned non-200: '.$response->status().' '.$response->body());
 
             if ($response->status() === 429) {
-                Cache::put('gemini_assistant_status', [
-                    'state' => 'quota_exceeded',
-                    'model' => $model,
-                    'label' => 'Gemini 3.6 Flash: Quota Exceeded',
-                    'sublabel' => 'Local DB Engine Active',
-                    'tooltip' => 'Google Gemini 3.6 Flash API free tier quota limit exceeded. Real-time Local MySQL DB Engine is active.',
-                    'is_fallback' => true,
-                ], 180);
+                Cache::put('gemini_assistant_quota_exceeded', true, now()->addMinutes(30));
+                Cache::put('gemini_rate_limited', true, now()->addMinutes(30));
             } elseif (in_array($response->status(), [401, 403])) {
-                Cache::put('gemini_assistant_status', [
-                    'state' => 'credit_exhausted',
-                    'model' => $model,
-                    'label' => 'Gemini 3.6 Flash: Credit Exhausted',
-                    'sublabel' => 'Local DB Engine Active',
-                    'tooltip' => 'Gemini API credits exhausted or key expired. Real-time Local MySQL DB Engine is active.',
-                    'is_fallback' => true,
-                ], 300);
+                Cache::put('gemini_assistant_quota_exceeded', true, now()->addMinutes(60));
             } else {
-                Cache::put('gemini_assistant_status', [
-                    'state' => 'service_unavailable',
-                    'model' => $model,
-                    'label' => 'Gemini 3.6 Flash: High Demand',
-                    'sublabel' => 'Local DB Engine Active',
-                    'tooltip' => 'Gemini service is temporarily unavailable. Real-time Local MySQL DB Engine is active.',
-                    'is_fallback' => true,
-                ], 60);
+                Cache::put('gemini_assistant_service_error', true, now()->addMinutes(5));
             }
 
             return null;
         }
-
-        Cache::put('gemini_assistant_status', [
-            'state' => 'online',
-            'model' => $model,
-            'label' => 'Gemini 3.6 Flash Active',
-            'sublabel' => 'Online',
-            'tooltip' => 'Gemini 3.6 Flash is online and grounded in real-time MySQL database context.',
-            'is_fallback' => false,
-        ], 300);
 
         $result = $response->json();
         $rawText = $result['candidates'][0]['content']['parts'][0]['text'] ?? null;

@@ -65,11 +65,11 @@ class MatchingController extends Controller
     }
 
     /**
-     * Test connectivity specifically to Gemini 3.6 Flash.
+     * Test connectivity specifically to Gemini 3.1 Flash-Lite.
      */
     public function testGemini(Request $request, GeminiService $geminiService): JsonResponse
     {
-        $model = $request->input('model', 'gemini-3.6-flash');
+        $model = $request->input('model', config('services.gemini.model', 'gemini-3.1-flash-lite'));
         $result = $geminiService->testConnectivity($model);
 
         return response()->json($result);

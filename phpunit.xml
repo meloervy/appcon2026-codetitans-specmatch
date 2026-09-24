@@ -32,5 +32,8 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="GEMINI_DEMO_OFFLINE" value="true"/>
+        <env name="GEMINI_API_KEY" value=""/>
+        <env name="GEMINI_MODEL" value="gemini-3.1-flash-lite"/>
     </php>
 </phpunit>

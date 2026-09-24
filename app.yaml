@@ -1,0 +1,7 @@
+kind: wasmer.io/App.v0
+name: specmatch
+package: .
+capabilities:
+  instaboot:
+    requests:
+      - path: /

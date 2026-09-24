@@ -229,7 +229,7 @@ export default function MatchRequest({
     const handleTestGemini = async () => {
         setIsTestingGemini(true);
         try {
-            const res = await axios.post(route('match.test-gemini'), { model: 'gemini-3.6-flash' });
+            const res = await axios.post(route('match.test-gemini'), { model: 'gemini-3.1-flash-lite' });
             setGeminiTestResult(res.data);
             setShowGeminiModal(true);
         } catch (err) {
@@ -237,7 +237,7 @@ export default function MatchRequest({
                 status: 'error',
                 success: false,
                 http_status: 500,
-                model: 'gemini-3.6-flash',
+                model: 'gemini-3.1-flash-lite',
                 message: err.response?.data?.message || 'Failed to ping Gemini endpoint.',
                 latency_ms: 0,
                 fallback_active: true,
@@ -471,14 +471,14 @@ export default function MatchRequest({
                             AI-Powered Matching Engine
                         </h1>
                         <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1">
-                            Two-layer intelligent pipeline: Natural language requirement extraction (Gemini 3.6 Flash) + Deterministic fleet ranking.
+                            Two-layer intelligent pipeline: Natural language requirement extraction (Gemini 3.1 Flash-Lite) + Deterministic fleet ranking.
                         </p>
                     </div>
 
                     <div className="flex items-center gap-2">
                         <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-bold border border-slate-200 dark:border-zinc-700 shadow-2xs">
                             <span className="w-2 h-2 rounded-full bg-[#0aceb3] animate-pulse" />
-                            <span>Gemini 3.6 Flash Active</span>
+                            <span>Gemini 3.1 Flash-Lite Active</span>
                         </div>
                     </div>
                 </div>
@@ -589,7 +589,7 @@ export default function MatchRequest({
                                             <span>Save as Template</span>
                                         </button>
                                     )}
-                                    <span className="text-[11px] text-[#026eff] dark:text-[#0b79ff] font-medium">Layer 1: Gemini 3.6</span>
+                                    <span className="text-[11px] text-[#026eff] dark:text-[#0b79ff] font-medium">Layer 1: Gemini 3.1</span>
                                 </div>
                             </div>
                             <textarea
@@ -723,7 +723,7 @@ export default function MatchRequest({
                                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    Analyzing with Gemini 3.6 Flash...
+                                    Analyzing with Gemini 3.1 Flash-Lite...
                                 </>
                             ) : isRanking ? (
                                 <>
@@ -820,8 +820,8 @@ export default function MatchRequest({
                                                             <path d="M11 2L7.33 10.67 2 11l5.33 3.67L5 22l6-3.33L17 22l-2.33-7.33L20 11l-5.33-.33L11 2zm8 4l-1.33 2.67L15 9l2.67 1.33L19 13l1.33-2.67L23 9l-2.67-1.33z" />
                                                         </svg>
                                                         {extracted.source === 'heuristic_fallback'
-                                                            ? 'SpecMatch Heuristic Engine (Gemini 3.6 Quota Failover)'
-                                                            : 'Powered by Gemini 3.6 Flash'}
+                                                            ? 'SpecMatch Heuristic Engine (Gemini 3.1 Quota Failover)'
+                                                            : 'Powered by Gemini 3.1 Flash-Lite'}
                                                     </span>
                                                     <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-900/50">
                                                         Validated JSON
@@ -833,7 +833,7 @@ export default function MatchRequest({
                                                         <RiInformationLine className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                                                         <div>
                                                             <strong className="font-semibold text-amber-900 dark:text-amber-200">
-                                                                Gemini 3.6 Cloud Quota Notice (Free Tier):
+                                                                Gemini 3.1 Cloud Quota Notice (Free Tier):
                                                             </strong>
                                                             <p className="mt-0.5 text-amber-700 dark:text-amber-300">
                                                                 {extracted.fallback_reason}
@@ -959,7 +959,7 @@ export default function MatchRequest({
                                                         <div className="pt-3 border-t border-slate-200/60 dark:border-zinc-700/60 flex items-center justify-between">
                                                             <div>
                                                                 <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 block">
-                                                                    Gemini 3.6 Flash Live Connectivity
+                                                                    Gemini 3.1 Flash-Lite Live Connectivity
                                                                 </span>
                                                                 <span className="text-[11px] text-slate-500 dark:text-zinc-400">
                                                                     Verify cloud API round-trip latency &amp; rate limits
@@ -1979,7 +1979,7 @@ export default function MatchRequest({
                 </div>
             )}
 
-            {/* Gemini 3.6 Flash Connectivity Diagnostic Modal */}
+            {/* Gemini 3.1 Flash-Lite Connectivity Diagnostic Modal */}
             {showGeminiModal && geminiTestResult && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200">
                     <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 relative overflow-hidden max-h-[90vh] overflow-y-auto custom-scrollbar">
@@ -1992,7 +1992,7 @@ export default function MatchRequest({
                                 </span>
                                 <div>
                                     <h3 className="text-base font-bold text-slate-900 dark:text-zinc-100">
-                                        Gemini 3.6 Flash Connectivity Status
+                                        Gemini 3.1 Flash-Lite Connectivity Status
                                     </h3>
                                     <p className="text-xs text-slate-500 dark:text-zinc-400">
                                         Live round-trip diagnostics to Google Generative Language API

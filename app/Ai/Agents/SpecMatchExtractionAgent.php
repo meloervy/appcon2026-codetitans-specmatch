@@ -16,7 +16,7 @@ use Laravel\Ai\Providers\Tools\ProviderTool;
 use Stringable;
 
 #[Provider('gemini')]
-#[Model('gemini-3.6-flash')]
+#[Model('gemini-3.1-flash-lite')]
 class SpecMatchExtractionAgent implements Agent, Conversational, HasStructuredOutput, HasTools
 {
     use Promptable;
