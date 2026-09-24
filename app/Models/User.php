@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role', 'department', 'avatar'])]
+#[Fillable(['name', 'email', 'password', 'role', 'department', 'job_title', 'phone', 'avatar'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -22,7 +22,7 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
-    protected $appends = ['role_title'];
+    protected $appends = ['role_title', 'avatar_url'];
 
     /**
      * Get the attributes that should be cast.
@@ -74,6 +74,10 @@ class User extends Authenticatable
      */
     public function getRoleTitleAttribute(): string
     {
+        if (! empty($this->job_title)) {
+            return $this->job_title;
+        }
+
         return match ($this->role) {
             'admin' => 'IT Administrator',
             'manager' => 'IT Asset Manager',
@@ -81,5 +85,23 @@ class User extends Authenticatable
             'viewer' => 'IT Auditor',
             default => 'Enterprise Staff',
         };
+    }
+
+    /**
+     * Resolve browser avatar URL.
+     */
+    public function getAvatarUrlAttribute(): ?string
+    {
+        if (empty($this->avatar)) {
+            return null;
+        }
+        if (str_starts_with($this->avatar, 'http://') || str_starts_with($this->avatar, 'https://') || str_starts_with($this->avatar, '/')) {
+            return $this->avatar;
+        }
+        if (str_starts_with($this->avatar, 'public/')) {
+            return '/'.substr($this->avatar, 7);
+        }
+
+        return '/'.$this->avatar;
     }
 }

@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Device;
 use App\Models\LifecycleEvent;
+use App\Services\MatchingService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -117,7 +119,7 @@ class DeviceController extends Controller
             'contract_sla' => ['nullable', 'string', 'max:100'],
             'condition' => ['required', 'in:excellent,good,fair,needs_repair,retired'],
             'status' => ['required', 'in:available,assigned,in_repair,retired'],
-            'lifecycle_stage' => ['nullable', 'in:acquisition,deployment,maintenance,retirement'],
+            'lifecycle_stage' => ['nullable', 'in:acquisition,deployment,reclaimed,maintenance,retirement'],
             'notes' => ['nullable', 'string'],
         ]);
 
@@ -182,7 +184,7 @@ class DeviceController extends Controller
             'contract_sla' => ['nullable', 'string', 'max:100'],
             'condition' => ['required', 'in:excellent,good,fair,needs_repair,retired'],
             'status' => ['required', 'in:available,assigned,in_repair,retired'],
-            'lifecycle_stage' => ['required', 'in:acquisition,deployment,maintenance,retirement'],
+            'lifecycle_stage' => ['required', 'in:acquisition,deployment,reclaimed,maintenance,retirement'],
             'notes' => ['nullable', 'string'],
         ]);
 
@@ -210,7 +212,7 @@ class DeviceController extends Controller
         $device = Device::findOrFail($id);
 
         $validated = $request->validate([
-            'to_stage' => ['required', 'in:acquisition,deployment,maintenance,retirement'],
+            'to_stage' => ['required', 'in:acquisition,deployment,reclaimed,maintenance,retirement'],
             'notes' => ['nullable', 'string'],
         ]);
 
@@ -223,6 +225,11 @@ class DeviceController extends Controller
             $newStatus = 'in_repair';
         } elseif ($toStage === 'retirement') {
             $newStatus = 'retired';
+            if ($device->activeAssignment) {
+                $device->activeAssignment->update(['unassigned_at' => now()]);
+            }
+        } elseif ($toStage === 'reclaimed') {
+            $newStatus = 'available';
             if ($device->activeAssignment) {
                 $device->activeAssignment->update(['unassigned_at' => now()]);
             }
@@ -245,6 +252,63 @@ class DeviceController extends Controller
         ]);
 
         return back()->with('success', "Asset {$device->asset_tag} transitioned to {$toStage} stage.");
+    }
+
+    /**
+     * Directly reclaim a device back into the pool and discover recirculation opportunities.
+     */
+    public function reclaim(Request $request, int $id, MatchingService $matchingService): JsonResponse|RedirectResponse
+    {
+        $device = Device::with('activeAssignment.employee')->findOrFail($id);
+
+        if ($device->activeAssignment && $device->activeAssignment->employee) {
+            $validated = $request->validate([
+                'reason' => ['nullable', 'string', 'in:resignation,role_transition,hardware_upgrade,contract_end,other'],
+                'condition' => ['nullable', 'string', 'in:excellent,good,fair,needs_repair'],
+                'wipe_confirmed' => ['nullable', 'boolean'],
+                'notes' => ['nullable', 'string', 'max:1000'],
+            ]);
+
+            $result = $matchingService->reclaimDevice($device->activeAssignment->employee->id, [
+                'reason' => $validated['reason'] ?? 'hardware_upgrade',
+                'condition' => $validated['condition'] ?? $device->condition,
+                'wipe_confirmed' => $validated['wipe_confirmed'] ?? true,
+                'notes' => $validated['notes'] ?? 'Direct asset reclamation to stockroom.',
+            ], auth()->id());
+
+            if ($request->wantsJson()) {
+                return response()->json($result);
+            }
+
+            return back()->with('success', $result['message'])->with('reclaimed_details', $result);
+        }
+
+        $fromStage = $device->lifecycle_stage;
+        $device->update([
+            'status' => 'available',
+            'lifecycle_stage' => 'reclaimed',
+        ]);
+
+        LifecycleEvent::create([
+            'device_id' => $device->id,
+            'from_stage' => $fromStage,
+            'to_stage' => 'reclaimed',
+            'changed_by_user_id' => auth()->id(),
+            'notes' => 'Asset returned to pool in reclaimed stage.',
+        ]);
+
+        $circulation = $matchingService->findRecirculationMatches($device);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Device {$device->asset_tag} returned to pool in reclaimed stage.",
+                'device' => $device->fresh(),
+                'circulation_matches' => $circulation,
+            ]);
+        }
+
+        return back()->with('success', "Device {$device->asset_tag} returned to pool in reclaimed stage.");
     }
 
     public function retire(int $id): RedirectResponse

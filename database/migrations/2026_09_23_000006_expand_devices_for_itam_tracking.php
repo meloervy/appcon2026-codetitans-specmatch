@@ -32,7 +32,7 @@ return new class extends Migration
             $table->string('contract_sla', 100)->nullable()->after('warranty_expiry');
 
             // Lifecycle Stage
-            $table->enum('lifecycle_stage', ['acquisition', 'deployment', 'maintenance', 'retirement'])
+            $table->enum('lifecycle_stage', ['acquisition', 'deployment', 'reclaimed', 'maintenance', 'retirement'])
                 ->default('deployment')
                 ->after('status');
         });

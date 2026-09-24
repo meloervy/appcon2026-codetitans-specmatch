@@ -138,6 +138,7 @@ export default function DevicesIndex({ devices, filters }) {
                             <option value="">All Lifecycle Stages</option>
                             <option value="acquisition">Acquisition</option>
                             <option value="deployment">Deployment</option>
+                            <option value="reclaimed">Reclaimed (In Pool)</option>
                             <option value="maintenance">Maintenance</option>
                             <option value="retirement">Retirement</option>
                         </select>
@@ -436,6 +437,7 @@ export default function DevicesIndex({ devices, filters }) {
                                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider inline-block ${
                                                 device.lifecycle_stage === 'acquisition' ? 'bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200/50 dark:border-sky-800/50' :
                                                 device.lifecycle_stage === 'deployment' ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-800/50' :
+                                                device.lifecycle_stage === 'reclaimed' ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200/50 dark:border-teal-800/50' :
                                                 device.lifecycle_stage === 'maintenance' ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/50 dark:border-amber-800/50' :
                                                 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 border border-slate-200/50 dark:border-zinc-700/50'
                                             }`}>

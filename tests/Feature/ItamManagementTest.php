@@ -6,7 +6,6 @@ use App\Models\Device;
 use App\Models\MaintenanceLog;
 use App\Models\User;
 use App\Services\ItamTrackingService;
-use App\Services\TechSpecsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -190,7 +189,7 @@ class ItamManagementTest extends TestCase
             'lifecycle_stage' => 'deployment',
         ]);
 
-        $service = new ItamTrackingService();
+        $service = new ItamTrackingService;
         $financials = $service->getFinancialSummary();
         $warranties = $service->getWarrantyAlerts();
         $redundancy = $service->detectRedundantAssets();

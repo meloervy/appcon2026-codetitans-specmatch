@@ -129,8 +129,9 @@ export default function DevicesShow({ device }) {
     const stages = [
         { key: 'acquisition', label: '1. Acquisition', desc: 'Procurement & Staging' },
         { key: 'deployment', label: '2. Deployment', desc: 'Active Production' },
-        { key: 'maintenance', label: '3. Maintenance', desc: 'Repairs & Servicing' },
-        { key: 'retirement', label: '4. Retirement', desc: 'Decommissioned / EOL' },
+        { key: 'reclaimed', label: '3. Reclaimed', desc: 'Sanitized in Pool' },
+        { key: 'maintenance', label: '4. Maintenance', desc: 'Repairs & Servicing' },
+        { key: 'retirement', label: '5. Retirement', desc: 'Decommissioned / EOL' },
     ];
 
     const currentStageIndex = stages.findIndex((s) => s.key === device.lifecycle_stage);
@@ -222,7 +223,7 @@ export default function DevicesShow({ device }) {
                         </button>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
                         {stages.map((stage, idx) => {
                             const isCurrent = stage.key === device.lifecycle_stage;
                             const isPast = currentStageIndex > idx;
@@ -713,6 +714,7 @@ export default function DevicesShow({ device }) {
                                 >
                                     <option value="acquisition">Acquisition (Intake / Staging)</option>
                                     <option value="deployment">Deployment (Active In-Service)</option>
+                                    <option value="reclaimed">Reclaimed (Sanitized in Pool)</option>
                                     <option value="maintenance">Maintenance (Servicing / In-Repair)</option>
                                     <option value="retirement">Retirement (Decommissioned)</option>
                                 </select>

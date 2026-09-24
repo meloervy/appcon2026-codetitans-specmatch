@@ -85,8 +85,93 @@ class MatchingService
             return $b['score'] <=> $a['score'];
         });
 
+        $topCandidate = null;
+        $alternativeComparisons = [];
+
+        foreach ($ranked as $candidate) {
+            if (! $candidate['disqualified'] && $candidate['score'] >= self::MATCH_THRESHOLD) {
+                $topCandidate = $candidate;
+                break;
+            }
+        }
+
+        if ($topCandidate) {
+            $topDev = $topCandidate['device'];
+            $rankCounter = 1;
+
+            for ($i = 0; $i < count($ranked); $i++) {
+                if ($ranked[$i]['device']->id === $topDev->id) {
+                    continue;
+                }
+
+                $cand = &$ranked[$i];
+                $candDev = $cand['device'];
+                $rankCounter++;
+
+                $reasons = [];
+
+                if ($cand['disqualified']) {
+                    $reasons[] = $cand['disqualification_reason'] ?? 'Disqualified by hard eligibility filter.';
+                } else {
+                    // RAM comparison
+                    if ($candDev->ram_gb < $topDev->ram_gb) {
+                        $diff = $topDev->ram_gb - $candDev->ram_gb;
+                        $reasons[] = "{$diff}GB less RAM ({$candDev->ram_gb}GB vs Top Pick's {$topDev->ram_gb}GB)";
+                    }
+                    // CPU tier comparison
+                    $cpuDiff = (self::CPU_TIERS[$topDev->cpu_tier] ?? 1) - (self::CPU_TIERS[$candDev->cpu_tier] ?? 1);
+                    if ($cpuDiff > 0) {
+                        $reasons[] = "Lower CPU tier ({$candDev->cpu_tier} vs Top Pick's {$topDev->cpu_tier})";
+                    }
+                    // GPU comparison
+                    $gpuDiff = (self::GPU_TIERS[$topDev->gpu_tier] ?? 0) - (self::GPU_TIERS[$candDev->gpu_tier] ?? 0);
+                    if ($gpuDiff > 0) {
+                        $reasons[] = "Inferior GPU tier ({$candDev->gpu_tier} vs {$topDev->gpu_tier})";
+                    }
+                    // Form factor / Portability
+                    if (! empty($requirements['portability_required']) && $candDev->device_type !== 'laptop') {
+                        $reasons[] = 'Desktop form factor lacks required mobility';
+                    }
+                    // Condition & Age
+                    if ($candDev->isAging() && ! $topDev->isAging()) {
+                        $reasons[] = 'Older hardware generation (≥3 years in service)';
+                    }
+                    if (in_array(strtolower($candDev->condition ?? ''), ['fair', 'poor']) && in_array(strtolower($topDev->condition ?? ''), ['excellent', 'good'])) {
+                        $reasons[] = "Suboptimal physical condition ({$candDev->condition})";
+                    }
+                    if (empty($reasons)) {
+                        $scoreDelta = (int) round(($topCandidate['score'] - $cand['score']) * 100);
+                        $reasons[] = "Lower composite alignment score (-{$scoreDelta}%)";
+                    }
+                }
+
+                $cand['why_not_reasons'] = $reasons;
+
+                if (count($alternativeComparisons) < 3) {
+                    $alternativeComparisons[] = [
+                        'rank' => $rankCounter,
+                        'device_id' => $candDev->id,
+                        'asset_tag' => $candDev->asset_tag,
+                        'brand' => $candDev->brand,
+                        'model' => $candDev->model,
+                        'image_clip_url' => $candDev->image_clip_url,
+                        'score' => $cand['score'],
+                        'score_delta_pct' => (int) round(($topCandidate['score'] - $cand['score']) * 100),
+                        'fit_grade' => $cand['fit_grade'],
+                        'why_not_reasons' => $reasons,
+                        'verdict' => $cand['disqualified']
+                            ? 'Ineligible for this role'
+                            : 'Viable secondary option with tighter operational margins',
+                    ];
+                }
+            }
+            unset($cand);
+        }
+
         return [
             'results' => $ranked,
+            'top_candidate' => $topCandidate,
+            'alternative_comparisons' => $alternativeComparisons,
             'procurement_recommended' => ! $hasEligibleAboveThreshold,
             'total_capex_savings_php' => $totalCapexSavings,
             'threshold' => self::MATCH_THRESHOLD,
@@ -138,11 +223,12 @@ class MatchingService
             default => 0.0,
         };
 
-        // 2. Lifecycle adjustment (+0.02 for operational, -0.15 for maintenance)
-        $lifecycleMod = match (strtolower($device->lifecycle_stage ?? 'operational')) {
-            'operational' => 0.02,
+        // 2. Lifecycle adjustment (+0.02 for operational/deployment/reclaimed, -0.15 for maintenance)
+        $lifecycleMod = match (strtolower($device->lifecycle_stage ?? 'deployment')) {
+            'operational', 'deployment', 'reclaimed' => 0.02,
+            'acquisition' => 0.01,
             'maintenance' => -0.15,
-            'retired', 'disposed' => -0.30,
+            'retired', 'disposed', 'retirement' => -0.30,
             default => 0.0,
         };
 
@@ -165,6 +251,16 @@ class MatchingService
 
         // CapEx Savings in PHP (reusing existing idle unit saves replacement procurement)
         $capexSavedPhp = ! $disqualified ? $this->estimateDeviceValuePhp($device) : 0.0;
+        $deviceMarketValue = $this->estimateDeviceValuePhp($device);
+
+        $procurementAvoidanceAudit = [
+            'avoided_capex_php' => $capexSavedPhp,
+            'market_replacement_benchmark_php' => $deviceMarketValue,
+            'benchmark_source' => $device->purchase_cost ? 'Procurement Invoice Record' : "Commercial Hardware Benchmark ({$device->device_type} • ".ucfirst($device->cpu_tier).' tier)',
+            'redeployment_cost_php' => 0.00,
+            'formula' => 'Net CapEx Avoided = Benchmark Replacement (₱'.number_format($deviceMarketValue, 2).') - Redeployment Cost (₱0.00)',
+            'audit_note' => "Reallocating existing asset {$device->asset_tag} directly displaces a new ₱".number_format($deviceMarketValue, 0).' commercial procurement expenditure from the IT capital budget.',
+        ];
 
         // Fit Grade
         $fitGrade = match (true) {
@@ -188,6 +284,104 @@ class MatchingService
             'portability' => round($portabilityScore, 3),
         ];
 
+        // Detailed Sub-score Audit for transparency and mathematical explainability
+        $subscoreAudit = [
+            'cpu' => [
+                'score' => round($cpuScore, 3),
+                'weight' => 0.30,
+                'weighted_score' => round($cpuScore * 0.30, 3),
+                'provided' => $device->cpu.' ('.ucfirst($device->cpu_tier).' Tier)',
+                'required' => ucfirst($requirements['min_cpu_tier'] ?? 'entry').' Tier',
+                'status' => $cpuScore >= 1.0 ? 'Met' : ($cpuScore >= 0.8 ? 'Exceeded' : 'Deficit'),
+                'delta' => (self::CPU_TIERS[$device->cpu_tier] ?? 1) - (self::CPU_TIERS[$requirements['min_cpu_tier'] ?? 'entry'] ?? 1),
+            ],
+            'ram' => [
+                'score' => round($ramScore, 3),
+                'weight' => 0.25,
+                'weighted_score' => round($ramScore * 0.25, 3),
+                'provided' => "{$device->ram_gb} GB",
+                'required' => ($requirements['min_ram_gb'] ?? 8).' GB',
+                'status' => $ramScore >= 1.0 ? 'Met' : ($ramScore >= 0.85 ? 'Headroom' : 'Deficit'),
+                'delta_gb' => $device->ram_gb - ($requirements['min_ram_gb'] ?? 8),
+            ],
+            'storage' => [
+                'score' => round($storageScore, 3),
+                'weight' => 0.15,
+                'weighted_score' => round($storageScore * 0.15, 3),
+                'provided' => "{$device->storage_gb} GB {$device->storage_type}",
+                'required' => ($requirements['min_storage_gb'] ?? 256).' GB',
+                'status' => $storageScore >= 1.0 ? 'Met' : ($storageScore >= 0.85 ? 'Headroom' : 'Deficit'),
+                'delta_gb' => $device->storage_gb - ($requirements['min_storage_gb'] ?? 256),
+            ],
+            'gpu' => [
+                'score' => round($gpuScore, 3),
+                'weight' => 0.20,
+                'weighted_score' => round($gpuScore * 0.20, 3),
+                'provided' => $device->gpu ? "{$device->gpu} ({$device->gpu_tier})" : ($device->gpu_tier !== 'none' ? ucfirst($device->gpu_tier) : 'Integrated/None'),
+                'required' => $requiresGpu ? ucfirst($reqGpuTier) : 'None / Optional',
+                'status' => $gpuScore >= 1.0 ? 'Met' : ($gpuScore >= 0.7 ? 'Exceeded' : ($gpuScore == 0.3 ? 'Overkill' : 'Deficit')),
+            ],
+            'portability' => [
+                'score' => round($portabilityScore, 3),
+                'weight' => 0.10,
+                'weighted_score' => round($portabilityScore * 0.10, 3),
+                'provided' => ucfirst($device->device_type),
+                'required' => $portabilityRequired ? 'Laptop (Mobile)' : 'Any / Desktop Preferred',
+                'status' => $portabilityScore >= 1.0 ? 'Met' : 'Suboptimal',
+            ],
+            'modifiers' => [
+                'condition' => [
+                    'adjustment' => $conditionMod,
+                    'label' => ucfirst($device->condition ?? 'Good'),
+                ],
+                'lifecycle' => [
+                    'adjustment' => $lifecycleMod,
+                    'label' => ucfirst($device->lifecycle_stage ?? 'Deployment'),
+                ],
+            ],
+        ];
+
+        // Confidence Rating (0 - 100): Separates raw spec fit from sustainability/risk factors
+        $exactnessRatio = ($cpuScore >= 0.8 && $ramScore >= 0.85 && $storageScore >= 0.85) ? 1.0 : 0.6;
+        if ($disqualified) {
+            $exactnessRatio = 0.0;
+        }
+
+        $conditionWeight = match (strtolower($device->condition ?? 'good')) {
+            'new', 'excellent' => 1.0,
+            'good' => 0.85,
+            'fair' => 0.50,
+            default => 0.20,
+        };
+
+        $ageWeight = $device->isAging() ? 0.45 : 1.0;
+
+        $warrantyWeight = match ($device->warranty_status) {
+            'active' => 1.0,
+            'expiring_soon' => 0.65,
+            default => 0.35,
+        };
+
+        $confidenceScore = (int) round(
+            (($exactnessRatio * 0.35) + ($conditionWeight * 0.25) + ($ageWeight * 0.20) + ($warrantyWeight * 0.20)) * 100
+        );
+        $confidenceScore = max(0, min(100, $confidenceScore));
+
+        $confidenceLevel = match (true) {
+            $confidenceScore >= 80 => 'High Confidence',
+            $confidenceScore >= 60 => 'Moderate Confidence',
+            default => 'Cautious Recommendation',
+        };
+
+        $confidenceExplanation = sprintf(
+            '%s (%d/100): %s condition, %s, warranty %s.',
+            $confidenceLevel,
+            $confidenceScore,
+            ucfirst($device->condition ?? 'good'),
+            $device->isAging() ? 'aging hardware (≥3 yrs)' : 'modern platform',
+            $device->warranty_status === 'active' ? 'active' : ($device->warranty_status === 'expiring_soon' ? 'expiring soon' : 'expired/none')
+        );
+
         $rationale = $this->generateRationale($device, $requirements, $subscores, $disqualified, $disqualificationReason);
 
         return [
@@ -195,8 +389,13 @@ class MatchingService
             'score' => $finalScore,
             'base_score' => round($baseScore, 3),
             'subscores' => $subscores,
+            'subscore_audit' => $subscoreAudit,
             'component_meters' => $componentMeters,
             'capex_saved_php' => $capexSavedPhp,
+            'procurement_avoidance_audit' => $procurementAvoidanceAudit,
+            'confidence_score' => $confidenceScore,
+            'confidence_level' => $confidenceLevel,
+            'confidence_explanation' => $confidenceExplanation,
             'fit_grade' => $fitGrade,
             'overprovisioning_risk' => $overprovisioningRisk,
             'rationale' => $rationale,
@@ -748,5 +947,279 @@ class MatchingService
                 'donor_device' => $donorDevice,
             ];
         });
+    }
+
+    /**
+     * Atomically reclaim an assigned device back into the inventory pool during employee offboarding or role change,
+     * record full lifecycle audit event, and identify immediate re-circulation opportunities.
+     *
+     * @param  array{
+     *   reason: string,
+     *   condition: string,
+     *   wipe_confirmed: bool,
+     *   notes: ?string
+     * }  $details
+     */
+    public function reclaimDevice(int $employeeId, array $details, ?int $userId = null): array
+    {
+        return DB::transaction(function () use ($employeeId, $details, $userId) {
+            $now = now();
+            $employee = Employee::with(['activeAssignment.device', 'roleProfile'])->findOrFail($employeeId);
+            $assignment = $employee->activeAssignment;
+
+            if (! $assignment || ! $assignment->device) {
+                throw new \InvalidArgumentException("Employee {$employee->name} does not have an active device assignment to reclaim.");
+            }
+
+            $device = $assignment->device;
+            $fromStage = $device->lifecycle_stage;
+
+            // 1. Mark assignment unassigned
+            $assignment->update(['unassigned_at' => $now]);
+
+            // 2. Set new condition and lifecycle stage
+            $newCondition = $details['condition'] ?? $device->condition;
+            $targetStage = ($newCondition === 'needs_repair') ? 'maintenance' : 'reclaimed';
+            $targetStatus = ($newCondition === 'needs_repair') ? 'in_repair' : 'available';
+
+            $device->update([
+                'condition' => $newCondition,
+                'status' => $targetStatus,
+                'lifecycle_stage' => $targetStage,
+            ]);
+
+            // 3. Log LifecycleEvent
+            $wipeStatus = (! empty($details['wipe_confirmed'])) ? 'Data Wipe Verified & Sanitized' : 'Wipe Pending';
+            $reasonLabel = ucfirst(str_replace('_', ' ', $details['reason'] ?? 'Offboarding'));
+            $eventNotes = sprintf(
+                'Asset reclaimed from %s via %s. Condition: %s. %s. %s',
+                $employee->name,
+                $reasonLabel,
+                ucfirst($newCondition),
+                $wipeStatus,
+                $details['notes'] ?? ''
+            );
+
+            LifecycleEvent::create([
+                'device_id' => $device->id,
+                'from_stage' => $fromStage,
+                'to_stage' => $targetStage,
+                'changed_by_user_id' => $userId ?? auth()->id(),
+                'notes' => trim($eventNotes),
+            ]);
+
+            // 4. Find immediate recirculation matches
+            $recirculationMatches = $this->findRecirculationMatches($device, $employeeId);
+
+            return [
+                'success' => true,
+                'message' => "Device {$device->asset_tag} ({$device->brand} {$device->model}) reclaimed from {$employee->name} and returned to pool.",
+                'device' => $device->fresh(),
+                'employee' => $employee,
+                'circulation_matches' => $recirculationMatches,
+            ];
+        });
+    }
+
+    /**
+     * Find employees who can immediately receive a newly reclaimed device.
+     * Evaluates unassigned employees or employees with under-provisioned active assignments.
+     */
+    public function findRecirculationMatches(Device $device, ?int $excludeEmployeeId = null): array
+    {
+        // 1. Get employees with role profiles
+        $query = Employee::with(['roleProfile', 'activeAssignment.device'])
+            ->whereNotNull('role_profile_id');
+
+        if ($excludeEmployeeId) {
+            $query->where('id', '!=', $excludeEmployeeId);
+        }
+
+        $candidates = $query->get();
+
+        $matches = [];
+
+        foreach ($candidates as $candidate) {
+            $profile = $candidate->roleProfile;
+            if (! $profile) {
+                continue;
+            }
+
+            $requirements = [
+                'min_cpu_tier' => $profile->min_cpu_tier,
+                'min_ram_gb' => $profile->min_ram_gb,
+                'min_storage_gb' => $profile->min_storage_gb,
+                'requires_gpu' => (bool) $profile->requires_gpu,
+                'min_gpu_tier' => $profile->min_gpu_tier ?? 'none',
+                'portability_required' => (bool) $profile->portability_required,
+            ];
+
+            // Evaluate this reclaimed device for candidate employee
+            $eval = $this->evaluateDevice($device, $requirements, false);
+
+            if ($eval['disqualified'] || $eval['score'] < self::MATCH_THRESHOLD) {
+                continue;
+            }
+
+            // Determine recirculation priority
+            $priority = 'standard';
+            $priorityReason = 'Eligible for assignment';
+
+            $currentAssignment = $candidate->activeAssignment;
+            if (! $currentAssignment) {
+                $priority = 'high';
+                $priorityReason = 'Awaiting hardware assignment';
+            } elseif ($currentAssignment->device) {
+                $currentEval = $this->evaluateDevice($currentAssignment->device, $requirements, false);
+                if ($eval['score'] > $currentEval['score'] + 0.15) {
+                    $priority = 'urgent_upgrade';
+                    $priorityReason = sprintf(
+                        'Upgrades under-provisioned specs (+%d%% match gain)',
+                        round(($eval['score'] - $currentEval['score']) * 100)
+                    );
+                }
+            }
+
+            $matches[] = [
+                'employee_id' => $candidate->id,
+                'name' => $candidate->name,
+                'department' => $candidate->department,
+                'role_name' => $profile->name,
+                'match_score' => $eval['score'],
+                'fit_grade' => $eval['fit_grade'],
+                'priority' => $priority,
+                'priority_reason' => $priorityReason,
+                'current_device_tag' => $currentAssignment?->device?->asset_tag ?? 'None (Unassigned)',
+            ];
+        }
+
+        // Sort descending by priority then match score
+        usort($matches, function ($a, $b) {
+            $pOrder = ['urgent_upgrade' => 3, 'high' => 2, 'standard' => 1];
+            $pA = $pOrder[$a['priority']] ?? 0;
+            $pB = $pOrder[$b['priority']] ?? 0;
+
+            if ($pA !== $pB) {
+                return $pB <=> $pA;
+            }
+
+            return $b['match_score'] <=> $a['match_score'];
+        });
+
+        return array_slice($matches, 0, 5);
+    }
+
+    /**
+     * Simulate hypothetical headcount and role requirements against current stockroom inventory.
+     *
+     * @param  array{
+     *   min_cpu_tier: string,
+     *   min_ram_gb: int,
+     *   min_storage_gb: int,
+     *   requires_gpu: bool,
+     *   min_gpu_tier?: string,
+     *   portability_required: bool
+     * }  $requirements
+     */
+    public function simulateHeadcount(array $requirements, int $quantity): array
+    {
+        $quantity = max(1, $quantity);
+        $availableDevices = Device::available()->get();
+
+        $qualifiedDevices = [];
+
+        foreach ($availableDevices as $device) {
+            $eval = $this->evaluateDevice($device, $requirements, true);
+            if (! $eval['disqualified'] && $eval['score'] >= self::MATCH_THRESHOLD) {
+                $qualifiedDevices[] = [
+                    'device' => $device,
+                    'evaluation' => $eval,
+                ];
+            }
+        }
+
+        // Sort by evaluation score descending
+        usort($qualifiedDevices, fn ($a, $b) => $b['evaluation']['score'] <=> $a['evaluation']['score']);
+
+        $coveredUnits = array_slice($qualifiedDevices, 0, $quantity);
+        $coveredCount = count($coveredUnits);
+        $deficitCount = max(0, $quantity - $coveredCount);
+
+        // CapEx Calculations
+        $capexAvoidedPhp = array_sum(array_map(
+            fn ($u) => $u['evaluation']['capex_saved_php'],
+            $coveredUnits
+        ));
+
+        // Baseline benchmark for required hardware
+        $reqCpu = $requirements['min_cpu_tier'] ?? 'entry';
+        $isLaptop = ! empty($requirements['portability_required']);
+        $unitProcurementBenchmark = match ($reqCpu) {
+            'workstation' => 185000.00,
+            'high' => $isLaptop ? 120000.00 : 95000.00,
+            'mid' => $isLaptop ? 65000.00 : 45000.00,
+            default => $isLaptop ? 32000.00 : 25000.00,
+        };
+
+        $capexRequiredPhp = $deficitCount * $unitProcurementBenchmark;
+        $coveragePercentage = round(($coveredCount / $quantity) * 100, 1);
+
+        $deployableList = array_map(function ($u) {
+            $dev = $u['device'];
+            $eval = $u['evaluation'];
+
+            return [
+                'id' => $dev->id,
+                'asset_tag' => $dev->asset_tag,
+                'brand' => $dev->brand,
+                'model' => $dev->model,
+                'device_type' => $dev->device_type,
+                'cpu' => $dev->cpu,
+                'cpu_tier' => $dev->cpu_tier,
+                'ram_gb' => $dev->ram_gb,
+                'storage_gb' => $dev->storage_gb,
+                'storage_type' => $dev->storage_type,
+                'gpu' => $dev->gpu,
+                'location' => $dev->location,
+                'condition' => $dev->condition,
+                'image_clip_url' => $dev->image_clip_url,
+                'match_score' => $eval['score'],
+                'fit_grade' => $eval['fit_grade'],
+                'confidence_level' => $eval['confidence_level'],
+                'capex_saved_php' => $eval['capex_saved_php'],
+            ];
+        }, $coveredUnits);
+
+        $summary = sprintf(
+            'Stockroom inventory covers %d of %d required seats (%g%% coverage), avoiding ₱%s in new procurement. %s',
+            $coveredCount,
+            $quantity,
+            $coveragePercentage,
+            number_format($capexAvoidedPhp, 2),
+            $deficitCount > 0
+                ? 'CapEx of ~₱'.number_format($capexRequiredPhp, 2)." required to purchase {$deficitCount} units."
+                : 'Zero CapEx procurement required—all seats satisfied from existing idle stock.'
+        );
+
+        return [
+            'quantity_requested' => $quantity,
+            'covered_count' => $coveredCount,
+            'deficit_count' => $deficitCount,
+            'coverage_percentage' => $coveragePercentage,
+            'capex_avoided_php' => $capexAvoidedPhp,
+            'capex_required_php' => $capexRequiredPhp,
+            'unit_procurement_benchmark_php' => $unitProcurementBenchmark,
+            'procurement_needed' => $deficitCount > 0,
+            'requisition_spec' => [
+                'cpu_tier' => ucfirst($reqCpu),
+                'ram_gb' => $requirements['min_ram_gb'] ?? 8,
+                'storage_gb' => $requirements['min_storage_gb'] ?? 256,
+                'gpu_required' => ! empty($requirements['requires_gpu']),
+                'gpu_tier' => $requirements['min_gpu_tier'] ?? 'none',
+                'device_type' => $isLaptop ? 'Laptop' : 'Desktop',
+            ],
+            'deployable_units' => $deployableList,
+            'summary' => $summary,
+        ];
     }
 }

@@ -8,7 +8,9 @@ use Illuminate\Support\Facades\Log;
 class TechSpecsService
 {
     protected string $baseUrl = 'https://api.techspecs.io/v5';
+
     protected ?string $apiId;
+
     protected ?string $apiKey;
 
     public function __construct()
@@ -19,16 +21,12 @@ class TechSpecsService
 
     /**
      * Search products in the TechSpecs hardware database.
-     *
-     * @param string $query
-     * @param string $category
-     * @param int $size
-     * @return array
      */
     public function searchProducts(string $query, string $category = '', int $size = 10): array
     {
         if (empty($this->apiId) || empty($this->apiKey)) {
             Log::warning('TechSpecs API credentials missing in configuration.');
+
             return [];
         }
 
@@ -39,7 +37,7 @@ class TechSpecsService
                 'size' => max(10, $size),
             ];
 
-            if (!empty($category)) {
+            if (! empty($category)) {
                 $params['category'] = $category;
             }
 
@@ -51,8 +49,9 @@ class TechSpecsService
                 ])
                 ->get("{$this->baseUrl}/products/search", $params);
 
-            if (!$response->successful()) {
-                Log::warning('TechSpecs Search API error: ' . $response->body());
+            if (! $response->successful()) {
+                Log::warning('TechSpecs Search API error: '.$response->body());
+
                 return [];
             }
 
@@ -62,6 +61,7 @@ class TechSpecsService
             // Standardize format
             return array_map(function ($item) {
                 $prod = $item['Product'] ?? [];
+
                 return [
                     'id' => $prod['english_id'] ?? $prod['id'] ?? ($item['_id'] ?? ''),
                     'brand' => $prod['Brand'] ?? '',
@@ -73,16 +73,14 @@ class TechSpecsService
                 ];
             }, $results);
         } catch (\Throwable $e) {
-            Log::error('TechSpecs search request failed: ' . $e->getMessage());
+            Log::error('TechSpecs search request failed: '.$e->getMessage());
+
             return [];
         }
     }
 
     /**
      * Fetch complete technical specifications for a single product by TechSpecs ID.
-     *
-     * @param string $productId
-     * @return array|null
      */
     public function getProductDetail(string $productId): ?array
     {
@@ -101,21 +99,23 @@ class TechSpecsService
                     'lang' => 'en',
                 ]);
 
-            if (!$response->successful()) {
-                Log::warning("TechSpecs Detail API error for {$productId}: " . $response->body());
+            if (! $response->successful()) {
+                Log::warning("TechSpecs Detail API error for {$productId}: ".$response->body());
+
                 return null;
             }
 
             $json = $response->json();
             $data = $json['data'] ?? null;
 
-            if (!$data) {
+            if (! $data) {
                 return null;
             }
 
             return $this->mapToDeviceAttributes($data);
         } catch (\Throwable $e) {
-            Log::error("TechSpecs detail fetch failed for {$productId}: " . $e->getMessage());
+            Log::error("TechSpecs detail fetch failed for {$productId}: ".$e->getMessage());
+
             return null;
         }
     }
@@ -141,7 +141,7 @@ class TechSpecsService
         $cpuFamily = $cpuData['Family'] ?? '';
         $cpuModel = $cpuData['Model'] ?? '';
         $cpuName = trim("{$cpuBrand} {$cpuFamily} {$cpuModel}");
-        if (empty($cpuName) && !empty($keyAspects['Processor'])) {
+        if (empty($cpuName) && ! empty($keyAspects['Processor'])) {
             $cpuName = $keyAspects['Processor'];
         }
         if (empty($cpuName)) {
@@ -157,26 +157,26 @@ class TechSpecsService
         // Storage
         $storageRaw = $inside['Storage']['Total Capacity'] ?? ($inside['SSD']['Capacity'] ?? ($keyAspects['Storage'] ?? '512 GB'));
         $storageGb = $this->parseGb($storageRaw, 512);
-        $storageType = (!empty($inside['HDD']) && empty($inside['SSD'])) ? 'HDD' : 'SSD';
+        $storageType = (! empty($inside['HDD']) && empty($inside['SSD'])) ? 'HDD' : 'SSD';
 
         // GPU
         $gpuData = $inside['GPU'] ?? [];
         $dedicatedGpu = $gpuData['Dedicated Card Model'] ?? '';
         $integratedGpu = $gpuData['Integrated Card Model'] ?? ($keyAspects['Integrated Graphics Card'] ?? '');
-        $gpuName = !empty($dedicatedGpu) ? $dedicatedGpu : $integratedGpu;
-        $gpuTier = $this->inferGpuTier($gpuName, !empty($dedicatedGpu));
+        $gpuName = ! empty($dedicatedGpu) ? $dedicatedGpu : $integratedGpu;
+        $gpuTier = $this->inferGpuTier($gpuName, ! empty($dedicatedGpu));
 
         // Release Date / Year
         $releaseDate = $keyAspects['Release Date'] ?? ($raw['Metadata']['ReleaseDate'] ?? '');
-        $year = !empty($releaseDate) && preg_match('/(\d{4})/', $releaseDate, $m) ? (int)$m[1] : (int)date('Y');
+        $year = ! empty($releaseDate) && preg_match('/(\d{4})/', $releaseDate, $m) ? (int) $m[1] : (int) date('Y');
 
         // Image / Thumbnail
         $imageUrl = $raw['Thumbnail']['Image_1'] ?? ($raw['Thumbnail']['Image_2'] ?? null);
-        if (empty($imageUrl) && !empty($raw['Product']['Thumbnail'])) {
+        if (empty($imageUrl) && ! empty($raw['Product']['Thumbnail'])) {
             $imageUrl = $raw['Product']['Thumbnail'];
         }
         if (empty($imageUrl)) {
-            $imageUrl = \App\Services\HardwareImageService::resolveModelImage($brand, $model, $deviceType);
+            $imageUrl = HardwareImageService::resolveModelImage($brand, $model, $deviceType);
         }
 
         return [
@@ -199,9 +199,11 @@ class TechSpecsService
     private function parseGb(string $val, int $default): int
     {
         if (preg_match('/(\d+(?:\.\d+)?)\s*(GB|TB)/i', $val, $m)) {
-            $num = (float)$m[1];
-            return strtoupper($m[2]) === 'TB' ? (int)($num * 1024) : (int)$num;
+            $num = (float) $m[1];
+
+            return strtoupper($m[2]) === 'TB' ? (int) ($num * 1024) : (int) $num;
         }
+
         return $default;
     }
 
@@ -217,6 +219,7 @@ class TechSpecsService
         if (str_contains($l, 'i5') || str_contains($l, 'ryzen 5') || str_contains($l, 'apple m') || str_contains($l, 'core ultra 5')) {
             return 'mid';
         }
+
         return 'entry';
     }
 

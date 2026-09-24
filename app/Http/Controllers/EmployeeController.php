@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Employee;
 use App\Models\RoleProfile;
 use App\Services\MatchingService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -126,5 +127,27 @@ class EmployeeController extends Controller
         }
 
         return back()->with('error', 'Employee has no active device assignment.');
+    }
+
+    /**
+     * Offboard an employee, reclaim and sanitize their hardware asset, and return recirculation opportunities.
+     */
+    public function offboard(Request $request, int $id, MatchingService $matchingService): JsonResponse|RedirectResponse
+    {
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'in:resignation,role_transition,hardware_upgrade,contract_end,other'],
+            'condition' => ['required', 'string', 'in:excellent,good,fair,needs_repair'],
+            'wipe_confirmed' => ['required', 'boolean'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $result = $matchingService->reclaimDevice($id, $validated, auth()->id());
+
+        if ($request->wantsJson()) {
+            return response()->json($result);
+        }
+
+        return back()->with('success', $result['message'])
+            ->with('reclaimed_details', $result);
     }
 }

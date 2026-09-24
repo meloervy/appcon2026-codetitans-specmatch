@@ -6,8 +6,18 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
     const stageBreakdown = metrics.stage_breakdown || {
         acquisition: 0,
         deployment: metrics.total_devices || 0,
+        reclaimed: 0,
         maintenance: metrics.in_repair_devices || 0,
         retirement: metrics.retired_devices || 0,
+    };
+
+    const fleetRisk = metrics.fleet_risk || {
+        risk_score: 0,
+        risk_tier: 'Low Risk',
+        status_label: 'Healthy Fleet',
+        factors: { warranty_risk_pct: 0, aging_risk_pct: 0, condition_risk_pct: 0 },
+        counts: { total_active: 0, warranty_at_risk: 0, aging_at_risk: 0, condition_at_risk: 0 },
+        key_alerts: [],
     };
 
     return (
@@ -48,7 +58,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Fleet Lifecycle Phase Distribution</span>
                     <span className="text-xs text-slate-400 dark:text-zinc-500">Total Authoritative Inventory: {metrics.total_devices + (metrics.retired_devices || 0)} Units</span>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                     <div className="p-3 rounded-xl bg-sky-50/70 dark:bg-sky-950/30 border border-sky-100 dark:border-sky-900/50 flex items-center justify-between">
                         <div>
                             <span className="text-[11px] font-bold uppercase tracking-wider text-sky-700 dark:text-sky-400 block">1. Acquisition</span>
@@ -67,9 +77,18 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                         <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 text-[10px] font-bold shadow-xs"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>LIVE</span>
                     </div>
 
+                    <div className="p-3 rounded-xl bg-teal-50/70 dark:bg-teal-950/30 border border-teal-100 dark:border-teal-900/50 flex items-center justify-between">
+                        <div>
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-teal-700 dark:text-teal-400 block">3. Reclaimed</span>
+                            <span className="text-xl font-black text-teal-950 dark:text-teal-200 mt-0.5 block">{stageBreakdown.reclaimed || 0}</span>
+                            <span className="text-[11px] text-teal-600 dark:text-teal-400/80">Sanitized in Pool</span>
+                        </div>
+                        <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 text-[10px] font-bold shadow-xs"><span className="w-1.5 h-1.5 rounded-full bg-teal-500"></span>POOL</span>
+                    </div>
+
                     <div className="p-3 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/50 flex items-center justify-between">
                         <div>
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 block">3. Maintenance</span>
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 block">4. Maintenance</span>
                             <span className="text-xl font-black text-amber-950 dark:text-amber-200 mt-0.5 block">{stageBreakdown.maintenance || 0}</span>
                             <span className="text-[11px] text-amber-600 dark:text-amber-400/80">Repair & Servicing</span>
                         </div>
@@ -80,7 +99,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
 
                     <div className="p-3 rounded-xl bg-slate-100/70 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700/60 flex items-center justify-between">
                         <div>
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 block">4. Retirement</span>
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 block">5. Retirement</span>
                             <span className="text-xl font-black text-slate-800 dark:text-zinc-200 mt-0.5 block">{stageBreakdown.retirement || 0}</span>
                             <span className="text-[11px] text-slate-500 dark:text-zinc-500">Decommissioned / EOL</span>
                         </div>
@@ -173,6 +192,180 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                     <p className="mt-3 text-xs text-slate-500 dark:text-zinc-400">
                         Capital saved by matching idle fleet vs purchasing new units.
                     </p>
+                </div>
+            </div>
+
+            {/* Fleet Operational Risk & Health Index */}
+            <div className="mb-8 bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 p-6 shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-slate-100 dark:border-zinc-800">
+                    <div>
+                        <div className="flex items-center gap-2.5">
+                            <span className="p-1.5 rounded-lg bg-[#026eff]/10 text-[#026eff] dark:text-[#0b79ff]">
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                </svg>
+                            </span>
+                            <h3 className="font-bold text-slate-900 dark:text-zinc-100 text-lg">
+                                Fleet Operational Risk & Health Index
+                            </h3>
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
+                            Weighted composite reliability index evaluating warranty coverage (35%), asset age &ge; 3yrs (35%), and maintenance/hardware condition (30%).
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                            fleetRisk.risk_score <= 25 ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' :
+                            fleetRisk.risk_score <= 55 ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800' :
+                            'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
+                        }`}>
+                            {fleetRisk.risk_tier}
+                        </span>
+                        <span className="text-xs font-semibold text-slate-600 dark:text-zinc-300">
+                            {fleetRisk.status_label}
+                        </span>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-5">
+                    {/* Left Column: Composite Risk Score Gauge */}
+                    <div className="lg:col-span-4 flex flex-col justify-between p-5 rounded-xl bg-slate-50/70 dark:bg-zinc-800/40 border border-slate-200/60 dark:border-zinc-700/60">
+                        <div>
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+                                Composite Fleet Risk Rating
+                            </span>
+                            <div className="mt-3 flex items-baseline gap-2">
+                                <span className={`text-4xl font-black ${
+                                    fleetRisk.risk_score <= 25 ? 'text-emerald-600 dark:text-emerald-400' :
+                                    fleetRisk.risk_score <= 55 ? 'text-amber-600 dark:text-amber-400' :
+                                    'text-rose-600 dark:text-rose-400'
+                                }`}>
+                                    {fleetRisk.risk_score}
+                                </span>
+                                <span className="text-sm font-semibold text-slate-400 dark:text-zinc-500">/ 100 Risk Index</span>
+                            </div>
+
+                            {/* Visual Bar Gauge */}
+                            <div className="mt-3 w-full bg-slate-200 dark:bg-zinc-700 h-2.5 rounded-full overflow-hidden">
+                                <div
+                                    className={`h-full rounded-full transition-all duration-500 ${
+                                        fleetRisk.risk_score <= 25 ? 'bg-emerald-500' :
+                                        fleetRisk.risk_score <= 55 ? 'bg-amber-500' :
+                                        'bg-rose-500'
+                                    }`}
+                                    style={{ width: `${Math.max(5, Math.min(100, fleetRisk.risk_score))}%` }}
+                                />
+                            </div>
+                            <div className="flex justify-between text-[10px] text-slate-400 dark:text-zinc-500 mt-1 font-mono">
+                                <span>0 (Optimum)</span>
+                                <span>50 (Moderate)</span>
+                                <span>100 (Critical)</span>
+                            </div>
+                        </div>
+
+                        <div className="mt-4 pt-3 border-t border-slate-200/60 dark:border-zinc-700/60 text-xs text-slate-500 dark:text-zinc-400">
+                            <span>Active Tracked Devices: </span>
+                            <strong className="text-slate-800 dark:text-zinc-200">{fleetRisk.counts?.total_active || 0} units</strong>
+                        </div>
+                    </div>
+
+                    {/* Middle Column: 3 Weighted Factors */}
+                    <div className="lg:col-span-4 space-y-3.5">
+                        {/* Warranty Exposure (35%) */}
+                        <div className="p-3.5 rounded-xl border border-slate-200/60 dark:border-zinc-800 bg-slate-50/40 dark:bg-zinc-800/30">
+                            <div className="flex items-center justify-between text-xs mb-1.5">
+                                <div className="flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                                    <span className="font-semibold text-slate-800 dark:text-zinc-200">Warranty Exposure</span>
+                                    <span className="text-[10px] text-slate-400 dark:text-zinc-500">(35% weight)</span>
+                                </div>
+                                <span className="font-mono font-bold text-slate-900 dark:text-zinc-100">
+                                    {fleetRisk.factors?.warranty_risk_pct ?? 0}%
+                                </span>
+                            </div>
+                            <div className="w-full bg-slate-200 dark:bg-zinc-700 h-1.5 rounded-full overflow-hidden">
+                                <div
+                                    className="bg-amber-500 h-full rounded-full transition-all"
+                                    style={{ width: `${Math.min(100, fleetRisk.factors?.warranty_risk_pct ?? 0)}%` }}
+                                />
+                            </div>
+                            <div className="mt-1 text-[11px] text-slate-500 dark:text-zinc-400">
+                                {fleetRisk.counts?.warranty_at_risk ?? 0} units expired or expiring in &le; 60 days
+                            </div>
+                        </div>
+
+                        {/* Hardware Aging >= 3 Years (35%) */}
+                        <div className="p-3.5 rounded-xl border border-slate-200/60 dark:border-zinc-800 bg-slate-50/40 dark:bg-zinc-800/30">
+                            <div className="flex items-center justify-between text-xs mb-1.5">
+                                <div className="flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-sky-500"></span>
+                                    <span className="font-semibold text-slate-800 dark:text-zinc-200">Hardware Aging (&ge; 3 Yrs)</span>
+                                    <span className="text-[10px] text-slate-400 dark:text-zinc-500">(35% weight)</span>
+                                </div>
+                                <span className="font-mono font-bold text-slate-900 dark:text-zinc-100">
+                                    {fleetRisk.factors?.aging_risk_pct ?? 0}%
+                                </span>
+                            </div>
+                            <div className="w-full bg-slate-200 dark:bg-zinc-700 h-1.5 rounded-full overflow-hidden">
+                                <div
+                                    className="bg-sky-500 h-full rounded-full transition-all"
+                                    style={{ width: `${Math.min(100, fleetRisk.factors?.aging_risk_pct ?? 0)}%` }}
+                                />
+                            </div>
+                            <div className="mt-1 text-[11px] text-slate-500 dark:text-zinc-400">
+                                {fleetRisk.counts?.aging_at_risk ?? 0} units nearing economic end-of-life
+                            </div>
+                        </div>
+
+                        {/* Condition / Maintenance (30%) */}
+                        <div className="p-3.5 rounded-xl border border-slate-200/60 dark:border-zinc-800 bg-slate-50/40 dark:bg-zinc-800/30">
+                            <div className="flex items-center justify-between text-xs mb-1.5">
+                                <div className="flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                                    <span className="font-semibold text-slate-800 dark:text-zinc-200">Degraded Condition / Repair</span>
+                                    <span className="text-[10px] text-slate-400 dark:text-zinc-500">(30% weight)</span>
+                                </div>
+                                <span className="font-mono font-bold text-slate-900 dark:text-zinc-100">
+                                    {fleetRisk.factors?.condition_risk_pct ?? 0}%
+                                </span>
+                            </div>
+                            <div className="w-full bg-slate-200 dark:bg-zinc-700 h-1.5 rounded-full overflow-hidden">
+                                <div
+                                    className="bg-rose-500 h-full rounded-full transition-all"
+                                    style={{ width: `${Math.min(100, fleetRisk.factors?.condition_risk_pct ?? 0)}%` }}
+                                />
+                            </div>
+                            <div className="mt-1 text-[11px] text-slate-500 dark:text-zinc-400">
+                                {fleetRisk.counts?.condition_at_risk ?? 0} units in repair or degraded condition
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Column: Key Alerts & Proactive Mitigation */}
+                    <div className="lg:col-span-4 flex flex-col justify-between p-4 rounded-xl border border-slate-200/60 dark:border-zinc-800 bg-slate-50/40 dark:bg-zinc-800/30">
+                        <div>
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 block mb-2">
+                                Actionable Risk Insights
+                            </span>
+                            <ul className="space-y-2 text-xs">
+                                {(fleetRisk.key_alerts || []).map((alert, idx) => (
+                                    <li key={idx} className="flex items-start gap-2 text-slate-700 dark:text-zinc-300">
+                                        <span className="text-amber-500 shrink-0 mt-0.5">&bull;</span>
+                                        <span>{alert}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                        <div className="mt-4 pt-3 border-t border-slate-200/60 dark:border-zinc-800 flex items-center justify-between">
+                            <span className="text-[11px] text-slate-400 dark:text-zinc-500">Autonomous Fleet Scoring</span>
+                            <Link
+                                href={route('devices.index')}
+                                className="text-xs font-semibold text-[#026eff] dark:text-[#0b79ff] hover:underline"
+                            >
+                                Audit Fleet &rarr;
+                            </Link>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -354,7 +547,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                             </div>
                             <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-xs text-[#0b79ff] flex items-center justify-between">
                                 <span>Lifecycle Stages</span>
-                                <span className="font-semibold text-amber-300">4 Tracked Phases</span>
+                                <span className="font-semibold text-amber-300">5 Tracked Phases</span>
                             </div>
                         </div>
                     </div>
