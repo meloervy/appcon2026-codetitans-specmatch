@@ -4,7 +4,7 @@ import HardwareImage from '@/Components/HardwareImage';
 import StatefulButton from '@/Components/ui/StatefulButton';
 import { Head, router } from '@inertiajs/react';
 import axios from 'axios';
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import {
     RiAddLine,
     RiAlertLine,
@@ -103,6 +103,8 @@ export default function MatchRequest({
     const [bridgeSwaps, setBridgeSwaps] = useState([]);
     const [selectedBridgeSwap, setSelectedBridgeSwap] = useState(null);
     const [showBridgeModal, setShowBridgeModal] = useState(false);
+    const [showAlternativeCascade, setShowAlternativeCascade] = useState(false);
+    const [showSecondarySwaps, setShowSecondarySwaps] = useState(false);
     const [errorMsg, setErrorMsg] = useState(null);
 
     // Fleet Recommendations Filtering & Progressive Disclosure
@@ -370,6 +372,95 @@ export default function MatchRequest({
     } else if (recoFilter === 'disqualified') {
         displayedResults = disqualifiedResults;
     }
+
+    // Direct Stockroom Assignment vs Single-Hop Bridge Swap Reconciliation Logic
+    const topDirectCandidate = stockroomQualifiedResults[0] || qualifiedResults[0] || null;
+    const hasQualifiedDirect = Boolean(topDirectCandidate && topDirectCandidate.passes_threshold && !topDirectCandidate.disqualified);
+    const bestBridgeSwap = bridgeSwaps && bridgeSwaps.length > 0 ? bridgeSwaps[0] : null;
+
+    // A Bridge Swap is meaningfully better if:
+    // 1. No direct stockroom unit qualifies (it is the primary way to avoid new CapEx procurement)
+    // 2. Or it provides a noticeably higher-spec workstation for the requester (+2% or more match score)
+    // 3. Or it avoids significantly larger CapEx (+₱10,000 or more)
+    const isBridgeMeaningfullyBetter = Boolean(
+        bestBridgeSwap && (
+            !hasQualifiedDirect ||
+            (bestBridgeSwap.requester_score_on_donor_device >= ((topDirectCandidate?.score || 0) + 0.02)) ||
+            (Number(bestBridgeSwap.capex_saved_php) >= (Number(topDirectCandidate?.capex_saved_php || 0) + 10000))
+        )
+    );
+
+    const renderBridgeSwapDiagram = (swap) => (
+        <div className="my-4 p-4 rounded-xl bg-white/5 border border-white/10 relative z-10">
+            <div className="flex items-center justify-between mb-3">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#0b79ff]">
+                    Single-Hop Cascade Architecture (1 Swap &bull; 2 Colleagues &bull; 1 Freed Rig)
+                </span>
+                {swap.same_location && (
+                    <span className="text-[10px] font-bold text-[#0aceb3] flex items-center gap-1.5">
+                        <RiMapPinLine className="w-3.5 h-3.5 shrink-0" />
+                        <span>Same Campus Hub (Zero Shipping Delay)</span>
+                    </span>
+                )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
+                {/* Node 1: Idle Stockroom Unit */}
+                <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-lg bg-slate-800 border border-slate-700 shrink-0 overflow-hidden">
+                        <HardwareImage
+                            src={swap.bridge_device.image_clip_url || swap.bridge_device.image_url}
+                            alt={swap.bridge_device.model}
+                            className="w-full h-full object-cover"
+                        />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                        <span className="text-[9px] font-bold uppercase text-[#0aceb3] block">Step 1: Stockroom Unit</span>
+                        <div className="font-bold text-xs truncate text-white">
+                            {swap.bridge_device.brand} {swap.bridge_device.model}
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-mono">
+                            {swap.bridge_device.ram_gb}GB &bull; {swap.bridge_device.cpu_tier} Tier
+                        </div>
+                    </div>
+                </div>
+
+                {/* Node 2: Overprovisioned Donor */}
+                <div className="p-3 rounded-xl bg-[#026eff]/15 border border-[#026eff]/40 flex items-center gap-3 text-center md:text-left">
+                    <div className="min-w-0 flex-1">
+                        <span className="text-[9px] font-bold uppercase text-[#0b79ff] block">Bridge Donor Recipient</span>
+                        <div className="font-bold text-xs truncate text-white flex items-center gap-1.5">
+                            <RiUserLine className="w-3.5 h-3.5 text-[#0b79ff] shrink-0" />
+                            <span>{swap.donor_employee.name}</span>
+                        </div>
+                        <div className="text-[10px] text-slate-300">
+                            {swap.donor_employee.role_profile.name} (Needs {swap.donor_employee.role_profile.min_ram_gb}GB)
+                        </div>
+                    </div>
+                </div>
+
+                {/* Node 3: High-Spec Rig to Requester */}
+                <div className="p-3 rounded-xl bg-white/5 border border-[#0aceb3]/40 flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-lg bg-slate-800 border border-slate-700 shrink-0 overflow-hidden">
+                        <HardwareImage
+                            src={swap.donor_device.image_clip_url || swap.donor_device.image_url}
+                            alt={swap.donor_device.model}
+                            className="w-full h-full object-cover"
+                        />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                        <span className="text-[9px] font-bold uppercase text-[#0aceb3] block">Step 2: Reassign to Requester</span>
+                        <div className="font-bold text-xs truncate text-white">
+                            {swap.donor_device.brand} {swap.donor_device.model}
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-mono">
+                            {swap.donor_device.ram_gb}GB &bull; {swap.donor_device.cpu_tier} Tier
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 
     return (
         <AuthenticatedLayout
@@ -1055,12 +1146,12 @@ export default function MatchRequest({
                                             </div>
                                         )}
 
-                                        {/* Dynamic Inventory Bridge Swap Opportunities (Cascaded Fleet Reallocation) */}
-                                        {bridgeSwaps && bridgeSwaps.length > 0 && (
+                                        {/* Primary Procurement Avoidance Solution: Dynamic Bridge Swap (When NO stockroom unit qualifies) */}
+                                        {!hasQualifiedDirect && bridgeSwaps && bridgeSwaps.length > 0 && (
                                             <div className="space-y-4">
                                                 {bridgeSwaps.map((swap, sIdx) => (
                                                     <div
-                                                        key={`bridge-swap-${sIdx}`}
+                                                        key={`proc-avoid-swap-${sIdx}`}
                                                         className="p-5 rounded-2xl bg-gradient-to-br from-[#031a40] via-[#021230] to-[#031a40] text-white border-2 border-[#0aceb3]/60 shadow-lg relative overflow-hidden"
                                                     >
                                                         <div className="absolute top-0 right-0 w-64 h-64 bg-[#0aceb3]/10 rounded-full blur-3xl pointer-events-none" />
@@ -1068,24 +1159,22 @@ export default function MatchRequest({
                                                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-white/10 relative z-10">
                                                             <div className="flex items-center gap-2.5">
                                                                 <span className="p-2 rounded-xl bg-[#0aceb3]/20 text-[#0aceb3] border border-[#0aceb3]/40 shadow-xs">
-                                                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                                                    </svg>
+                                                                    <RiExchangeLine className="w-5 h-5 text-[#0aceb3]" />
                                                                 </span>
                                                                 <div>
                                                                     <div className="flex items-center gap-2 flex-wrap">
                                                                         <h3 className="font-black text-sm tracking-tight text-white">
-                                                                            Dynamic Inventory Bridge Swap Solution
+                                                                            Primary Procurement Avoidance: Single-Hop Bridge Swap
                                                                         </h3>
                                                                         <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#0b79ff]/20 text-[#0b79ff] border border-[#0b79ff]/40 uppercase tracking-wide">
-                                                                            Cascaded Reallocation Alternative
+                                                                            Avoids New Procurement
                                                                         </span>
                                                                         <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#0aceb3]/20 text-[#0aceb3] border border-[#0aceb3]/40">
-                                                                            Avoids Procurement
+                                                                            Zero CapEx Required
                                                                         </span>
                                                                     </div>
                                                                     <p className="text-xs text-slate-300 mt-0.5">
-                                                                        Alternative to new procurement: Cascades an idle stockroom unit to an overprovisioned employee to free up their workstation for the requester.
+                                                                        No idle stockroom unit fulfills these requirements directly. Rather than purchasing new equipment, cascading an idle unit to an overprovisioned colleague frees up their workstation for this request.
                                                                     </p>
                                                                 </div>
                                                             </div>
@@ -1102,76 +1191,7 @@ export default function MatchRequest({
                                                             </div>
                                                         </div>
 
-                                                        {/* 3-Node Visual Cascade Flow Diagram */}
-                                                        <div className="my-4 p-4 rounded-xl bg-white/5 border border-white/10 relative z-10">
-                                                            <div className="flex items-center justify-between mb-3">
-                                                                <span className="text-[10px] font-bold uppercase tracking-wider text-[#0b79ff]">
-                                                                    Cascade Reallocation Architecture
-                                                                </span>
-                                                                {swap.same_location && (
-                                                                    <span className="text-[10px] font-bold text-[#0aceb3] flex items-center gap-1.5">
-                                                                        <RiMapPinLine className="w-3.5 h-3.5 shrink-0" />
-                                                                        <span>Same Campus Hub (Zero Shipping Delay)</span>
-                                                                    </span>
-                                                                )}
-                                                            </div>
-
-                                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
-                                                                {/* Node 1: Idle Stockroom Unit */}
-                                                                <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
-                                                                    <div className="w-11 h-11 rounded-lg bg-slate-800 border border-slate-700 shrink-0 overflow-hidden">
-                                                                        <HardwareImage
-                                                                            src={swap.bridge_device.image_clip_url || swap.bridge_device.image_url}
-                                                                            alt={swap.bridge_device.model}
-                                                                            className="w-full h-full object-cover"
-                                                                        />
-                                                                    </div>
-                                                                    <div className="min-w-0 flex-1">
-                                                                        <span className="text-[9px] font-bold uppercase text-[#0aceb3] block">Step 1: Stockroom Unit</span>
-                                                                        <div className="font-bold text-xs truncate text-white">
-                                                                            {swap.bridge_device.brand} {swap.bridge_device.model}
-                                                                        </div>
-                                                                        <div className="text-[10px] text-slate-400 font-mono">
-                                                                            {swap.bridge_device.ram_gb}GB &bull; {swap.bridge_device.cpu_tier} Tier
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-
-                                                                {/* Node 2: Overprovisioned Donor */}
-                                                                <div className="p-3 rounded-xl bg-[#026eff]/15 border border-[#026eff]/40 flex items-center gap-3 text-center md:text-left">
-                                                                    <div className="min-w-0 flex-1">
-                                                                        <span className="text-[9px] font-bold uppercase text-[#0b79ff] block">Bridge Donor Recipient</span>
-                                                                        <div className="font-bold text-xs truncate text-white flex items-center gap-1.5">
-                                                                            <RiUserLine className="w-3.5 h-3.5 text-[#0b79ff] shrink-0" />
-                                                                            <span>{swap.donor_employee.name}</span>
-                                                                        </div>
-                                                                        <div className="text-[10px] text-slate-300">
-                                                                            {swap.donor_employee.role_profile.name} (Needs {swap.donor_employee.role_profile.min_ram_gb}GB)
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-
-                                                                {/* Node 3: High-Spec Rig to Requester */}
-                                                                <div className="p-3 rounded-xl bg-white/5 border border-[#0aceb3]/40 flex items-center gap-3">
-                                                                    <div className="w-11 h-11 rounded-lg bg-slate-800 border border-slate-700 shrink-0 overflow-hidden">
-                                                                        <HardwareImage
-                                                                            src={swap.donor_device.image_clip_url || swap.donor_device.image_url}
-                                                                            alt={swap.donor_device.model}
-                                                                            className="w-full h-full object-cover"
-                                                                        />
-                                                                    </div>
-                                                                    <div className="min-w-0 flex-1">
-                                                                        <span className="text-[9px] font-bold uppercase text-[#0aceb3] block">Step 2: Reassign to Requester</span>
-                                                                        <div className="font-bold text-xs truncate text-white">
-                                                                            {swap.donor_device.brand} {swap.donor_device.model}
-                                                                        </div>
-                                                                        <div className="text-[10px] text-slate-400 font-mono">
-                                                                            {swap.donor_device.ram_gb}GB &bull; {swap.donor_device.cpu_tier} Tier
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
+                                                        {renderBridgeSwapDiagram(swap)}
 
                                                         {/* Rationale & Action */}
                                                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2 relative z-10">
@@ -1237,9 +1257,9 @@ export default function MatchRequest({
                                                         };
 
                                                         return (
-                                                            <div
-                                                                key={device.id}
-                                                                className={`rounded-2xl border p-5 transition shadow-xs ${
+                                                            <Fragment key={device.id}>
+                                                                <div
+                                                                    className={`rounded-2xl border p-5 transition shadow-xs ${
                                                                     isTopHero
                                                                         ? 'bg-gradient-to-b from-emerald-50/50 via-white to-white dark:from-emerald-950/20 dark:via-zinc-900 dark:to-zinc-900 border-emerald-400 dark:border-emerald-600 ring-2 ring-emerald-500/20 shadow-md'
                                                                         : disqualified
@@ -1434,7 +1454,79 @@ export default function MatchRequest({
                                                                         </StatefulButton>
                                                                     </div>
                                                                 )}
-                                                            </div>
+                                                                </div>
+
+                                                                {/* Secondary Alternative Prompt: "Or, consider this instead" */}
+                                                                {isTopHero && isBridgeMeaningfullyBetter && bestBridgeSwap && recoFilter === 'top' && (
+                                                                    <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-[#031a40] to-slate-900 text-white border-2 border-dashed border-[#0aceb3]/60 shadow-md relative overflow-hidden space-y-3.5 my-2">
+                                                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                                                            <div className="flex items-start gap-3">
+                                                                                <span className="p-2 rounded-xl bg-[#0aceb3]/20 text-[#0aceb3] border border-[#0aceb3]/40 shadow-xs shrink-0 mt-0.5">
+                                                                                    <RiExchangeLine className="w-5 h-5 text-[#0aceb3]" />
+                                                                                </span>
+                                                                                <div>
+                                                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                                                        <span className="text-xs font-black uppercase tracking-wider text-[#0aceb3]">
+                                                                                            Or, Consider This Reallocation Alternative
+                                                                                        </span>
+                                                                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#0b79ff]/20 text-[#0b79ff] border border-[#0b79ff]/40 uppercase tracking-wide">
+                                                                                            Single-Hop Cascade
+                                                                                        </span>
+                                                                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#0aceb3]/20 text-[#0aceb3] border border-[#0aceb3]/40">
+                                                                                            Higher Specs Unlocked
+                                                                                        </span>
+                                                                                    </div>
+                                                                                    <p className="text-xs text-slate-300 mt-1 leading-relaxed max-w-2xl">
+                                                                                        Provides higher performance (<strong>{Math.round(bestBridgeSwap.requester_score_on_donor_device * 100)}%</strong> match vs <strong>{Math.round(score * 100)}%</strong> direct) by cascading stockroom unit <strong>{bestBridgeSwap.bridge_device.brand} {bestBridgeSwap.bridge_device.model}</strong> to <strong>{bestBridgeSwap.donor_employee.name}</strong>, freeing up their <strong>{bestBridgeSwap.donor_device.brand} {bestBridgeSwap.donor_device.model}</strong> ({bestBridgeSwap.donor_device.ram_gb}GB) without new procurement (<strong>₱{Number(bestBridgeSwap.capex_saved_php).toLocaleString()}</strong> CapEx avoided).
+                                                                                    </p>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => setShowAlternativeCascade(!showAlternativeCascade)}
+                                                                                    className="px-3 py-1.5 rounded-xl border border-white/20 bg-white/10 hover:bg-white/15 text-white text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+                                                                                >
+                                                                                    <span>{showAlternativeCascade ? 'Hide Flow' : 'Inspect 2-Step Flow'}</span>
+                                                                                    <RiArrowDownSLine className={`w-4 h-4 transition-transform ${showAlternativeCascade ? 'rotate-180' : ''}`} />
+                                                                                </button>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    disabled={isAssigning}
+                                                                                    onClick={() => {
+                                                                                        setSelectedBridgeSwap(bestBridgeSwap);
+                                                                                        setShowBridgeModal(true);
+                                                                                    }}
+                                                                                    className="px-4 py-2 rounded-xl bg-[#0aceb3] hover:bg-[#0aceb3]/90 text-slate-950 font-black text-xs transition shadow-sm shrink-0 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                                                                                >
+                                                                                    <RiExchangeLine className="w-4 h-4 text-slate-950 shrink-0" />
+                                                                                    <span>Review &amp; Execute Swap</span>
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        {/* Clear Comparison Trade-Off Grid */}
+                                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2.5 border-t border-white/10 text-[11px]">
+                                                                            <div className="flex items-center gap-2 text-slate-300">
+                                                                                <span className="font-bold text-white uppercase tracking-wide">Option A (Direct Hero Above):</span>
+                                                                                <span>1 step &bull; Ready now &bull; 0 colleague friction</span>
+                                                                            </div>
+                                                                            <div className="flex items-center gap-2 text-[#0aceb3]">
+                                                                                <span className="font-bold uppercase tracking-wide">Option B (Bridge Swap):</span>
+                                                                                <span>2 steps &bull; Single-hop cascade &bull; Unlocks higher-spec rig</span>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        {/* Expandable 3-Node Cascade Diagram */}
+                                                                        {showAlternativeCascade && (
+                                                                            <div className="pt-2 border-t border-white/10">
+                                                                                {renderBridgeSwapDiagram(bestBridgeSwap)}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </Fragment>
                                                         );
                                                     })}
 
@@ -1473,6 +1565,103 @@ export default function MatchRequest({
                                                                     </>
                                                                 )}
                                                             </button>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Secondary Reallocation Alternatives (Single-hop cascades for when direct match is already optimal) */}
+                                                    {hasQualifiedDirect && bridgeSwaps && bridgeSwaps.length > 0 && !isBridgeMeaningfullyBetter && (
+                                                        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-zinc-800/40 border border-slate-200/80 dark:border-zinc-700/60 shadow-xs transition space-y-3">
+                                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                                                <div>
+                                                                    <div className="text-xs font-bold text-slate-800 dark:text-zinc-200 flex items-center gap-1.5">
+                                                                        <RiExchangeLine className="w-4 h-4 text-[#0aceb3]" />
+                                                                        <span>Single-Hop Reallocation Alternatives ({bridgeSwaps.length})</span>
+                                                                    </div>
+                                                                    <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">
+                                                                        Direct stockroom match ({topDirectCandidate?.device?.brand} {topDirectCandidate?.device?.model} at {Math.round((topDirectCandidate?.score || 0) * 100)}%) is already optimal. Cascading is not required, but options are available for reference.
+                                                                    </p>
+                                                                </div>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setShowSecondarySwaps(!showSecondarySwaps)}
+                                                                    className="px-3.5 py-1.5 rounded-xl bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 text-xs font-bold border border-slate-300 dark:border-zinc-600 shadow-2xs transition cursor-pointer shrink-0 flex items-center gap-1.5"
+                                                                >
+                                                                    {showSecondarySwaps ? (
+                                                                        <>
+                                                                            <RiArrowUpSLine className="w-4 h-4" />
+                                                                            <span>Hide Alternatives</span>
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <RiArrowDownSLine className="w-4 h-4" />
+                                                                            <span>View Alternatives ({bridgeSwaps.length})</span>
+                                                                        </>
+                                                                    )}
+                                                                </button>
+                                                            </div>
+
+                                                            {showSecondarySwaps && (
+                                                                <div className="space-y-4 pt-2 border-t border-slate-200/60 dark:border-zinc-700/60">
+                                                                    {bridgeSwaps.map((swap, sIdx) => (
+                                                                        <div
+                                                                            key={`secondary-swap-${sIdx}`}
+                                                                            className="p-5 rounded-2xl bg-gradient-to-br from-[#031a40] via-[#021230] to-[#031a40] text-white border border-[#0aceb3]/40 shadow-sm relative overflow-hidden"
+                                                                        >
+                                                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-white/10 relative z-10">
+                                                                                <div className="flex items-center gap-2.5">
+                                                                                    <span className="p-2 rounded-xl bg-[#0aceb3]/20 text-[#0aceb3] border border-[#0aceb3]/40 shadow-xs">
+                                                                                        <RiExchangeLine className="w-4 h-4 text-[#0aceb3]" />
+                                                                                    </span>
+                                                                                    <div>
+                                                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                                                            <h4 className="font-bold text-xs tracking-tight text-white">
+                                                                                                Single-Hop Reallocation Option #{sIdx + 1}
+                                                                                            </h4>
+                                                                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#0b79ff]/20 text-[#0b79ff] border border-[#0b79ff]/40 uppercase tracking-wide">
+                                                                                                Cascade Alternative
+                                                                                            </span>
+                                                                                        </div>
+                                                                                        <p className="text-[11px] text-slate-300 mt-0.5">
+                                                                                            Cascades stockroom unit to {swap.donor_employee.name} to release their workstation.
+                                                                                        </p>
+                                                                                    </div>
+                                                                                </div>
+
+                                                                                <div className="flex items-center gap-3 self-end sm:self-center">
+                                                                                    <div className="text-right">
+                                                                                        <div className="text-xs font-black uppercase text-[#0aceb3] tracking-wide">
+                                                                                            ₱{Number(swap.capex_saved_php).toLocaleString()} CapEx Saved
+                                                                                        </div>
+                                                                                        <span className="text-[10px] font-bold text-slate-300">
+                                                                                            {Math.round(swap.feasibility_score * 100)}% Feasibility
+                                                                                        </span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            {renderBridgeSwapDiagram(swap)}
+
+                                                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2 relative z-10">
+                                                                                <p className="text-xs text-slate-300 leading-relaxed max-w-2xl">
+                                                                                    {swap.rationale}
+                                                                                </p>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    disabled={isAssigning}
+                                                                                    onClick={() => {
+                                                                                        setSelectedBridgeSwap(swap);
+                                                                                        setShowBridgeModal(true);
+                                                                                    }}
+                                                                                    className="px-4 py-2 rounded-xl bg-[#0aceb3] hover:bg-[#0aceb3]/90 text-slate-950 font-extrabold text-xs transition shadow-sm shrink-0 flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                                                                                >
+                                                                                    <RiExchangeLine className="w-4 h-4 text-slate-950 shrink-0" />
+                                                                                    <span>Review &amp; Execute Bridge Swap</span>
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </div>
