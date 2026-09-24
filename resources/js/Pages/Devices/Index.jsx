@@ -3,7 +3,7 @@ import CustomSelect from '@/Components/CustomSelect';
 import HardwareImage from '@/Components/HardwareImage';
 import ResizableTh from '@/Components/ResizableTh';
 import { useResizableColumns } from '@/Hooks/useResizableColumns';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import {
     RiSearchLine,
@@ -19,6 +19,10 @@ import {
 } from 'react-icons/ri';
 
 export default function DevicesIndex({ devices, filters }) {
+    const { auth } = usePage().props;
+    const user = auth?.user;
+    const isAdminOrManager = ['admin', 'manager'].includes(user?.role);
+
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || '');
     const [lifecycleStage, setLifecycleStage] = useState(filters.lifecycle_stage || '');
@@ -94,15 +98,17 @@ export default function DevicesIndex({ devices, filters }) {
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <a
-                            href={route('devices.export.pdf')}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700/60 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-200 dark:hover:bg-zinc-700 transition"
-                        >
-                            <RiFilePdfLine className="w-4 h-4 text-rose-500" />
-                            <span>Export Audit PDF</span>
-                        </a>
+                        {isAdminOrManager && (
+                            <a
+                                href={route('devices.export.pdf')}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700/60 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-200 dark:hover:bg-zinc-700 transition"
+                            >
+                                <RiFilePdfLine className="w-4 h-4 text-rose-500" />
+                                <span>Export Audit PDF</span>
+                            </a>
+                        )}
                         <Link
                             href={route('maintenance.index')}
                             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 text-xs font-semibold text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition"
@@ -110,13 +116,15 @@ export default function DevicesIndex({ devices, filters }) {
                             <RiToolsLine className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                             <span>Service Hub</span>
                         </Link>
-                        <Link
-                            href={route('devices.create')}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#026eff] hover:bg-[#0256cc] text-xs font-semibold text-white shadow-2xs transition"
-                        >
-                            <RiAddLine className="w-4 h-4" />
-                            <span>Register Asset</span>
-                        </Link>
+                        {isAdminOrManager && (
+                            <Link
+                                href={route('devices.create')}
+                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#026eff] hover:bg-[#0256cc] text-xs font-semibold text-white shadow-2xs transition"
+                            >
+                                <RiAddLine className="w-4 h-4" />
+                                <span>Register Asset</span>
+                            </Link>
+                        )}
                     </div>
                 </div>
             }

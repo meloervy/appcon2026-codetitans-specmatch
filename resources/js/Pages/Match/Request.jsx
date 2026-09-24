@@ -64,6 +64,7 @@ export default function MatchRequest({
     const [extracted, setExtracted] = useState(null);
     const [rankedResults, setRankedResults] = useState(null);
     const [procurementRecommended, setProcurementRecommended] = useState(false);
+    const [procurementAdvisory, setProcurementAdvisory] = useState(null);
     const [bridgeSwaps, setBridgeSwaps] = useState([]);
     const [selectedBridgeSwap, setSelectedBridgeSwap] = useState(null);
     const [showBridgeModal, setShowBridgeModal] = useState(false);
@@ -216,7 +217,7 @@ export default function MatchRequest({
     };
 
     const handleExtract = async () => {
-        if (!rawInput.trim()) return;
+        if (!rawInput.trim() || isExtracting || isRanking) return;
         setIsExtracting(true);
         setErrorMsg(null);
         try {
@@ -237,7 +238,7 @@ export default function MatchRequest({
     };
 
     const handleRank = async (requirementsToRank = extracted) => {
-        if (!requirementsToRank) return;
+        if (!requirementsToRank || isRanking) return;
         setIsRanking(true);
         setErrorMsg(null);
         try {
@@ -249,6 +250,7 @@ export default function MatchRequest({
             setTopCandidate(res.data.top_candidate || null);
             setAlternativeComparisons(res.data.alternative_comparisons || []);
             setProcurementRecommended(res.data.procurement_recommended);
+            setProcurementAdvisory(res.data.procurement_advisory || null);
             setBridgeSwaps(res.data.bridge_swaps || []);
         } catch (err) {
             setErrorMsg(err.response?.data?.message || 'Device ranking failed.');
@@ -955,15 +957,20 @@ export default function MatchRequest({
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                                     </svg>
                                                 </div>
-                                                <div>
+                                                <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-2">
                                                         <span className="font-extrabold text-rose-900 dark:text-rose-200 text-sm">
                                                             PROCUREMENT RECOMMENDED (Threshold &lt; 0.65)
                                                         </span>
                                                     </div>
                                                     <p className="text-xs text-rose-700 dark:text-rose-300 mt-1 leading-relaxed">
-                                                        Constraint #1 Enforced: Available company inventory was thoroughly inspected first. No currently idle device satisfies the minimum performance threshold (0.65) without severe mismatch or workflow degradation.
+                                                        {procurementAdvisory?.recommendation || 'Constraint #1 Enforced: Available company inventory was thoroughly inspected first. No currently idle device satisfies the minimum performance threshold (0.65) without severe mismatch or workflow degradation.'}
                                                     </p>
+                                                    {procurementAdvisory?.justification && (
+                                                        <div className="mt-2 text-xs text-rose-800 dark:text-rose-200 font-medium bg-rose-100/60 dark:bg-rose-900/40 p-2.5 rounded-lg border border-rose-200 dark:border-rose-800/60">
+                                                            <strong>Analysis:</strong> {procurementAdvisory.justification}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         )}

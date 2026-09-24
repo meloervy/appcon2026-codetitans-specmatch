@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import HardwareImage from '@/Components/HardwareImage';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import axios from 'axios';
 import { useState } from 'react';
 import {
@@ -9,6 +9,7 @@ import {
     RiExchangeLine,
     RiEditLine,
     RiArchiveLine,
+    RiDeleteBinLine,
     RiCloseLine,
     RiMapPinLine,
     RiCheckLine,
@@ -37,6 +38,13 @@ import {
 } from 'react-icons/ri';
 
 export default function DevicesShow({ device }) {
+    const { auth } = usePage().props;
+    const user = auth?.user;
+    const isAdminOrManager = ['admin', 'manager'].includes(user?.role);
+    const canPerformMaintenance = ['admin', 'manager', 'technician'].includes(user?.role);
+    const isAssigned = device.status === 'assigned' || Boolean(device.active_assignment);
+    const [isDeleting, setIsDeleting] = useState(false);
+
     const [isEditing, setIsEditing] = useState(false);
     const [showLifecycleModal, setShowLifecycleModal] = useState(false);
     const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
@@ -224,6 +232,19 @@ export default function DevicesShow({ device }) {
         }
     };
 
+    const handleDelete = () => {
+        if (isAssigned) {
+            alert('Cannot delete an assigned device. Please unassign or reclaim the asset first.');
+            return;
+        }
+        if (confirm(`Are you sure you want to permanently delete device ${device.asset_tag}? This action cannot be undone.`)) {
+            router.delete(route('devices.destroy', device.id), {
+                onStart: () => setIsDeleting(true),
+                onFinish: () => setIsDeleting(false),
+            });
+        }
+    };
+
     const stages = [
         { key: 'acquisition', label: '1. Acquisition', desc: 'Procurement & Staging' },
         { key: 'deployment', label: '2. Deployment', desc: 'Active Production' },
@@ -399,37 +420,43 @@ export default function DevicesShow({ device }) {
                                 </Link>
 
                                 {/* 2. Log Servicing Button */}
-                                <button
-                                    type="button"
-                                    onClick={() => setShowMaintenanceModal(true)}
-                                    className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 text-xs font-semibold text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition shadow-2xs cursor-pointer"
-                                >
-                                    <RiToolsLine className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                                    <span>Log Servicing</span>
-                                </button>
+                                {canPerformMaintenance && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowMaintenanceModal(true)}
+                                        className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 text-xs font-semibold text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition shadow-2xs cursor-pointer"
+                                    >
+                                        <RiToolsLine className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                                        <span>Log Servicing</span>
+                                    </button>
+                                )}
 
                                 {/* 3. Transition Stage Button */}
-                                <button
-                                    type="button"
-                                    onClick={() => setShowLifecycleModal(true)}
-                                    className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-xl bg-[#026eff]/10 dark:bg-[#031a40]/40 border border-[#026eff]/20 dark:border-[#031a40]/60 text-xs font-semibold text-[#026eff] dark:text-[#38bdf8] hover:bg-[#026eff]/20 transition shadow-2xs cursor-pointer"
-                                >
-                                    <RiExchangeLine className="w-4 h-4" />
-                                    <span>Transition Stage</span>
-                                </button>
+                                {isAdminOrManager && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowLifecycleModal(true)}
+                                        className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-xl bg-[#026eff]/10 dark:bg-[#031a40]/40 border border-[#026eff]/20 dark:border-[#031a40]/60 text-xs font-semibold text-[#026eff] dark:text-[#38bdf8] hover:bg-[#026eff]/20 transition shadow-2xs cursor-pointer"
+                                    >
+                                        <RiExchangeLine className="w-4 h-4" />
+                                        <span>Transition Stage</span>
+                                    </button>
+                                )}
 
                                 {/* 4. Edit Asset Button */}
-                                <button
-                                    type="button"
-                                    onClick={() => setIsEditing(true)}
-                                    className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-xl border border-slate-200/80 dark:border-zinc-700/60 bg-white dark:bg-zinc-800 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-700 transition shadow-2xs cursor-pointer"
-                                >
-                                    <RiEditLine className="w-4 h-4 text-slate-500 dark:text-zinc-400" />
-                                    <span>Edit Asset</span>
-                                </button>
+                                {isAdminOrManager && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsEditing(true)}
+                                        className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-xl border border-slate-200/80 dark:border-zinc-700/60 bg-white dark:bg-zinc-800 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-700 transition shadow-2xs cursor-pointer"
+                                    >
+                                        <RiEditLine className="w-4 h-4 text-slate-500 dark:text-zinc-400" />
+                                        <span>Edit Asset</span>
+                                    </button>
+                                )}
 
                                 {/* 5. Retire Asset Button */}
-                                {device.status !== 'retired' && (
+                                {isAdminOrManager && device.status !== 'retired' && (
                                     <button
                                         type="button"
                                         onClick={handleRetire}
@@ -437,6 +464,24 @@ export default function DevicesShow({ device }) {
                                     >
                                         <RiArchiveLine className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                                         <span>Retire</span>
+                                    </button>
+                                )}
+
+                                {/* 6. Delete Asset Button */}
+                                {isAdminOrManager && (
+                                    <button
+                                        type="button"
+                                        disabled={isAssigned || isDeleting}
+                                        onClick={handleDelete}
+                                        title={isAssigned ? 'Assigned devices cannot be deleted. Unassign or reclaim first.' : 'Permanently delete this asset record'}
+                                        className={`h-8 inline-flex items-center gap-1.5 px-3 rounded-xl border text-xs font-semibold transition shadow-2xs ${
+                                            isAssigned
+                                                ? 'opacity-40 cursor-not-allowed border-slate-200 dark:border-zinc-800 text-slate-400 dark:text-zinc-600'
+                                                : 'border-rose-200/80 dark:border-rose-900/60 bg-white dark:bg-zinc-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer'
+                                        }`}
+                                    >
+                                        <RiDeleteBinLine className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                                        <span>{isDeleting ? 'Deleting...' : 'Delete'}</span>
                                     </button>
                                 )}
                             </>

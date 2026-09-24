@@ -62,6 +62,15 @@ class Device extends Model
         'image_clip_url',
     ];
 
+    protected static function booted(): void
+    {
+        static::deleting(function (Device $device) {
+            if ($device->activeAssignment()->exists() || $device->status === 'assigned') {
+                throw new \DomainException("Cannot delete device {$device->asset_tag}: it is currently assigned to an employee.");
+            }
+        });
+    }
+
     public function assignments(): HasMany
     {
         return $this->hasMany(Assignment::class);
@@ -84,7 +93,8 @@ class Device extends Model
 
     public function scopeAvailable($query)
     {
-        return $query->where('status', 'available');
+        return $query->where('status', 'available')
+            ->whereNotIn('condition', ['needs_repair', 'retired']);
     }
 
     public function scopeReclaimed($query)

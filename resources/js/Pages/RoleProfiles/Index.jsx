@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import ExpandableCardContainer from '@/Components/ui/ExpandableCard';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import {
     RiShieldUserLine,
@@ -16,6 +16,10 @@ import {
 } from 'react-icons/ri';
 
 export default function RoleProfilesIndex({ profiles }) {
+    const { auth } = usePage().props;
+    const user = auth?.user;
+    const isAdminOrManager = ['admin', 'manager'].includes(user?.role);
+
     const [showModal, setShowModal] = useState(false);
     const [editingProfile, setEditingProfile] = useState(null);
 
@@ -251,17 +255,19 @@ export default function RoleProfilesIndex({ profiles }) {
                 >
                     Close
                 </button>
-                <button
-                    type="button"
-                    onClick={() => {
-                        close();
-                        openEdit(profile);
-                    }}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#026eff] hover:bg-[#0256cc] text-white text-xs font-bold shadow-xs transition"
-                >
-                    <RiEditLine className="w-4 h-4" />
-                    Edit Profile Configuration
-                </button>
+                {isAdminOrManager && (
+                    <button
+                        type="button"
+                        onClick={() => {
+                            close();
+                            openEdit(profile);
+                        }}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#026eff] hover:bg-[#0256cc] text-white text-xs font-bold shadow-xs transition"
+                    >
+                        <RiEditLine className="w-4 h-4" />
+                        Edit Profile Configuration
+                    </button>
+                )}
             </div>
         </div>
     );
@@ -276,13 +282,15 @@ export default function RoleProfilesIndex({ profiles }) {
                             Objective hardware specifications per job function for scoring and mismatch detection.
                         </p>
                     </div>
-                    <button
-                        onClick={openCreate}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#026eff] text-sm font-semibold text-white hover:bg-[#0256cc] shadow-sm transition self-start sm:self-auto"
-                    >
-                        <RiAddLine className="w-4 h-4" />
-                        Create Role Profile
-                    </button>
+                    {isAdminOrManager && (
+                        <button
+                            onClick={openCreate}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#026eff] text-sm font-semibold text-white hover:bg-[#0256cc] shadow-sm transition self-start sm:self-auto"
+                        >
+                            <RiAddLine className="w-4 h-4" />
+                            Create Role Profile
+                        </button>
+                    )}
                 </div>
             }
         >

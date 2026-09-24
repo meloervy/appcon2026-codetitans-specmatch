@@ -9,6 +9,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -115,7 +116,7 @@ class DeviceController extends Controller
             'depreciation_rate_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'vendor' => ['nullable', 'string', 'max:100'],
             'warranty_start' => ['nullable', 'date'],
-            'warranty_expiry' => ['nullable', 'date'],
+            'warranty_expiry' => ['nullable', 'date', 'after_or_equal:warranty_start'],
             'contract_sla' => ['nullable', 'string', 'max:100'],
             'condition' => ['required', 'in:excellent,good,fair,needs_repair,retired'],
             'status' => ['required', 'in:available,assigned,in_repair,retired'],
@@ -180,7 +181,7 @@ class DeviceController extends Controller
             'depreciation_rate_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'vendor' => ['nullable', 'string', 'max:100'],
             'warranty_start' => ['nullable', 'date'],
-            'warranty_expiry' => ['nullable', 'date'],
+            'warranty_expiry' => ['nullable', 'date', 'after_or_equal:warranty_start'],
             'contract_sla' => ['nullable', 'string', 'max:100'],
             'condition' => ['required', 'in:excellent,good,fair,needs_repair,retired'],
             'status' => ['required', 'in:available,assigned,in_repair,retired'],
@@ -338,10 +339,34 @@ class DeviceController extends Controller
     }
 
     /**
+     * Permanently delete a device from inventory.
+     * Prevents deletion of devices with active assignments or assigned status.
+     */
+    public function destroy(int $id): RedirectResponse
+    {
+        $device = Device::with('activeAssignment')->findOrFail($id);
+
+        if ($device->activeAssignment) {
+            return back()->with('error', "Cannot delete device {$device->asset_tag}: it has an active assignment. Unassign the device first.");
+        }
+
+        if ($device->status === 'assigned') {
+            return back()->with('error', "Cannot delete device {$device->asset_tag}: status is 'assigned'. Return the device first.");
+        }
+
+        $assetTag = $device->asset_tag;
+        $device->delete();
+
+        return redirect()->route('devices.index')->with('success', "Device {$assetTag} permanently removed from inventory.");
+    }
+
+    /**
      * Export complete hardware asset inventory as a compliance PDF report.
      */
     public function exportPdf(Request $request)
     {
+        Gate::authorize('exportPdf', Device::class);
+
         $devices = Device::with('activeAssignment.employee')
             ->orderBy('asset_tag')
             ->get();

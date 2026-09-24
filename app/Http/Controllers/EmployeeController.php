@@ -9,6 +9,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -226,6 +227,8 @@ class EmployeeController extends Controller
      */
     public function exportPdf(Request $request)
     {
+        Gate::authorize('exportPdf', Employee::class);
+
         $employees = Employee::with(['roleProfile', 'activeAssignment.device'])
             ->orderBy('name')
             ->get();

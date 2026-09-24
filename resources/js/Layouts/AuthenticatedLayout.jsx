@@ -23,6 +23,7 @@ import {
 export default function AuthenticatedLayout({ header, children }) {
     const { auth, flash } = usePage().props;
     const user = auth.user;
+    const isAdminOrManager = ['admin', 'manager'].includes(user?.role);
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
     const [isDark, setIsDark] = useState(false);
@@ -97,12 +98,14 @@ export default function AuthenticatedLayout({ header, children }) {
                                     <RiTeamLine className="w-4 h-4 mr-1.5 shrink-0" />
                                     Employees
                                 </NavLink>
-                                <NavLink href={route('match.index')} active={route().current('match.*')} className="text-[#026eff] dark:text-[#38bdf8]">
-                                    <span className="flex items-center gap-1.5 font-semibold">
-                                        <RiSparklingLine className="w-4 h-4 shrink-0 text-[#026eff] dark:text-[#38bdf8]" />
-                                        AI Match
-                                    </span>
-                                </NavLink>
+                                {isAdminOrManager && (
+                                    <NavLink href={route('match.index')} active={route().current('match.*')} className="text-[#026eff] dark:text-[#38bdf8]">
+                                        <span className="flex items-center gap-1.5 font-semibold">
+                                            <RiSparklingLine className="w-4 h-4 shrink-0 text-[#026eff] dark:text-[#38bdf8]" />
+                                            AI Match
+                                        </span>
+                                    </NavLink>
+                                )}
                                 <NavLink href={route('mismatches.index')} active={route().current('mismatches.*')}>
                                     <RiAlertLine className="w-4 h-4 mr-1.5 shrink-0" />
                                     Mismatches
@@ -302,12 +305,14 @@ export default function AuthenticatedLayout({ header, children }) {
                                 Employees
                             </span>
                         </ResponsiveNavLink>
-                        <ResponsiveNavLink href={route('match.index')} active={route().current('match.*')}>
-                            <span className="flex items-center gap-2 font-semibold text-[#026eff] dark:text-[#38bdf8]">
-                                <RiSparklingLine className="w-4 h-4 shrink-0 text-[#026eff] dark:text-[#38bdf8]" />
-                                AI Match
-                            </span>
-                        </ResponsiveNavLink>
+                        {isAdminOrManager && (
+                            <ResponsiveNavLink href={route('match.index')} active={route().current('match.*')}>
+                                <span className="flex items-center gap-2 font-semibold text-[#026eff] dark:text-[#38bdf8]">
+                                    <RiSparklingLine className="w-4 h-4 shrink-0 text-[#026eff] dark:text-[#38bdf8]" />
+                                    AI Match
+                                </span>
+                            </ResponsiveNavLink>
+                        )}
                         <ResponsiveNavLink href={route('mismatches.index')} active={route().current('mismatches.*')}>
                             <span className="flex items-center gap-2">
                                 <RiAlertLine className="w-4 h-4 shrink-0" />

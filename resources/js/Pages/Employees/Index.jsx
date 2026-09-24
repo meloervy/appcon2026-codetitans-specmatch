@@ -4,7 +4,7 @@ import HardwareImage from '@/Components/HardwareImage';
 import ResizableTh from '@/Components/ResizableTh';
 import { useResizableColumns } from '@/Hooks/useResizableColumns';
 import useOutsideClick from '@/hooks/useOutsideClick';
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { useRef, useState } from 'react';
 import {
@@ -29,6 +29,10 @@ import {
 } from 'react-icons/ri';
 
 export default function EmployeesIndex({ employees, role_profiles = [], departments = [], stats = {}, filters = {} }) {
+    const { auth } = usePage().props;
+    const user = auth?.user;
+    const isAdminOrManager = ['admin', 'manager'].includes(user?.role);
+
     const [showModal, setShowModal] = useState(false);
     const [editingEmp, setEditingEmp] = useState(null);
     const [wrapText, setWrapText] = useState(false);
@@ -242,22 +246,26 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <a
-                            href={route('employees.export.pdf')}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700/60 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-200 dark:hover:bg-zinc-700 transition"
-                        >
-                            <RiFilePdfLine className="w-4 h-4 text-rose-500" />
-                            <span>Export Audit PDF</span>
-                        </a>
-                        <button
-                            onClick={openCreate}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#026eff] text-xs font-semibold text-white hover:bg-[#0256cc] shadow-2xs transition cursor-pointer"
-                        >
-                            <RiUserAddLine className="w-4 h-4" />
-                            <span>Add Employee</span>
-                        </button>
+                        {isAdminOrManager && (
+                            <a
+                                href={route('employees.export.pdf')}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700/60 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-200 dark:hover:bg-zinc-700 transition"
+                            >
+                                <RiFilePdfLine className="w-4 h-4 text-rose-500" />
+                                <span>Export Audit PDF</span>
+                            </a>
+                        )}
+                        {isAdminOrManager && (
+                            <button
+                                onClick={openCreate}
+                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#026eff] text-xs font-semibold text-white hover:bg-[#0256cc] shadow-2xs transition cursor-pointer"
+                            >
+                                <RiUserAddLine className="w-4 h-4" />
+                                <span>Add Employee</span>
+                            </button>
+                        )}
                     </div>
                 </div>
             }
@@ -771,8 +779,9 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
 
                                             {/* Actions */}
                                             <td className="py-3 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                                                {actions.length >= 2 ? (
-                                                    <div className="relative inline-flex items-center justify-end">
+                                                {isAdminOrManager ? (
+                                                    actions.length >= 2 ? (
+                                                        <div className="relative inline-flex items-center justify-end">
                                                         <button
                                                             type="button"
                                                             onClick={(e) => {
@@ -904,8 +913,11 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
                                                             )
                                                         )}
                                                     </div>
-                                                )}
-                                            </td>
+                                                )
+                                            ) : (
+                                                <span className="text-xs text-slate-400 dark:text-zinc-500 italic">View Only</span>
+                                            )}
+                                        </td>
                                         </tr>
                                     );
                                 })
