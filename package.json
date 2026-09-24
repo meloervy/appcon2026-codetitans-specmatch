@@ -3,26 +3,6 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "NODE_OPTIONS='--max-old-space-size=512' vite build",
-        "dev": "vite"
-    },
-    "devDependencies": {
-        "@headlessui/react": "^2.2.0",
-        "@inertiajs/react": "^2.0.0",
-        "@tailwindcss/vite": "^4.0.0",
-        "@vitejs/plugin-react": "^6.1.1",
-        "axios": "^1.20.0",
-        "concurrently": "^9.1.2",
-        "laravel-vite-plugin": "^3.1",
-        "react": "^18.3.1",
-        "react-dom": "^18.3.1",
-        "tailwindcss": "^4.0.0",
-        "vite": "^8.0.0"
-    },
-    "dependencies": {
-        "clsx": "^2.1.1",
-        "framer-motion": "^13.4.2",
-        "react-icons": "^5.7.0",
-        "tailwind-merge": "^3.7.0"
+        "build": "echo 'Frontend assets are pre-compiled in public/build'"
     }
 }

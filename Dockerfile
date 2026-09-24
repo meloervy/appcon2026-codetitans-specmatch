@@ -1,42 +1,27 @@
 # =========================================================================
-# Stage 1: Build Frontend Assets
-# =========================================================================
-FROM node:22-alpine AS frontend-builder
-WORKDIR /app
-
-COPY package.json package-lock.json ./
-RUN npm ci
-
-COPY resources/ resources/
-COPY vite.config.js postcss.config.js tailwind.config.js* ./
-COPY public/ public/
-
-RUN npm run build
-
-# =========================================================================
-# Stage 2: Install Composer Dependencies
+# Stage 1: Install Composer Dependencies (Production only)
 # =========================================================================
 FROM composer:2 AS vendor-builder
 WORKDIR /app
 
-COPY composer.json composer.lock ./
-RUN composer install \
-    --no-dev \
-    --no-interaction \
-    --prefer-dist \
-    --no-autoloader \
-    --no-scripts
-
+COPY composer.json composer.lock artisan ./
 COPY app/ app/
 COPY bootstrap/ bootstrap/
 COPY config/ config/
 COPY database/ database/
 COPY routes/ routes/
 
-RUN composer dump-autoload --optimize --no-dev
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --prefer-dist \
+    --optimize-autoloader \
+    --no-scripts \
+    --ignore-platform-reqs
 
 # =========================================================================
-# Stage 3: Production Runtime
+# Stage 2: Production Runtime (Lean Alpine, <100MB RAM build)
+# Frontend assets are pre-compiled in public/build and copied directly.
 # =========================================================================
 FROM php:8.4-cli-alpine AS runtime
 
@@ -56,12 +41,11 @@ RUN install-php-extensions \
 
 WORKDIR /app
 
-# Copy application files
+# Copy application files (includes pre-compiled public/build)
 COPY . .
 
-# Copy built vendor and public assets from builder stages
+# Copy optimized vendor from builder stage
 COPY --from=vendor-builder /app/vendor /app/vendor
-COPY --from=frontend-builder /app/public/build /app/public/build
 
 # Copy and configure entrypoint
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint
