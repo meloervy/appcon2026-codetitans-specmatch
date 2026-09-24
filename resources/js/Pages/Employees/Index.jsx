@@ -25,6 +25,7 @@ import {
     RiArrowDownSLine,
     RiCpuLine,
     RiBuildingLine,
+    RiCloseLine,
 } from 'react-icons/ri';
 
 export default function EmployeesIndex({ employees, role_profiles = [], departments = [], stats = {}, filters = {} }) {
@@ -47,16 +48,16 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
     });
 
     const initialWidths = {
-        employee: 210,
-        department: 140,
-        role_profile: 160,
-        hardware: 220,
-        specs: 190,
-        date: 130,
+        employee: 260,
+        department: 170,
+        role_profile: 190,
+        hardware: 280,
+        specs: 230,
+        date: 150,
         actions: 120,
     };
 
-    const { widths, startResize, autoExpandCol, resetWidths, isResizing, resizingCol } = useResizableColumns(initialWidths, 'employees_table_v5');
+    const { widths, startResize, autoExpandCol, resetWidths, isResizing, resizingCol } = useResizableColumns(initialWidths, 'employees_table_v6');
 
     const { data, setData, post, processing, reset, errors } = useForm({
         name: '',
@@ -627,23 +628,23 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
                                     return (
                                         <tr key={emp.id} className="hover:bg-slate-50/60 dark:hover:bg-zinc-800/40 transition">
                                             {/* Employee Profile & Avatar */}
-                                            <td className="py-3 px-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="relative w-9 h-9 rounded-full overflow-hidden bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shrink-0 shadow-2xs">
+                                            <td className="py-4 px-5">
+                                                <div className="flex items-center gap-3.5">
+                                                    <div className="relative w-11 h-11 rounded-full overflow-hidden bg-slate-100 dark:bg-zinc-800 border-2 border-slate-200 dark:border-zinc-700 shrink-0 shadow-2xs">
                                                         <img
                                                             src={avatarSrc}
                                                             alt={emp.name}
                                                             className="w-full h-full object-cover"
                                                             onError={(e) => {
                                                                 e.currentTarget.src = '/user/default-profile-picture.png';
-                                                            }}
+                                                             }}
                                                         />
                                                     </div>
                                                     <div className="min-w-0 flex-1">
-                                                        <div className={`font-semibold text-slate-900 dark:text-zinc-100 ${wrapText ? 'break-words whitespace-normal' : 'truncate'}`} title={emp.name}>
+                                                        <div className={`font-bold text-slate-900 dark:text-zinc-100 text-sm ${wrapText ? 'break-words whitespace-normal' : 'truncate'}`} title={emp.name}>
                                                             {emp.name}
                                                         </div>
-                                                        <div className="text-[10px] text-slate-400 dark:text-zinc-500 font-mono">
+                                                        <div className="text-xs text-slate-400 dark:text-zinc-500 font-mono font-medium mt-0.5">
                                                             ID #{emp.id.toString().padStart(4, '0')}
                                                         </div>
                                                     </div>
@@ -651,16 +652,16 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
                                             </td>
 
                                             {/* Department */}
-                                            <td className="py-3 px-4 text-slate-500 dark:text-zinc-400">
+                                            <td className="py-4 px-5 text-slate-600 dark:text-zinc-300 font-medium text-sm">
                                                 <div className={wrapText ? 'break-words whitespace-normal' : 'truncate'} title={emp.department}>
                                                     {emp.department}
                                                 </div>
                                             </td>
 
                                             {/* Role Profile */}
-                                            <td className="py-3 px-4">
+                                            <td className="py-4 px-5">
                                                 {emp.role_profile ? (
-                                                    <span className={`text-xs px-2.5 py-1 rounded-full bg-[#026eff]/10 dark:bg-[#031a40]/60 border border-[#026eff]/15 dark:border-[#031a40]/50 text-[#026eff] dark:text-[#0b79ff] font-medium inline-block ${wrapText ? 'break-words whitespace-normal' : 'truncate max-w-full'}`} title={emp.role_profile.name}>
+                                                    <span className={`text-xs px-3 py-1 rounded-lg bg-[#026eff]/10 dark:bg-[#031a40]/60 border border-[#026eff]/15 dark:border-[#031a40]/50 text-[#026eff] dark:text-[#38bdf8] font-bold inline-block ${wrapText ? 'break-words whitespace-normal' : 'truncate max-w-full'}`} title={emp.role_profile.name}>
                                                         {emp.role_profile.name}
                                                     </span>
                                                 ) : (
@@ -669,37 +670,37 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
                                             </td>
 
                                             {/* Assigned Hardware */}
-                                            <td className="py-3 px-4">
+                                            <td className="py-4 px-5">
                                                 {device ? (
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/60 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
+                                                    <div className="flex items-center gap-3.5">
+                                                        <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/60 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs p-0.5">
                                                             <HardwareImage
                                                                 src={device.image_clip_url || device.image_url}
                                                                 alt={device.name}
-                                                                className="w-full h-full object-cover"
+                                                                className="w-full h-full object-cover rounded-lg"
                                                             />
                                                         </div>
                                                         <div className="min-w-0 flex-1">
-                                                            <span className="font-mono text-xs font-bold text-slate-700 dark:text-zinc-300 bg-slate-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-zinc-700 inline-block truncate" title={device.asset_tag}>
+                                                            <span className="font-mono text-xs font-bold text-slate-700 dark:text-zinc-300 bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-700 inline-block truncate" title={device.asset_tag}>
                                                                 {device.asset_tag}
                                                             </span>
-                                                            <div className={`font-medium text-slate-900 dark:text-zinc-100 text-xs mt-1 ${wrapText ? 'break-words whitespace-normal' : 'truncate'}`} title={`${device.brand} ${device.model}`}>
+                                                            <div className={`font-bold text-slate-900 dark:text-zinc-100 text-sm mt-1 ${wrapText ? 'break-words whitespace-normal' : 'truncate'}`} title={`${device.brand} ${device.model}`}>
                                                                 {device.brand} {device.model}
                                                             </div>
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <span className="text-xs text-amber-600 dark:text-amber-400 font-semibold bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded inline-block">
+                                                    <span className="text-xs text-amber-600 dark:text-amber-400 font-bold bg-amber-50 dark:bg-amber-950/40 px-2.5 py-1 rounded-lg border border-amber-200/60 dark:border-amber-900/40 inline-block">
                                                         No Device Assigned
                                                     </span>
                                                 )}
                                             </td>
 
                                             {/* Device Specs */}
-                                            <td className="py-3 px-4 text-xs text-slate-500 dark:text-zinc-400">
+                                            <td className="py-4 px-5 text-xs text-slate-600 dark:text-zinc-300">
                                                 {device ? (
-                                                    <div className={wrapText ? 'break-words whitespace-normal leading-relaxed' : 'truncate'} title={`${device.ram_gb}GB • ${device.storage_gb}GB ${device.storage_type} • ${device.device_type}`}>
-                                                        {device.ram_gb}GB • {device.storage_gb}GB {device.storage_type} • <span className="capitalize">{device.device_type}</span>
+                                                    <div className={`font-semibold text-slate-700 dark:text-zinc-300 leading-relaxed ${wrapText ? 'break-words whitespace-normal' : 'truncate'}`} title={`${device.ram_gb}GB • ${device.storage_gb}GB ${device.storage_type} • ${device.device_type}`}>
+                                                        {device.ram_gb}GB • {device.storage_gb}GB {device.storage_type} • <span className="capitalize font-medium">{device.device_type}</span>
                                                     </div>
                                                 ) : (
                                                     <span className="text-slate-400 dark:text-zinc-600">—</span>
@@ -707,17 +708,17 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
                                             </td>
 
                                             {/* Chronological Registration Date */}
-                                            <td className="py-3 px-4 text-xs text-slate-500 dark:text-zinc-400 whitespace-nowrap">
-                                                <div className="font-medium text-slate-700 dark:text-zinc-300">
+                                            <td className="py-4 px-5 text-xs whitespace-nowrap">
+                                                <div className="font-bold text-slate-800 dark:text-zinc-200 text-xs">
                                                     {emp.created_at ? new Date(emp.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
                                                 </div>
-                                                <div className="text-[10px] text-slate-400 dark:text-zinc-500 font-mono">
+                                                <div className="text-xs text-slate-400 dark:text-zinc-500 font-mono mt-0.5">
                                                     {emp.created_at ? new Date(emp.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : ''}
                                                 </div>
                                             </td>
 
                                             {/* Actions */}
-                                            <td className="py-3 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                                            <td className="py-4 px-5 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                                                 {actions.length >= 2 ? (
                                                     <div className="relative inline-flex items-center justify-end">
                                                         <button
@@ -726,7 +727,7 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
                                                                 e.stopPropagation();
                                                                 setOpenMenuId(isMenuOpen ? null : emp.id);
                                                             }}
-                                                            className={`inline-flex items-center justify-center w-8 h-8 rounded-xl border transition cursor-pointer ${
+                                                            className={`inline-flex items-center justify-center w-9 h-9 rounded-xl border transition cursor-pointer ${
                                                                 isMenuOpen
                                                                     ? 'bg-[#026eff]/10 border-[#026eff]/30 text-[#026eff] dark:bg-[#026eff]/20 dark:text-[#0b79ff] shadow-sm'
                                                                     : 'bg-white dark:bg-zinc-800/90 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100 hover:bg-slate-50 dark:hover:bg-zinc-700/60 shadow-2xs'
@@ -890,8 +891,12 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
                             <h3 className="text-lg font-bold text-slate-900 dark:text-zinc-100">
                                 {editingEmp ? 'Edit Employee' : 'Add Employee'}
                             </h3>
-                            <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 text-sm font-bold cursor-pointer">
-                                ✕
+                            <button
+                                onClick={() => setShowModal(false)}
+                                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition cursor-pointer"
+                                aria-label="Close modal"
+                            >
+                                <RiCloseLine className="w-5 h-5" />
                             </button>
                         </div>
 
@@ -987,20 +992,16 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold uppercase text-slate-700 dark:text-zinc-300">Role / Workload Profile</label>
-                                <div className="relative mt-1">
-                                    <select
-                                        value={data.role_profile_id}
-                                        onChange={(e) => setData('role_profile_id', e.target.value)}
-                                        className="w-full rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 text-sm py-2 pl-3 pr-8 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs appearance-none cursor-pointer"
-                                    >
-                                        <option value="">No Profile Assigned</option>
-                                        {role_profiles.map((p) => (
-                                            <option key={p.id} value={p.id}>{p.name}</option>
-                                        ))}
-                                    </select>
-                                    <RiArrowDownSLine className="w-4 h-4 text-slate-400 dark:text-zinc-500 pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" />
-                                </div>
+                                <label className="block text-xs font-bold uppercase text-slate-700 dark:text-zinc-300 mb-1">Role / Workload Profile</label>
+                                <CustomSelect
+                                    value={data.role_profile_id}
+                                    onChange={(val) => setData('role_profile_id', val)}
+                                    placeholder="No Profile Assigned"
+                                    options={role_profiles.map((p) => ({
+                                        value: p.id,
+                                        label: p.name,
+                                    }))}
+                                />
                             </div>
 
                             <div>

@@ -25,15 +25,15 @@ export default function MaintenanceIndex({ logs, stats = {}, filters = {} }) {
     const activeFilterCount = (search ? 1 : 0) + (type ? 1 : 0) + (status ? 1 : 0);
 
     const initialWidths = {
-        device: 220,
-        activity: 320,
-        technician: 180,
-        cost: 110,
-        status: 120,
-        actions: 120,
+        device: 280,
+        activity: 380,
+        technician: 220,
+        cost: 140,
+        status: 140,
+        actions: 140,
     };
 
-    const { widths, startResize, autoExpandCol, resetWidths, isResizing, resizingCol } = useResizableColumns(initialWidths, 'maintenance_table_v4');
+    const { widths, startResize, autoExpandCol, resetWidths, isResizing, resizingCol } = useResizableColumns(initialWidths, 'maintenance_table_v5');
 
     const { data: updateData, setData: setUpdateData, put, processing, reset } = useForm({
         cost: 0,
@@ -304,10 +304,10 @@ export default function MaintenanceIndex({ logs, stats = {}, filters = {} }) {
 
                     <div className="overflow-x-auto">
                         <table
-                            className="w-full text-left text-xs table-fixed"
-                            style={{ minWidth: `${Math.max(1000, Object.values(widths).reduce((a, b) => a + b, 0))}px` }}
+                            className="w-full text-left text-sm table-fixed"
+                            style={{ minWidth: `${Math.max(1100, Object.values(widths).reduce((a, b) => a + b, 0))}px` }}
                         >
-                            <thead className="bg-slate-50/70 dark:bg-zinc-800/50 border-b border-slate-200/80 dark:border-zinc-800 text-xs font-bold uppercase tracking-wider whitespace-nowrap text-slate-500 dark:text-zinc-400">
+                            <thead className="bg-slate-50/80 dark:bg-zinc-800/60 border-b border-slate-200 dark:border-zinc-800 text-xs font-bold uppercase tracking-wider whitespace-nowrap text-slate-500 dark:text-zinc-400">
                                 <tr>
                                     <ResizableTh
                                         colKey="device"
@@ -390,7 +390,7 @@ export default function MaintenanceIndex({ logs, stats = {}, filters = {} }) {
                             <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/60">
                                 {logs.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={6} className="py-14 text-center text-slate-400 dark:text-zinc-500">
+                                        <td colSpan={6} className="py-16 text-center text-slate-400 dark:text-zinc-500">
                                             No maintenance records found matching your filter criteria.
                                         </td>
                                     </tr>
@@ -398,20 +398,20 @@ export default function MaintenanceIndex({ logs, stats = {}, filters = {} }) {
                                     logs.data.map((log) => (
                                         <tr key={log.id} className="hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition">
                                             {/* 1. Device & Asset */}
-                                            <td className="py-3.5 px-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/60 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
+                                            <td className="py-4 px-5">
+                                                <div className="flex items-center gap-3.5">
+                                                    <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/60 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs p-0.5">
                                                         <HardwareImage
                                                             src={log.device?.image_clip_url || log.device?.image_url}
                                                             alt={log.device?.name}
-                                                            className="w-full h-full object-cover"
+                                                            className="w-full h-full object-cover rounded-lg"
                                                         />
                                                     </div>
                                                     <div className="min-w-0 flex-1">
                                                         {log.device ? (
                                                             <Link
                                                                 href={route('devices.show', log.device.id)}
-                                                                className="font-bold text-slate-900 dark:text-zinc-100 hover:text-[#026eff] dark:hover:text-[#38bdf8] transition truncate block text-xs"
+                                                                className="font-mono font-bold text-xs text-[#026eff] dark:text-[#38bdf8] bg-[#026eff]/10 dark:bg-[#026eff]/20 px-2 py-0.5 rounded-md border border-[#026eff]/20 hover:underline inline-block truncate"
                                                                 title={log.device.asset_tag}
                                                             >
                                                                 {log.device.asset_tag}
@@ -419,7 +419,7 @@ export default function MaintenanceIndex({ logs, stats = {}, filters = {} }) {
                                                         ) : (
                                                             <span className="text-slate-400 dark:text-zinc-500 text-xs">Unknown Asset</span>
                                                         )}
-                                                        <div className="text-[11px] text-slate-500 dark:text-zinc-400 truncate mt-0.5" title={`${log.device?.brand} ${log.device?.model}`}>
+                                                        <div className="font-bold text-slate-900 dark:text-zinc-100 text-sm truncate mt-1 leading-snug" title={`${log.device?.brand} ${log.device?.model}`}>
                                                             {log.device?.brand} {log.device?.model}
                                                         </div>
                                                     </div>
@@ -427,12 +427,12 @@ export default function MaintenanceIndex({ logs, stats = {}, filters = {} }) {
                                             </td>
 
                                             {/* 2. Activity & Scope */}
-                                            <td className="py-3.5 px-4">
+                                            <td className="py-4 px-5">
                                                 <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                                                    <span className={`font-semibold text-slate-900 dark:text-zinc-100 text-xs ${wrapText ? 'break-words' : 'truncate'}`} title={log.title}>
+                                                    <span className={`font-bold text-slate-900 dark:text-zinc-100 text-sm leading-snug ${wrapText ? 'break-words' : 'truncate'}`} title={log.title}>
                                                         {log.title}
                                                     </span>
-                                                    <span className={`shrink-0 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-md tracking-wider border shadow-2xs ${
+                                                    <span className={`shrink-0 px-2 py-0.5 text-xs font-bold uppercase rounded-lg tracking-wider border shadow-2xs ${
                                                         log.type === 'repair' ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-200/60 dark:border-rose-900/50' :
                                                         log.type === 'upgrade' ? 'bg-[#026eff]/10 dark:bg-[#031a40]/60 text-[#026eff] dark:text-[#38bdf8] border-[#026eff]/20 dark:border-[#031a40]/60' :
                                                         log.type === 'preventive' ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200/60 dark:border-emerald-900/50' :
@@ -442,39 +442,39 @@ export default function MaintenanceIndex({ logs, stats = {}, filters = {} }) {
                                                     </span>
                                                 </div>
                                                 {log.description && (
-                                                    <p className={`text-[11px] text-slate-500 dark:text-zinc-400 mt-1 leading-normal ${wrapText ? 'break-words whitespace-normal' : 'truncate'}`} title={log.description}>
+                                                    <p className={`text-xs text-slate-600 dark:text-zinc-300 mt-1.5 leading-relaxed ${wrapText ? 'break-words whitespace-normal' : 'truncate'}`} title={log.description}>
                                                         {log.description}
                                                     </p>
                                                 )}
                                                 {log.performance_assessment && (
-                                                    <div className="mt-1 flex items-center gap-1.5 text-[10px] text-emerald-700 dark:text-emerald-400" title={log.performance_assessment}>
-                                                        <span className="font-semibold uppercase tracking-wider text-[9px] bg-emerald-50 dark:bg-emerald-950/60 px-1 py-0.2 rounded border border-emerald-200/60 dark:border-emerald-900/50">Audit</span>
-                                                        <span className={wrapText ? 'break-words whitespace-normal' : 'truncate'}>{log.performance_assessment}</span>
+                                                    <div className="mt-2 flex items-center gap-1.5 text-xs text-emerald-700 dark:text-emerald-300" title={log.performance_assessment}>
+                                                        <span className="font-bold uppercase tracking-wider text-[10px] bg-emerald-100/80 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 px-1.5 py-0.5 rounded-md border border-emerald-300/60 dark:border-emerald-800/60">Audit</span>
+                                                        <span className={wrapText ? 'break-words whitespace-normal' : 'truncate font-medium'}>{log.performance_assessment}</span>
                                                     </div>
                                                 )}
                                             </td>
 
                                             {/* 3. Technician & Dates */}
-                                            <td className="py-3.5 px-4">
-                                                <div className="font-medium text-slate-800 dark:text-zinc-200 text-xs truncate" title={log.performed_by || 'Internal IT Desk'}>
+                                            <td className="py-4 px-5">
+                                                <div className="font-bold text-slate-900 dark:text-zinc-100 text-sm truncate" title={log.performed_by || 'Internal IT Desk'}>
                                                     {log.performed_by || 'Internal IT Desk'}
                                                 </div>
-                                                <div className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5 truncate">
+                                                <div className="text-xs text-slate-500 dark:text-zinc-400 mt-1 truncate font-medium">
                                                     <span>{new Date(log.started_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                                                     {log.completed_at && (
-                                                        <span className="text-slate-400 dark:text-zinc-500"> — {new Date(log.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                                                        <span className="text-slate-400 dark:text-zinc-500"> — {new Date(log.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                                                     )}
                                                 </div>
                                             </td>
 
                                             {/* 4. Cost */}
-                                            <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-zinc-100 text-xs whitespace-nowrap">
+                                            <td className="py-4 px-5 font-black text-slate-900 dark:text-zinc-100 text-sm whitespace-nowrap">
                                                 ₱{Number(log.cost || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                             </td>
 
                                             {/* 5. Status */}
-                                            <td className="py-3.5 px-4 whitespace-nowrap">
-                                                <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider border shadow-2xs ${
+                                            <td className="py-4 px-5 whitespace-nowrap">
+                                                <span className={`inline-flex items-center px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wider border shadow-2xs ${
                                                     log.status === 'completed' ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200/60 dark:border-emerald-900/50' :
                                                     log.status === 'in_progress' ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200/60 dark:border-amber-900/50' :
                                                     log.status === 'scheduled' ? 'bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border-sky-200/60 dark:border-sky-900/50' :
@@ -485,11 +485,11 @@ export default function MaintenanceIndex({ logs, stats = {}, filters = {} }) {
                                             </td>
 
                                             {/* 6. Action */}
-                                            <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                                            <td className="py-4 px-5 text-right whitespace-nowrap">
                                                 <button
                                                     type="button"
                                                     onClick={() => handleOpenUpdateModal(log)}
-                                                    className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-[#026eff] hover:text-white dark:bg-zinc-800 dark:hover:bg-[#026eff] text-slate-700 dark:text-zinc-200 transition shadow-2xs cursor-pointer"
+                                                    className="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-[#026eff] hover:text-white dark:bg-zinc-800 dark:hover:bg-[#026eff] text-slate-700 dark:text-zinc-200 transition shadow-2xs cursor-pointer"
                                                 >
                                                     <span>{log.status === 'completed' ? 'Edit Audit' : 'Assess & Close'}</span>
                                                 </button>

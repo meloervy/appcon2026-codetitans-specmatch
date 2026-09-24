@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import CustomSelect from '@/Components/CustomSelect';
 import HardwareImage from '@/Components/HardwareImage';
 import { Head, Link, useForm } from '@inertiajs/react';
 import axios from 'axios';
@@ -12,6 +13,7 @@ import {
     RiCloseLine,
     RiMapPinLine,
     RiCheckLine,
+    RiCheckboxCircleLine,
     RiArrowRightLine,
     RiShieldCheckLine,
     RiSaveLine,
@@ -35,6 +37,41 @@ import {
     RiDatabase2Line,
     RiEqualizerLine,
 } from 'react-icons/ri';
+
+const conditionOptions = [
+    { value: 'excellent', label: 'Excellent (Like New / Minimal Wear)', badge: 'Top Spec', icon: RiCheckboxCircleLine },
+    { value: 'good', label: 'Good (Normal Operational Wear)', badge: 'Standard', icon: RiCheckLine },
+    { value: 'fair', label: 'Fair (Noticeable Scratches / Moderate Wear)', badge: 'Moderate', icon: RiInformationLine },
+    { value: 'poor', label: 'Poor (Requires Servicing / Degraded)', badge: 'Degraded', icon: RiErrorWarningLine },
+];
+
+const statusOptions = [
+    { value: 'available', label: 'Available in Pool Stock', badge: 'Stockroom', icon: RiCheckboxCircleLine },
+    { value: 'assigned', label: 'Assigned to Employee', badge: 'In Use', icon: RiUser3Line },
+    { value: 'in_repair', label: 'Under Servicing / In Repair', badge: 'Servicing', icon: RiToolsLine },
+    { value: 'retired', label: 'Decommissioned / Retired', badge: 'Archived', icon: RiArchiveLine },
+];
+
+const lifecycleStageOptions = [
+    { value: 'acquisition', label: 'Acquisition (Intake / Staging)', badge: 'Phase 1', icon: RiPulseLine },
+    { value: 'deployment', label: 'Deployment (Active In-Service)', badge: 'Phase 2', icon: RiCheckboxCircleLine },
+    { value: 'maintenance', label: 'Maintenance (Servicing / In-Repair)', badge: 'Phase 3', icon: RiToolsLine },
+    { value: 'retirement', label: 'Retirement (Decommissioned)', badge: 'Phase 4', icon: RiArchiveLine },
+];
+
+const maintTypeOptions = [
+    { value: 'repair', label: 'Repair', badge: 'Fix', icon: RiToolsLine },
+    { value: 'upgrade', label: 'Hardware Upgrade', badge: 'Enhance', icon: RiSpeedUpLine },
+    { value: 'preventive', label: 'Preventive Servicing', badge: 'Checkup', icon: RiShieldCheckLine },
+    { value: 'inspection', label: 'Inspection / Audit', badge: 'Audit', icon: RiInformationLine },
+    { value: 'replacement', label: 'Component Replacement', badge: 'Parts', icon: RiExchangeLine },
+];
+
+const maintStatusOptions = [
+    { value: 'in_progress', label: 'In Progress', badge: 'Active', icon: RiPulseLine },
+    { value: 'scheduled', label: 'Scheduled', badge: 'Upcoming', icon: RiTimeLine },
+    { value: 'completed', label: 'Completed', badge: 'Resolved', icon: RiCheckboxCircleLine },
+];
 
 export default function DevicesShow({ device }) {
     const [isEditing, setIsEditing] = useState(false);
@@ -877,17 +914,14 @@ export default function DevicesShow({ device }) {
                                             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
                                                 Physical Condition <span className="text-rose-500">*</span>
                                             </label>
-                                            <select
+                                            <CustomSelect
                                                 value={editData.condition}
-                                                onChange={(e) => setEditData('condition', e.target.value)}
-                                                className="w-full text-sm rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 font-semibold py-2.5 px-3.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
-                                                required
-                                            >
-                                                <option value="excellent">Excellent (Like New / Minimal Wear)</option>
-                                                <option value="good">Good (Normal Operational Wear)</option>
-                                                <option value="fair">Fair (Noticeable Scratches / Moderate Wear)</option>
-                                                <option value="poor">Poor (Requires Servicing / Degraded)</option>
-                                            </select>
+                                                onChange={(val) => setEditData('condition', val)}
+                                                options={conditionOptions}
+                                                placeholder="Select physical condition..."
+                                                size="md"
+                                                className="w-full"
+                                            />
                                             {editErrors.condition && (
                                                 <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400 font-medium flex items-center gap-1">
                                                     <RiErrorWarningLine className="w-3.5 h-3.5 shrink-0" />
@@ -900,17 +934,14 @@ export default function DevicesShow({ device }) {
                                             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
                                                 Fleet Availability Status <span className="text-rose-500">*</span>
                                             </label>
-                                            <select
+                                            <CustomSelect
                                                 value={editData.status}
-                                                onChange={(e) => setEditData('status', e.target.value)}
-                                                className="w-full text-sm rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 font-semibold py-2.5 px-3.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
-                                                required
-                                            >
-                                                <option value="available">Available in Pool Stock</option>
-                                                <option value="assigned">Assigned to Employee</option>
-                                                <option value="in_repair">Under Servicing / In Repair</option>
-                                                <option value="retired">Decommissioned / Retired</option>
-                                            </select>
+                                                onChange={(val) => setEditData('status', val)}
+                                                options={statusOptions}
+                                                placeholder="Select fleet status..."
+                                                size="md"
+                                                className="w-full"
+                                            />
                                             {editErrors.status && (
                                                 <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400 font-medium flex items-center gap-1">
                                                     <RiErrorWarningLine className="w-3.5 h-3.5 shrink-0" />
@@ -1169,37 +1200,37 @@ export default function DevicesShow({ device }) {
                                         <div key={log.id} className="p-4 rounded-xl border border-slate-200/80 dark:border-zinc-800 bg-slate-50/80 dark:bg-zinc-800/60 text-xs">
                                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                                 <div className="flex items-center gap-2">
-                                                    <span className={`px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md ${
-                                                        log.type === 'repair' ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300' :
-                                                        log.type === 'upgrade' ? 'bg-[#026eff]/15 dark:bg-[#031a40]/60 text-[#026eff] dark:text-[#38bdf8]' :
-                                                        'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
+                                                    <span className={`px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider rounded-lg border ${
+                                                        log.type === 'repair' ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border-rose-200 dark:border-rose-900/60' :
+                                                        log.type === 'upgrade' ? 'bg-[#026eff]/15 dark:bg-[#031a40]/60 text-[#026eff] dark:text-[#38bdf8] border-[#026eff]/20' :
+                                                        'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/60'
                                                     }`}>
                                                         {log.type}
                                                     </span>
                                                     <h4 className="font-bold text-slate-900 dark:text-zinc-100 text-sm">{log.title}</h4>
                                                 </div>
                                                 <div className="flex items-center gap-2.5">
-                                                    <span className={`px-2.5 py-0.5 text-[10px] font-semibold rounded-full ${
-                                                        log.status === 'completed' ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300' :
-                                                        'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300'
+                                                    <span className={`px-2.5 py-0.5 text-xs font-bold rounded-full uppercase tracking-wider border ${
+                                                        log.status === 'completed' ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/60' :
+                                                        'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-900/60'
                                                     }`}>
                                                         {log.status.replace('_', ' ')}
                                                     </span>
-                                                    <span className="font-mono font-bold text-slate-900 dark:text-zinc-100">
+                                                    <span className="font-mono font-black text-slate-900 dark:text-zinc-100 text-sm">
                                                         ₱{Number(log.cost).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                                     </span>
                                                     {log.status !== 'completed' && (
                                                         <button
                                                             type="button"
                                                             onClick={() => handleOpenUpdateLog(log)}
-                                                            className="text-[#026eff] dark:text-[#38bdf8] font-semibold hover:underline cursor-pointer"
+                                                            className="text-[#026eff] dark:text-[#38bdf8] font-bold hover:underline cursor-pointer text-xs"
                                                         >
                                                             Assess & Close
                                                         </button>
                                                     )}
                                                 </div>
                                             </div>
-                                            <p className="text-xs text-slate-600 dark:text-zinc-400 mt-2">{log.description}</p>
+                                            <p className="text-xs text-slate-600 dark:text-zinc-300 mt-2 leading-relaxed">{log.description}</p>
                                             
                                             {log.performance_assessment && (
                                                 <div className="mt-2.5 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/50 text-xs text-emerald-800 dark:text-emerald-300 flex items-start gap-2">
@@ -1210,7 +1241,7 @@ export default function DevicesShow({ device }) {
                                                 </div>
                                             )}
 
-                                            <div className="text-[10px] text-slate-400 dark:text-zinc-500 mt-3 flex items-center justify-between border-t border-slate-200/50 dark:border-zinc-700/50 pt-2">
+                                            <div className="text-xs text-slate-500 dark:text-zinc-400 mt-3 flex items-center justify-between border-t border-slate-200/50 dark:border-zinc-700/50 pt-2 font-medium">
                                                 <span>Technician: {log.performed_by || 'Internal IT Services'}</span>
                                                 <span>Started: {new Date(log.started_at).toLocaleDateString()}</span>
                                             </div>
@@ -1359,17 +1390,14 @@ export default function DevicesShow({ device }) {
                         </div>
                         <form onSubmit={handleLifecycleTransition} className="mt-3.5 space-y-3">
                             <div>
-                                <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Target Lifecycle Stage</label>
-                                <select
+                                <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400 mb-1">Target Lifecycle Stage</label>
+                                <CustomSelect
                                     value={lifecycleData.to_stage}
-                                    onChange={(e) => setLifecycleData('to_stage', e.target.value)}
-                                    className="mt-1 w-full text-xs rounded-xl border-slate-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 font-semibold"
-                                >
-                                    <option value="acquisition">Acquisition (Intake / Staging)</option>
-                                    <option value="deployment">Deployment (Active In-Service)</option>
-                                    <option value="maintenance">Maintenance (Servicing / In-Repair)</option>
-                                    <option value="retirement">Retirement (Decommissioned)</option>
-                                </select>
+                                    onChange={(val) => setLifecycleData('to_stage', val)}
+                                    options={lifecycleStageOptions}
+                                    placeholder="Select lifecycle stage..."
+                                    className="w-full"
+                                />
                             </div>
                             <div>
                                 <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Audit Notes / Reason</label>
@@ -1420,18 +1448,14 @@ export default function DevicesShow({ device }) {
                         <form onSubmit={handleCreateMaintenance} className="mt-3.5 space-y-3">
                             <div className="grid grid-cols-2 gap-2.5">
                                 <div>
-                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Activity Type</label>
-                                    <select
+                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400 mb-1">Activity Type</label>
+                                    <CustomSelect
                                         value={maintData.type}
-                                        onChange={(e) => setMaintData('type', e.target.value)}
-                                        className="mt-1 w-full text-xs rounded-xl border-slate-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-                                    >
-                                        <option value="repair">Repair</option>
-                                        <option value="upgrade">Hardware Upgrade</option>
-                                        <option value="preventive">Preventive Servicing</option>
-                                        <option value="inspection">Inspection / Audit</option>
-                                        <option value="replacement">Component Replacement</option>
-                                    </select>
+                                        onChange={(val) => setMaintData('type', val)}
+                                        options={maintTypeOptions}
+                                        placeholder="Select type..."
+                                        className="w-full"
+                                    />
                                 </div>
                                 <div>
                                     <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Cost (₱)</label>
@@ -1480,16 +1504,14 @@ export default function DevicesShow({ device }) {
                             </div>
                             <div className="grid grid-cols-2 gap-2.5 items-center">
                                 <div>
-                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Status</label>
-                                    <select
+                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400 mb-1">Status</label>
+                                    <CustomSelect
                                         value={maintData.status}
-                                        onChange={(e) => setMaintData('status', e.target.value)}
-                                        className="mt-1 w-full text-xs rounded-xl border-slate-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-                                    >
-                                        <option value="in_progress">In Progress</option>
-                                        <option value="scheduled">Scheduled</option>
-                                        <option value="completed">Completed</option>
-                                    </select>
+                                        onChange={(val) => setMaintData('status', val)}
+                                        options={maintStatusOptions}
+                                        placeholder="Select status..."
+                                        className="w-full"
+                                    />
                                 </div>
                                 <div className="mt-4">
                                     <label className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-700 dark:text-zinc-300">
