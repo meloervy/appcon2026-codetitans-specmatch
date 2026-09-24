@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\UserRole;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -34,6 +35,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'role' => UserRole::class,
         ];
     }
 
@@ -42,7 +44,7 @@ class User extends Authenticatable
      */
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return $this->role === UserRole::Admin;
     }
 
     /**
@@ -50,7 +52,7 @@ class User extends Authenticatable
      */
     public function isManager(): bool
     {
-        return in_array($this->role, ['admin', 'manager'], true);
+        return in_array($this->role, [UserRole::Admin, UserRole::Manager], true);
     }
 
     /**
@@ -58,15 +60,19 @@ class User extends Authenticatable
      */
     public function isTechnician(): bool
     {
-        return in_array($this->role, ['admin', 'manager', 'technician'], true);
+        return in_array($this->role, [UserRole::Admin, UserRole::Manager, UserRole::Technician], true);
     }
 
     /**
      * Check if user has a specific role.
      */
-    public function hasRole(string $role): bool
+    public function hasRole(string|UserRole $role): bool
     {
-        return $this->role === $role;
+        if ($role instanceof UserRole) {
+            return $this->role === $role;
+        }
+
+        return $this->role === UserRole::tryFrom($role);
     }
 
     /**
@@ -78,13 +84,7 @@ class User extends Authenticatable
             return $this->job_title;
         }
 
-        return match ($this->role) {
-            'admin' => 'IT Administrator',
-            'manager' => 'IT Asset Manager',
-            'technician' => 'Hardware Technician',
-            'viewer' => 'IT Auditor',
-            default => 'Enterprise Staff',
-        };
+        return $this->role?->title() ?? 'Enterprise Staff';
     }
 
     /**

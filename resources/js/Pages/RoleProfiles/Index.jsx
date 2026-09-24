@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import CustomSelect from '@/Components/CustomSelect';
 import ExpandableCardContainer from '@/Components/ui/ExpandableCard';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import {
     RiShieldUserLine,
@@ -13,9 +14,15 @@ import {
     RiEditLine,
     RiSparklingLine,
     RiTeamLine,
+    RiCloseLine,
+    RiFlashlightLine,
 } from 'react-icons/ri';
 
 export default function RoleProfilesIndex({ profiles }) {
+    const { auth } = usePage().props;
+    const user = auth?.user;
+    const isAdminOrManager = ['admin', 'manager'].includes(user?.role);
+
     const [showModal, setShowModal] = useState(false);
     const [editingProfile, setEditingProfile] = useState(null);
 
@@ -234,10 +241,11 @@ export default function RoleProfilesIndex({ profiles }) {
 
             {/* AI Match Engine Criteria Note */}
             <div className="p-4 rounded-2xl bg-[#026eff]/10 dark:bg-[#031a40]/40 border border-[#026eff]/20 text-xs">
-                <span className="font-bold text-[#026eff] dark:text-[#38bdf8] block mb-1">
-                    ⚡ Match Engine Scoring Directive
+                <span className="font-bold text-[#026eff] dark:text-[#38bdf8] flex items-center gap-1.5 mb-1 text-xs">
+                    <RiFlashlightLine className="w-4 h-4" />
+                    <span>Match Engine Scoring Directive</span>
                 </span>
-                <p className="text-slate-600 dark:text-zinc-400 leading-relaxed">
+                <p className="text-slate-600 dark:text-zinc-400 leading-relaxed text-xs">
                     Devices evaluated for this role receive fit scoring based on RAM capacity (35%), CPU computing tier (30%), Storage architecture (15%), GPU capabilities (10%), and Form Factor (10%). Units exceeding requirements by &gt;50% RAM or 2 CPU tiers are tagged as overprovisioned donors for dynamic Bridge Swapping.
                 </p>
             </div>
@@ -247,21 +255,23 @@ export default function RoleProfilesIndex({ profiles }) {
                 <button
                     type="button"
                     onClick={close}
-                    className="px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-700 text-xs font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition"
+                    className="px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-700 text-xs font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition cursor-pointer"
                 >
                     Close
                 </button>
-                <button
-                    type="button"
-                    onClick={() => {
-                        close();
-                        openEdit(profile);
-                    }}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#026eff] hover:bg-[#0256cc] text-white text-xs font-bold shadow-xs transition"
-                >
-                    <RiEditLine className="w-4 h-4" />
-                    Edit Profile Configuration
-                </button>
+                {isAdminOrManager && (
+                    <button
+                        type="button"
+                        onClick={() => {
+                            close();
+                            openEdit(profile);
+                        }}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#026eff] hover:bg-[#0256cc] text-white text-xs font-bold shadow-xs transition cursor-pointer"
+                    >
+                        <RiEditLine className="w-4 h-4" />
+                        Edit Profile Configuration
+                    </button>
+                )}
             </div>
         </div>
     );
@@ -276,13 +286,15 @@ export default function RoleProfilesIndex({ profiles }) {
                             Objective hardware specifications per job function for scoring and mismatch detection.
                         </p>
                     </div>
-                    <button
-                        onClick={openCreate}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#026eff] text-sm font-semibold text-white hover:bg-[#0256cc] shadow-sm transition self-start sm:self-auto"
-                    >
-                        <RiAddLine className="w-4 h-4" />
-                        Create Role Profile
-                    </button>
+                    {isAdminOrManager && (
+                        <button
+                            onClick={openCreate}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#026eff] text-sm font-semibold text-white hover:bg-[#0256cc] shadow-sm transition self-start sm:self-auto cursor-pointer"
+                        >
+                            <RiAddLine className="w-4 h-4" />
+                            Create Role Profile
+                        </button>
+                    )}
                 </div>
             }
         >
@@ -306,23 +318,24 @@ export default function RoleProfilesIndex({ profiles }) {
                             </h3>
                             <button
                                 onClick={() => setShowModal(false)}
-                                className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 text-sm font-bold p-1 rounded-lg"
+                                className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 p-1 rounded-lg transition cursor-pointer"
+                                aria-label="Close modal"
                             >
-                                ✕
+                                <RiCloseLine className="w-5 h-5" />
                             </button>
                         </div>
 
                         <form onSubmit={handleSubmit} className="space-y-4 text-sm">
                             <div>
                                 <label className="block text-xs font-bold uppercase text-slate-700 dark:text-zinc-300">
-                                    Role Title *
+                                    Role Title <span className="text-rose-500 font-bold ml-0.5">*</span>
                                 </label>
                                 <input
                                     type="text"
                                     value={data.name}
                                     onChange={(e) => setData('name', e.target.value)}
                                     placeholder="e.g. Lead Frontend Engineer"
-                                    className="mt-1 w-full rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 text-sm py-2.5 px-3.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
+                                    className="mt-1 w-full rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 text-sm py-2 px-3 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
                                     required
                                 />
                                 {errors.name && (
@@ -332,30 +345,30 @@ export default function RoleProfilesIndex({ profiles }) {
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-bold uppercase text-slate-700 dark:text-zinc-300">
+                                    <label className="block text-xs font-bold uppercase text-slate-700 dark:text-zinc-300 mb-1">
                                         Min CPU Tier
                                     </label>
-                                    <select
+                                    <CustomSelect
                                         value={data.min_cpu_tier}
-                                        onChange={(e) => setData('min_cpu_tier', e.target.value)}
-                                        className="mt-1 w-full rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 text-sm font-medium py-2.5 px-3 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
-                                    >
-                                        <option value="entry">Entry</option>
-                                        <option value="mid">Mid</option>
-                                        <option value="high">High</option>
-                                        <option value="workstation">Workstation</option>
-                                    </select>
+                                        onChange={(val) => setData('min_cpu_tier', val)}
+                                        options={[
+                                            { value: 'entry', label: 'Entry' },
+                                            { value: 'mid', label: 'Mid' },
+                                            { value: 'high', label: 'High' },
+                                            { value: 'workstation', label: 'Workstation' },
+                                        ]}
+                                    />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold uppercase text-slate-700 dark:text-zinc-300">
-                                        Min RAM (GB)
+                                    <label className="block text-xs font-bold uppercase text-slate-700 dark:text-zinc-300 mb-1">
+                                        Min RAM (GB) <span className="text-rose-500 font-bold ml-0.5">*</span>
                                     </label>
                                     <input
                                         type="number"
                                         min="4"
                                         value={data.min_ram_gb}
                                         onChange={(e) => setData('min_ram_gb', parseInt(e.target.value) || 0)}
-                                        className="mt-1 w-full rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 text-sm py-2.5 px-3.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
+                                        className="w-full rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 text-sm py-2 px-3 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
                                         required
                                     />
                                 </div>
@@ -363,33 +376,33 @@ export default function RoleProfilesIndex({ profiles }) {
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-bold uppercase text-slate-700 dark:text-zinc-300">
-                                        Min Storage (GB)
+                                    <label className="block text-xs font-bold uppercase text-slate-700 dark:text-zinc-300 mb-1">
+                                        Min Storage (GB) <span className="text-rose-500 font-bold ml-0.5">*</span>
                                     </label>
                                     <input
                                         type="number"
                                         min="64"
                                         value={data.min_storage_gb}
                                         onChange={(e) => setData('min_storage_gb', parseInt(e.target.value) || 0)}
-                                        className="mt-1 w-full rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 text-sm py-2.5 px-3.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
+                                        className="w-full rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 text-sm py-2 px-3 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
                                         required
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold uppercase text-slate-700 dark:text-zinc-300">
+                                    <label className="block text-xs font-bold uppercase text-slate-700 dark:text-zinc-300 mb-1">
                                         Min GPU Tier
                                     </label>
-                                    <select
+                                    <CustomSelect
                                         value={data.min_gpu_tier}
-                                        onChange={(e) => setData('min_gpu_tier', e.target.value)}
-                                        className="mt-1 w-full rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 text-sm font-medium py-2.5 px-3 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
+                                        onChange={(val) => setData('min_gpu_tier', val)}
                                         disabled={!data.requires_gpu}
-                                    >
-                                        <option value="none">None</option>
-                                        <option value="integrated">Integrated</option>
-                                        <option value="dedicated-entry">Dedicated Entry</option>
-                                        <option value="dedicated-high">Dedicated High</option>
-                                    </select>
+                                        options={[
+                                            { value: 'none', label: 'None' },
+                                            { value: 'integrated', label: 'Integrated' },
+                                            { value: 'dedicated-entry', label: 'Dedicated Entry' },
+                                            { value: 'dedicated-high', label: 'Dedicated High' },
+                                        ]}
+                                    />
                                 </div>
                             </div>
 
@@ -399,7 +412,7 @@ export default function RoleProfilesIndex({ profiles }) {
                                         type="checkbox"
                                         checked={data.requires_gpu}
                                         onChange={(e) => setData('requires_gpu', e.target.checked)}
-                                        className="rounded border-slate-300 dark:border-zinc-600 text-[#026eff] focus:ring-[#026eff] bg-white dark:bg-zinc-700"
+                                        className="rounded border-slate-300 dark:border-zinc-600 text-[#026eff] focus:ring-[#026eff] bg-white dark:bg-zinc-700 cursor-pointer"
                                     />
                                     Requires Dedicated/Capable GPU
                                 </label>
@@ -408,7 +421,7 @@ export default function RoleProfilesIndex({ profiles }) {
                                         type="checkbox"
                                         checked={data.portability_required}
                                         onChange={(e) => setData('portability_required', e.target.checked)}
-                                        className="rounded border-slate-300 dark:border-zinc-600 text-[#026eff] focus:ring-[#026eff] bg-white dark:bg-zinc-700"
+                                        className="rounded border-slate-300 dark:border-zinc-600 text-[#026eff] focus:ring-[#026eff] bg-white dark:bg-zinc-700 cursor-pointer"
                                     />
                                     Portability Required (Laptop Essential)
                                 </label>
@@ -431,14 +444,14 @@ export default function RoleProfilesIndex({ profiles }) {
                                 <button
                                     type="button"
                                     onClick={() => setShowModal(false)}
-                                    className="px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700 transition"
+                                    className="px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700 transition cursor-pointer"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="px-5 py-2 rounded-xl bg-[#026eff] text-white text-xs font-bold hover:bg-[#0256cc] transition shadow-xs"
+                                    className="px-5 py-2 rounded-xl bg-[#026eff] text-white text-xs font-bold hover:bg-[#0256cc] transition shadow-xs cursor-pointer"
                                 >
                                     {editingProfile ? 'Save Changes' : 'Create Profile'}
                                 </button>

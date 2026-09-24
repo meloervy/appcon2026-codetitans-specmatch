@@ -4,9 +4,8 @@ import HardwareImage from '@/Components/HardwareImage';
 import ResizableTh from '@/Components/ResizableTh';
 import { useResizableColumns } from '@/Hooks/useResizableColumns';
 import useOutsideClick from '@/hooks/useOutsideClick';
-import { Head, Link, router, useForm } from '@inertiajs/react';
-import axios from 'axios';
-import { useRef, useState } from 'react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { useEffect, useRef, useState } from 'react';
 import {
     RiMoreFill,
     RiExchangeLine,
@@ -27,9 +26,14 @@ import {
     RiCpuLine,
     RiBuildingLine,
     RiCloseLine,
+    RiArrowUpDownLine,
 } from 'react-icons/ri';
 
 export default function EmployeesIndex({ employees, role_profiles = [], departments = [], stats = {}, filters = {} }) {
+    const { auth } = usePage().props;
+    const user = auth?.user;
+    const isAdminOrManager = ['admin', 'manager'].includes(user?.role);
+
     const [showModal, setShowModal] = useState(false);
     const [editingEmp, setEditingEmp] = useState(null);
     const [wrapText, setWrapText] = useState(false);
@@ -47,19 +51,6 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
             setOpenMenuId(null);
         }
     });
-
-    // Offboarding & Asset Reclamation State
-    const [offboardingEmp, setOffboardingEmp] = useState(null);
-    const [showOffboardModal, setShowOffboardModal] = useState(false);
-    const [offboardForm, setOffboardForm] = useState({
-        reason: 'resignation',
-        condition: 'good',
-        wipe_confirmed: true,
-        notes: '',
-    });
-    const [isOffboarding, setIsOffboarding] = useState(false);
-    const [circulationData, setCirculationData] = useState(null);
-    const [showCirculationModal, setShowCirculationModal] = useState(false);
 
     const initialWidths = {
         employee: 260,
@@ -104,6 +95,32 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
             { preserveState: true, replace: true }
         );
     };
+
+    const isFirstRender = useRef(true);
+
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            router.get(
+                route('employees.index'),
+                {
+                    search,
+                    department,
+                    role_profile_id: roleProfileId,
+                    hardware_status: hardwareStatus,
+                    sort: filters?.sort,
+                    direction: filters?.direction,
+                },
+                { preserveState: true, replace: true, preserveScroll: true }
+            );
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [search, department, roleProfileId, hardwareStatus]);
 
     const handleFilter = (e) => {
         e?.preventDefault();
@@ -201,37 +218,6 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
         }
     };
 
-    const handleOpenOffboard = (emp) => {
-        setOffboardingEmp(emp);
-        setOffboardForm({
-            reason: 'resignation',
-            condition: emp.active_assignment?.device?.condition || 'good',
-            wipe_confirmed: true,
-            notes: '',
-        });
-        setShowOffboardModal(true);
-    };
-
-    const handleConfirmOffboard = async (e) => {
-        e?.preventDefault();
-        if (!offboardingEmp) return;
-        setIsOffboarding(true);
-        try {
-            const res = await axios.post(route('employees.offboard', offboardingEmp.id), offboardForm);
-            setShowOffboardModal(false);
-            if (res.data.circulation_matches && res.data.circulation_matches.length > 0) {
-                setCirculationData(res.data);
-                setShowCirculationModal(true);
-            } else {
-                router.reload();
-            }
-        } catch (err) {
-            alert(err.response?.data?.message || 'Failed to offboard employee.');
-        } finally {
-            setIsOffboarding(false);
-        }
-    };
-
     return (
         <AuthenticatedLayout
             header={
@@ -243,22 +229,26 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <a
-                            href={route('employees.export.pdf')}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700/60 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-200 dark:hover:bg-zinc-700 transition"
-                        >
-                            <RiFilePdfLine className="w-4 h-4 text-rose-500" />
-                            <span>Export Audit PDF</span>
-                        </a>
-                        <button
-                            onClick={openCreate}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#026eff] text-xs font-semibold text-white hover:bg-[#0256cc] shadow-2xs transition cursor-pointer"
-                        >
-                            <RiUserAddLine className="w-4 h-4" />
-                            <span>Add Employee</span>
-                        </button>
+                        {isAdminOrManager && (
+                            <a
+                                href={route('employees.export.pdf')}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700/60 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-200 dark:hover:bg-zinc-700 transition"
+                            >
+                                <RiFilePdfLine className="w-4 h-4 text-rose-500" />
+                                <span>Export Audit PDF</span>
+                            </a>
+                        )}
+                        {isAdminOrManager && (
+                            <button
+                                onClick={openCreate}
+                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#026eff] text-xs font-semibold text-white hover:bg-[#0256cc] shadow-2xs transition cursor-pointer"
+                            >
+                                <RiUserAddLine className="w-4 h-4" />
+                                <span>Add Employee</span>
+                            </button>
+                        )}
                     </div>
                 </div>
             }
@@ -329,8 +319,9 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
                     </div>
                     <div className="mt-2 flex items-center gap-1.5 text-[11px]">
                         {stats?.unassigned > 0 ? (
-                            <span className="text-amber-600 dark:text-amber-400 font-medium">
-                                ● Ready for AI Match & Issue
+                            <span className="text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block"></span>
+                                <span>Ready for AI Match &amp; Issue</span>
                             </span>
                         ) : (
                             <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
@@ -462,8 +453,10 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
                 {/* Column Adjustment & Display Control Toolbar */}
                 <div className="px-4 py-2 bg-slate-50/70 dark:bg-zinc-800/40 border-b border-slate-200/70 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2 text-xs">
                     <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-400 text-[11px]">
-                        <span className="inline-flex items-center justify-center w-4 h-4 rounded bg-[#026eff]/10 text-[#026eff] font-bold text-[10px]">↕</span>
-                        <span>Click any header to sort • Drag dividers to resize</span>
+                        <span className="inline-flex items-center justify-center w-4 h-4 rounded bg-[#026eff]/10 text-[#026eff]">
+                            <RiArrowUpDownLine className="w-3 h-3" />
+                        </span>
+                        <span>Click any header to sort &bull; Drag dividers to resize</span>
                     </div>
                     <div className="flex items-center gap-2 ml-auto">
                         <button
@@ -651,14 +644,6 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
                                         ...(device
                                             ? [
                                                   {
-                                                      label: 'Reclaim',
-                                                      menuLabel: 'Reclaim to Pool',
-                                                      subtitle: 'NIST SP 800-88 sanitize & recirculate',
-                                                      onClick: () => handleOpenOffboard(emp),
-                                                      icon: RiRefreshLine,
-                                                      variant: 'teal',
-                                                  },
-                                                  {
                                                       label: 'Unassign',
                                                       menuLabel: 'Unassign Hardware',
                                                       subtitle: 'Return unit to available pool',
@@ -772,7 +757,8 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
 
                                             {/* Actions */}
                                             <td className="py-4 px-5 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                                                {actions.length >= 2 ? (
+                                                {isAdminOrManager ? (
+                                                    actions.length >= 2 ? (
                                                     <div className="relative inline-flex items-center justify-end">
                                                         <button
                                                             type="button"
@@ -820,9 +806,6 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
                                                                         if (act.variant === 'primary') {
                                                                             badgeStyle = 'bg-[#026eff]/10 dark:bg-[#026eff]/20 text-[#026eff] dark:text-[#38bdf8] group-hover:bg-[#026eff] group-hover:text-white';
                                                                             hoverStyle = 'text-slate-800 dark:text-zinc-100 hover:bg-[#026eff]/10 dark:hover:bg-[#026eff]/20';
-                                                                        } else if (act.variant === 'teal') {
-                                                                            badgeStyle = 'bg-teal-500/10 dark:bg-teal-500/20 text-teal-600 dark:text-teal-400 group-hover:bg-teal-500 group-hover:text-white';
-                                                                            hoverStyle = 'text-slate-800 dark:text-zinc-100 hover:bg-teal-500/10 dark:hover:bg-teal-500/20';
                                                                         } else if (act.variant === 'amber') {
                                                                             badgeStyle = 'bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 group-hover:bg-amber-500 group-hover:text-white';
                                                                             hoverStyle = 'text-slate-800 dark:text-zinc-100 hover:bg-amber-500/10 dark:hover:bg-amber-500/20';
@@ -905,8 +888,11 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
                                                             )
                                                         )}
                                                     </div>
-                                                )}
-                                            </td>
+                                                )
+                                            ) : (
+                                                <span className="text-xs text-slate-400 dark:text-zinc-500 italic">View Only</span>
+                                            )}
+                                        </td>
                                         </tr>
                                     );
                                 })
@@ -958,7 +944,9 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
 
                         <form onSubmit={handleSubmit} className="space-y-4 text-sm">
                             <div>
-                                <label className="block text-xs font-bold uppercase text-slate-700 dark:text-zinc-300">Full Name *</label>
+                                <label className="block text-xs font-bold uppercase text-slate-700 dark:text-zinc-300">
+                                    Full Name <span className="text-rose-500 font-bold ml-0.5">*</span>
+                                </label>
                                 <input
                                     type="text"
                                     value={data.name}
@@ -971,7 +959,9 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold uppercase text-slate-700 dark:text-zinc-300">Department *</label>
+                                <label className="block text-xs font-bold uppercase text-slate-700 dark:text-zinc-300">
+                                    Department <span className="text-rose-500 font-bold ml-0.5">*</span>
+                                </label>
                                 <input
                                     type="text"
                                     value={data.department}
@@ -1088,244 +1078,6 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
                                 </button>
                             </div>
                         </form>
-                    </div>
-                </div>
-            )}
-
-            {/* Offboard & Asset Reclamation Modal */}
-            {showOffboardModal && offboardingEmp && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 relative overflow-hidden">
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <span className="text-[10px] font-extrabold uppercase tracking-wider text-teal-600 dark:text-teal-400">
-                                    Lifecycle State Transition
-                                </span>
-                                <h3 className="text-lg font-bold text-slate-900 dark:text-zinc-100">
-                                    Offboard Staff &amp; Reclaim Hardware
-                                </h3>
-                                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
-                                    Returns asset to stockroom pool in Reclaimed status with automatic recirculation matching.
-                                </p>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => setShowOffboardModal(false)}
-                                disabled={isOffboarding}
-                                className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 transition cursor-pointer"
-                            >
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-
-                        {/* Staff & Asset Overview Card */}
-                        <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200/80 dark:border-zinc-700/60 flex items-center justify-between gap-3 text-xs">
-                            <div>
-                                <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500 block">Departing Employee</span>
-                                <div className="font-bold text-slate-900 dark:text-zinc-100">{offboardingEmp.name}</div>
-                                <div className="text-[11px] text-slate-500 dark:text-zinc-400">{offboardingEmp.department} &bull; {offboardingEmp.role_profile?.name || 'General Staff'}</div>
-                            </div>
-                            {offboardingEmp.active_assignment?.device && (
-                                <div className="text-right">
-                                    <span className="text-[10px] uppercase font-bold text-teal-600 dark:text-teal-400 block">Reclaimed Asset</span>
-                                    <div className="font-mono font-bold text-slate-900 dark:text-zinc-100">
-                                        {offboardingEmp.active_assignment.device.asset_tag}
-                                    </div>
-                                    <div className="text-[11px] text-slate-500 dark:text-zinc-400">
-                                        {offboardingEmp.active_assignment.device.brand} {offboardingEmp.active_assignment.device.model}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        <form onSubmit={handleConfirmOffboard} className="space-y-4">
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs font-bold uppercase text-slate-700 dark:text-zinc-300 mb-1">
-                                        Trigger Reason *
-                                    </label>
-                                    <select
-                                        value={offboardForm.reason}
-                                        onChange={(e) => setOffboardForm({ ...offboardForm, reason: e.target.value })}
-                                        className="w-full text-xs rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 py-2 px-3 focus:border-[#026eff] shadow-2xs"
-                                    >
-                                        <option value="resignation">Resignation / Departure</option>
-                                        <option value="role_transition">Internal Role Transition</option>
-                                        <option value="hardware_upgrade">Hardware Upgrade / Refresh</option>
-                                        <option value="contract_end">Contract Conclusion</option>
-                                        <option value="other">Other Administrative Reclamation</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs font-bold uppercase text-slate-700 dark:text-zinc-300 mb-1">
-                                        Inspected Condition *
-                                    </label>
-                                    <select
-                                        value={offboardForm.condition}
-                                        onChange={(e) => setOffboardForm({ ...offboardForm, condition: e.target.value })}
-                                        className="w-full text-xs rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 py-2 px-3 focus:border-[#026eff] shadow-2xs capitalize"
-                                    >
-                                        <option value="excellent">Excellent (Like New)</option>
-                                        <option value="good">Good (Normal Wear)</option>
-                                        <option value="fair">Fair (Usable, Minor Scuffs)</option>
-                                        <option value="needs_repair">Needs Repair (Move to Maintenance)</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            {/* Data Sanitization Verification Checkbox */}
-                            <div className="p-3 rounded-xl bg-teal-50 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-900/50">
-                                <label className="flex items-start gap-2.5 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={offboardForm.wipe_confirmed}
-                                        onChange={(e) => setOffboardForm({ ...offboardForm, wipe_confirmed: e.target.checked })}
-                                        className="rounded border-teal-400 text-teal-600 focus:ring-teal-500 mt-0.5"
-                                        required
-                                    />
-                                    <div className="text-xs">
-                                        <span className="font-bold text-teal-950 dark:text-teal-200 block">
-                                            Confirm Data Wipe &amp; Sanitization
-                                        </span>
-                                        <span className="text-[11px] text-teal-800 dark:text-teal-300/90 leading-tight block mt-0.5">
-                                            NIST SP 800-88 compliant factory reset executed. No company credentials or confidential user data remain on storage.
-                                        </span>
-                                    </div>
-                                </label>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold uppercase text-slate-700 dark:text-zinc-300 mb-1">
-                                    Reclamation Notes / Accessories Returned
-                                </label>
-                                <textarea
-                                    rows={2}
-                                    value={offboardForm.notes}
-                                    onChange={(e) => setOffboardForm({ ...offboardForm, notes: e.target.value })}
-                                    placeholder="Power adapter returned, external peripherals inspected, physical asset condition..."
-                                    className="w-full text-xs rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 py-2 px-3 focus:border-[#026eff] shadow-2xs resize-none"
-                                />
-                            </div>
-
-                            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-zinc-800">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowOffboardModal(false)}
-                                    disabled={isOffboarding}
-                                    className="px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-700 text-xs font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition cursor-pointer"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={isOffboarding || !offboardForm.wipe_confirmed}
-                                    className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-sm transition disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
-                                >
-                                    {isOffboarding ? 'Processing Reclamation...' : 'Confirm Offboard & Reclaim'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* Recirculation Opportunities Modal (Immediate Re-circulation Matching) */}
-            {showCirculationModal && circulationData && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl max-w-2xl w-full p-6 shadow-2xl space-y-5 relative overflow-hidden">
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-teal-100 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 mb-1.5">
-                                    ⚡ Asset Returned to Pool
-                                </span>
-                                <h3 className="text-lg font-bold text-slate-900 dark:text-zinc-100">
-                                    Immediate Recirculation Opportunities ({circulationData.circulation_matches?.length || 0})
-                                </h3>
-                                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
-                                    Device <strong>{circulationData.device?.asset_tag}</strong> ({circulationData.device?.brand} {circulationData.device?.model}) is sanitized. The matching engine identified open candidate needs that this asset satisfies:
-                                </p>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setShowCirculationModal(false);
-                                    router.reload();
-                                }}
-                                className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 transition cursor-pointer"
-                            >
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-
-                        {/* Candidates List */}
-                        <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
-                            {circulationData.circulation_matches.map((match, mIdx) => (
-                                <div
-                                    key={match.employee.id}
-                                    className="p-3.5 rounded-2xl border border-slate-200/80 dark:border-zinc-800 bg-slate-50/60 dark:bg-zinc-800/40 flex items-center justify-between gap-3 hover:border-teal-500/40 transition"
-                                >
-                                    <div className="flex items-center gap-3 min-w-0">
-                                        <span className="w-7 h-7 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center text-xs font-black shrink-0">
-                                            #{mIdx + 1}
-                                        </span>
-                                        <div className="min-w-0">
-                                            <div className="flex items-center gap-2">
-                                                <h4 className="font-bold text-slate-900 dark:text-zinc-100 text-xs truncate">
-                                                    {match.employee.name}
-                                                </h4>
-                                                <span className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium">
-                                                    ({match.employee.department})
-                                                </span>
-                                            </div>
-                                            <div className="text-[11px] text-slate-600 dark:text-zinc-300 mt-0.5">
-                                                Role: {match.employee.role_profile?.name || 'General Staff'} &bull; <span className="text-teal-600 dark:text-teal-400 font-semibold">{match.status}</span>
-                                            </div>
-                                            <div className="text-[10px] text-slate-400 dark:text-zinc-500 mt-0.5">
-                                                Deficit Context: {match.previous_deficit}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-3 shrink-0">
-                                        <div className="text-right">
-                                            <div className="text-xs font-black text-slate-900 dark:text-zinc-100">
-                                                {Math.round(match.score * 100)}%
-                                            </div>
-                                            <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-[#0aceb3]/20 text-[#0aceb3]">
-                                                {match.fit_grade}
-                                            </span>
-                                        </div>
-                                        <Link
-                                            href={route('match.index', { employee_id: match.employee.id })}
-                                            className="px-3 py-1.5 rounded-xl bg-[#026eff] hover:bg-[#0256cc] text-white text-xs font-bold shadow-2xs transition"
-                                        >
-                                            Deploy Asset &rarr;
-                                        </Link>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-zinc-800">
-                            <span className="text-xs text-slate-500 dark:text-zinc-400">
-                                Asset will remain staged in pool until deployed.
-                            </span>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setShowCirculationModal(false);
-                                    router.reload();
-                                }}
-                                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 text-xs font-bold transition cursor-pointer"
-                            >
-                                Keep in Stockroom Pool
-                            </button>
-                        </div>
                     </div>
                 </div>
             )}

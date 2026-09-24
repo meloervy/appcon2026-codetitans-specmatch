@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import CustomSelect from '@/Components/CustomSelect';
 import HardwareImage from '@/Components/HardwareImage';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import axios from 'axios';
 import { useState } from 'react';
 import {
@@ -10,10 +10,10 @@ import {
     RiExchangeLine,
     RiEditLine,
     RiArchiveLine,
+    RiDeleteBinLine,
     RiCloseLine,
     RiMapPinLine,
     RiCheckLine,
-    RiCheckboxCircleLine,
     RiArrowRightLine,
     RiShieldCheckLine,
     RiSaveLine,
@@ -36,13 +36,14 @@ import {
     RiTv2Line,
     RiDatabase2Line,
     RiEqualizerLine,
+    RiCheckboxCircleLine,
 } from 'react-icons/ri';
 
 const conditionOptions = [
-    { value: 'excellent', label: 'Excellent (Like New / Minimal Wear)', badge: 'Top Spec', icon: RiCheckboxCircleLine },
-    { value: 'good', label: 'Good (Normal Operational Wear)', badge: 'Standard', icon: RiCheckLine },
-    { value: 'fair', label: 'Fair (Noticeable Scratches / Moderate Wear)', badge: 'Moderate', icon: RiInformationLine },
-    { value: 'poor', label: 'Poor (Requires Servicing / Degraded)', badge: 'Degraded', icon: RiErrorWarningLine },
+    { value: 'excellent', label: 'Excellent (Like New / Minimal Wear)', badge: 'Like New', icon: RiCheckboxCircleLine },
+    { value: 'good', label: 'Good (Normal Operational Wear)', badge: 'Standard', icon: RiCheckboxCircleLine },
+    { value: 'fair', label: 'Fair (Noticeable Scratches / Moderate Wear)', badge: 'Used', icon: RiInformationLine },
+    { value: 'poor', label: 'Poor (Requires Servicing / Degraded)', badge: 'Degraded', icon: RiToolsLine },
 ];
 
 const statusOptions = [
@@ -52,29 +53,14 @@ const statusOptions = [
     { value: 'retired', label: 'Decommissioned / Retired', badge: 'Archived', icon: RiArchiveLine },
 ];
 
-const lifecycleStageOptions = [
-    { value: 'acquisition', label: 'Acquisition (Intake / Staging)', badge: 'Phase 1', icon: RiPulseLine },
-    { value: 'deployment', label: 'Deployment (Active In-Service)', badge: 'Phase 2', icon: RiCheckboxCircleLine },
-    { value: 'reclaimed', label: 'Reclaimed (Sanitized in Pool Stock)', badge: 'Stock', icon: RiCheckboxCircleLine },
-    { value: 'maintenance', label: 'Maintenance (Servicing / In-Repair)', badge: 'Phase 3', icon: RiToolsLine },
-    { value: 'retirement', label: 'Retirement (Decommissioned)', badge: 'Phase 4', icon: RiArchiveLine },
-];
-
-const maintTypeOptions = [
-    { value: 'repair', label: 'Repair', badge: 'Fix', icon: RiToolsLine },
-    { value: 'upgrade', label: 'Hardware Upgrade', badge: 'Enhance', icon: RiSpeedUpLine },
-    { value: 'preventive', label: 'Preventive Servicing', badge: 'Checkup', icon: RiShieldCheckLine },
-    { value: 'inspection', label: 'Inspection / Audit', badge: 'Audit', icon: RiInformationLine },
-    { value: 'replacement', label: 'Component Replacement', badge: 'Parts', icon: RiExchangeLine },
-];
-
-const maintStatusOptions = [
-    { value: 'in_progress', label: 'In Progress', badge: 'Active', icon: RiPulseLine },
-    { value: 'scheduled', label: 'Scheduled', badge: 'Upcoming', icon: RiTimeLine },
-    { value: 'completed', label: 'Completed', badge: 'Resolved', icon: RiCheckboxCircleLine },
-];
-
 export default function DevicesShow({ device }) {
+    const { auth } = usePage().props;
+    const user = auth?.user;
+    const isAdminOrManager = ['admin', 'manager'].includes(user?.role);
+    const canPerformMaintenance = ['admin', 'manager', 'technician'].includes(user?.role);
+    const isAssigned = device.status === 'assigned' || Boolean(device.active_assignment);
+    const [isDeleting, setIsDeleting] = useState(false);
+
     const [isEditing, setIsEditing] = useState(false);
     const [showLifecycleModal, setShowLifecycleModal] = useState(false);
     const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
@@ -262,6 +248,19 @@ export default function DevicesShow({ device }) {
         }
     };
 
+    const handleDelete = () => {
+        if (isAssigned) {
+            alert('Cannot delete an assigned device. Please unassign or reclaim the asset first.');
+            return;
+        }
+        if (confirm(`Are you sure you want to permanently delete device ${device.asset_tag}? This action cannot be undone.`)) {
+            router.delete(route('devices.destroy', device.id), {
+                onStart: () => setIsDeleting(true),
+                onFinish: () => setIsDeleting(false),
+            });
+        }
+    };
+
     const stages = [
         { key: 'acquisition', label: '1. Acquisition', desc: 'Procurement & Staging' },
         { key: 'deployment', label: '2. Deployment', desc: 'Active Production' },
@@ -437,37 +436,43 @@ export default function DevicesShow({ device }) {
                                 </Link>
 
                                 {/* 2. Log Servicing Button */}
-                                <button
-                                    type="button"
-                                    onClick={() => setShowMaintenanceModal(true)}
-                                    className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 text-xs font-semibold text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition shadow-2xs cursor-pointer"
-                                >
-                                    <RiToolsLine className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                                    <span>Log Servicing</span>
-                                </button>
+                                {canPerformMaintenance && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowMaintenanceModal(true)}
+                                        className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 text-xs font-semibold text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition shadow-2xs cursor-pointer"
+                                    >
+                                        <RiToolsLine className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                                        <span>Log Servicing</span>
+                                    </button>
+                                )}
 
                                 {/* 3. Transition Stage Button */}
-                                <button
-                                    type="button"
-                                    onClick={() => setShowLifecycleModal(true)}
-                                    className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-xl bg-[#026eff]/10 dark:bg-[#031a40]/40 border border-[#026eff]/20 dark:border-[#031a40]/60 text-xs font-semibold text-[#026eff] dark:text-[#38bdf8] hover:bg-[#026eff]/20 transition shadow-2xs cursor-pointer"
-                                >
-                                    <RiExchangeLine className="w-4 h-4" />
-                                    <span>Transition Stage</span>
-                                </button>
+                                {isAdminOrManager && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowLifecycleModal(true)}
+                                        className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-xl bg-[#026eff]/10 dark:bg-[#031a40]/40 border border-[#026eff]/20 dark:border-[#031a40]/60 text-xs font-semibold text-[#026eff] dark:text-[#38bdf8] hover:bg-[#026eff]/20 transition shadow-2xs cursor-pointer"
+                                    >
+                                        <RiExchangeLine className="w-4 h-4" />
+                                        <span>Transition Stage</span>
+                                    </button>
+                                )}
 
                                 {/* 4. Edit Asset Button */}
-                                <button
-                                    type="button"
-                                    onClick={() => setIsEditing(true)}
-                                    className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-xl border border-slate-200/80 dark:border-zinc-700/60 bg-white dark:bg-zinc-800 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-700 transition shadow-2xs cursor-pointer"
-                                >
-                                    <RiEditLine className="w-4 h-4 text-slate-500 dark:text-zinc-400" />
-                                    <span>Edit Asset</span>
-                                </button>
+                                {isAdminOrManager && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsEditing(true)}
+                                        className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-xl border border-slate-200/80 dark:border-zinc-700/60 bg-white dark:bg-zinc-800 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-700 transition shadow-2xs cursor-pointer"
+                                    >
+                                        <RiEditLine className="w-4 h-4 text-slate-500 dark:text-zinc-400" />
+                                        <span>Edit Asset</span>
+                                    </button>
+                                )}
 
                                 {/* 5. Retire Asset Button */}
-                                {device.status !== 'retired' && (
+                                {isAdminOrManager && device.status !== 'retired' && (
                                     <button
                                         type="button"
                                         onClick={handleRetire}
@@ -475,6 +480,24 @@ export default function DevicesShow({ device }) {
                                     >
                                         <RiArchiveLine className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                                         <span>Retire</span>
+                                    </button>
+                                )}
+
+                                {/* 6. Delete Asset Button */}
+                                {isAdminOrManager && (
+                                    <button
+                                        type="button"
+                                        disabled={isAssigned || isDeleting}
+                                        onClick={handleDelete}
+                                        title={isAssigned ? 'Assigned devices cannot be deleted. Unassign or reclaim first.' : 'Permanently delete this asset record'}
+                                        className={`h-8 inline-flex items-center gap-1.5 px-3 rounded-xl border text-xs font-semibold transition shadow-2xs ${
+                                            isAssigned
+                                                ? 'opacity-40 cursor-not-allowed border-slate-200 dark:border-zinc-800 text-slate-400 dark:text-zinc-600'
+                                                : 'border-rose-200/80 dark:border-rose-900/60 bg-white dark:bg-zinc-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer'
+                                        }`}
+                                    >
+                                        <RiDeleteBinLine className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                                        <span>{isDeleting ? 'Deleting...' : 'Delete'}</span>
                                     </button>
                                 )}
                             </>
@@ -1202,37 +1225,37 @@ export default function DevicesShow({ device }) {
                                         <div key={log.id} className="p-4 rounded-xl border border-slate-200/80 dark:border-zinc-800 bg-slate-50/80 dark:bg-zinc-800/60 text-xs">
                                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                                 <div className="flex items-center gap-2">
-                                                    <span className={`px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider rounded-lg border ${
-                                                        log.type === 'repair' ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border-rose-200 dark:border-rose-900/60' :
-                                                        log.type === 'upgrade' ? 'bg-[#026eff]/15 dark:bg-[#031a40]/60 text-[#026eff] dark:text-[#38bdf8] border-[#026eff]/20' :
-                                                        'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/60'
+                                                    <span className={`px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md ${
+                                                        log.type === 'repair' ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300' :
+                                                        log.type === 'upgrade' ? 'bg-[#026eff]/15 dark:bg-[#031a40]/60 text-[#026eff] dark:text-[#38bdf8]' :
+                                                        'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
                                                     }`}>
                                                         {log.type}
                                                     </span>
                                                     <h4 className="font-bold text-slate-900 dark:text-zinc-100 text-sm">{log.title}</h4>
                                                 </div>
                                                 <div className="flex items-center gap-2.5">
-                                                    <span className={`px-2.5 py-0.5 text-xs font-bold rounded-full uppercase tracking-wider border ${
-                                                        log.status === 'completed' ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/60' :
-                                                        'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-900/60'
+                                                    <span className={`px-2.5 py-0.5 text-[10px] font-semibold rounded-full ${
+                                                        log.status === 'completed' ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300' :
+                                                        'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300'
                                                     }`}>
                                                         {log.status.replace('_', ' ')}
                                                     </span>
-                                                    <span className="font-mono font-black text-slate-900 dark:text-zinc-100 text-sm">
+                                                    <span className="font-mono font-bold text-slate-900 dark:text-zinc-100">
                                                         ₱{Number(log.cost).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                                     </span>
                                                     {log.status !== 'completed' && (
                                                         <button
                                                             type="button"
                                                             onClick={() => handleOpenUpdateLog(log)}
-                                                            className="text-[#026eff] dark:text-[#38bdf8] font-bold hover:underline cursor-pointer text-xs"
+                                                            className="text-[#026eff] dark:text-[#38bdf8] font-semibold hover:underline cursor-pointer"
                                                         >
                                                             Assess & Close
                                                         </button>
                                                     )}
                                                 </div>
                                             </div>
-                                            <p className="text-xs text-slate-600 dark:text-zinc-300 mt-2 leading-relaxed">{log.description}</p>
+                                            <p className="text-xs text-slate-600 dark:text-zinc-400 mt-2">{log.description}</p>
                                             
                                             {log.performance_assessment && (
                                                 <div className="mt-2.5 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/50 text-xs text-emerald-800 dark:text-emerald-300 flex items-start gap-2">
@@ -1243,7 +1266,7 @@ export default function DevicesShow({ device }) {
                                                 </div>
                                             )}
 
-                                            <div className="text-xs text-slate-500 dark:text-zinc-400 mt-3 flex items-center justify-between border-t border-slate-200/50 dark:border-zinc-700/50 pt-2 font-medium">
+                                            <div className="text-[10px] text-slate-400 dark:text-zinc-500 mt-3 flex items-center justify-between border-t border-slate-200/50 dark:border-zinc-700/50 pt-2">
                                                 <span>Technician: {log.performed_by || 'Internal IT Services'}</span>
                                                 <span>Started: {new Date(log.started_at).toLocaleDateString()}</span>
                                             </div>
@@ -1392,14 +1415,18 @@ export default function DevicesShow({ device }) {
                         </div>
                         <form onSubmit={handleLifecycleTransition} className="mt-3.5 space-y-3">
                             <div>
-                                <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400 mb-1">Target Lifecycle Stage</label>
-                                <CustomSelect
+                                <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Target Lifecycle Stage</label>
+                                <select
                                     value={lifecycleData.to_stage}
-                                    onChange={(val) => setLifecycleData('to_stage', val)}
-                                    options={lifecycleStageOptions}
-                                    placeholder="Select lifecycle stage..."
-                                    className="w-full"
-                                />
+                                    onChange={(e) => setLifecycleData('to_stage', e.target.value)}
+                                    className="mt-1 w-full text-xs rounded-xl border-slate-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 font-semibold"
+                                >
+                                    <option value="acquisition">Acquisition (Intake / Staging)</option>
+                                    <option value="deployment">Deployment (Active In-Service)</option>
+                                    <option value="reclaimed">Reclaimed (Sanitized in Pool)</option>
+                                    <option value="maintenance">Maintenance (Servicing / In-Repair)</option>
+                                    <option value="retirement">Retirement (Decommissioned)</option>
+                                </select>
                             </div>
                             <div>
                                 <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Audit Notes / Reason</label>
@@ -1450,19 +1477,21 @@ export default function DevicesShow({ device }) {
                         <form onSubmit={handleCreateMaintenance} className="mt-3.5 space-y-3">
                             <div className="grid grid-cols-2 gap-2.5">
                                 <div>
-                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400 mb-1">Activity Type</label>
-                                    <CustomSelect
+                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Activity Type</label>
+                                    <select
                                         value={maintData.type}
-                                        onChange={(val) => setMaintData('type', val)}
-                                        options={maintTypeOptions}
-                                        placeholder="Select type..."
-                                        className="w-full"
-                                    />
+                                        onChange={(e) => setMaintData('type', e.target.value)}
+                                        className="mt-1 w-full text-xs rounded-xl border-slate-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                                    >
+                                        <option value="repair">Repair</option>
+                                        <option value="upgrade">Hardware Upgrade</option>
+                                        <option value="preventive">Preventive Servicing</option>
+                                        <option value="inspection">Inspection / Audit</option>
+                                        <option value="replacement">Component Replacement</option>
+                                    </select>
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">
-                                        Cost (₱) <span className="text-rose-500 font-bold ml-0.5">*</span>
-                                    </label>
+                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Cost (₱)</label>
                                     <input
                                         type="number"
                                         step="0.01"
@@ -1475,9 +1504,7 @@ export default function DevicesShow({ device }) {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">
-                                    Title <span className="text-rose-500 font-bold ml-0.5">*</span>
-                                </label>
+                                <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Title</label>
                                 <input
                                     type="text"
                                     value={maintData.title}
@@ -1498,9 +1525,7 @@ export default function DevicesShow({ device }) {
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">
-                                    Description of Work <span className="text-rose-500 font-bold ml-0.5">*</span>
-                                </label>
+                                <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Description of Work</label>
                                 <textarea
                                     rows={2}
                                     value={maintData.description}
@@ -1512,14 +1537,16 @@ export default function DevicesShow({ device }) {
                             </div>
                             <div className="grid grid-cols-2 gap-2.5 items-center">
                                 <div>
-                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400 mb-1">Status</label>
-                                    <CustomSelect
+                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Status</label>
+                                    <select
                                         value={maintData.status}
-                                        onChange={(val) => setMaintData('status', val)}
-                                        options={maintStatusOptions}
-                                        placeholder="Select status..."
-                                        className="w-full"
-                                    />
+                                        onChange={(e) => setMaintData('status', e.target.value)}
+                                        className="mt-1 w-full text-xs rounded-xl border-slate-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                                    >
+                                        <option value="in_progress">In Progress</option>
+                                        <option value="scheduled">Scheduled</option>
+                                        <option value="completed">Completed</option>
+                                    </select>
                                 </div>
                                 <div className="mt-4">
                                     <label className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-700 dark:text-zinc-300">
@@ -1574,9 +1601,7 @@ export default function DevicesShow({ device }) {
                         <form onSubmit={handleUpdateMaintenanceLog} className="mt-3.5 space-y-3">
                             <div className="grid grid-cols-2 gap-2.5">
                                 <div>
-                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">
-                                        Final Cost (₱) <span className="text-rose-500 font-bold ml-0.5">*</span>
-                                    </label>
+                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Final Cost (₱)</label>
                                     <input
                                         type="number"
                                         step="0.01"
@@ -1588,9 +1613,7 @@ export default function DevicesShow({ device }) {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">
-                                        Completion Date <span className="text-rose-500 font-bold ml-0.5">*</span>
-                                    </label>
+                                    <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Completion Date</label>
                                     <input
                                         type="date"
                                         value={updateMaintData.completed_at}
@@ -1601,9 +1624,7 @@ export default function DevicesShow({ device }) {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">
-                                    Performance Assessment <span className="text-rose-500 font-bold ml-0.5">*</span>
-                                </label>
+                                <label className="block text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400">Performance Assessment *</label>
                                 <textarea
                                     rows={3}
                                     value={updateMaintData.performance_assessment}

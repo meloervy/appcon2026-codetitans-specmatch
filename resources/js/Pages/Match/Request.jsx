@@ -19,7 +19,6 @@ import {
     RiExchangeLine,
     RiInformationLine,
     RiMapPinLine,
-    RiScales3Line,
     RiSearchLine,
     RiShieldCheckLine,
     RiUserLine,
@@ -98,6 +97,7 @@ export default function MatchRequest({
     const [extracted, setExtracted] = useState(null);
     const [rankedResults, setRankedResults] = useState(null);
     const [procurementRecommended, setProcurementRecommended] = useState(false);
+    const [procurementAdvisory, setProcurementAdvisory] = useState(null);
     const [bridgeSwaps, setBridgeSwaps] = useState([]);
     const [selectedBridgeSwap, setSelectedBridgeSwap] = useState(null);
     const [showBridgeModal, setShowBridgeModal] = useState(false);
@@ -106,27 +106,6 @@ export default function MatchRequest({
     // Fleet Recommendations Filtering & Progressive Disclosure
     const [recoFilter, setRecoFilter] = useState('top'); // 'top', 'stockroom', 'all', 'disqualified'
     const [showAllInTop, setShowAllInTop] = useState(false);
-
-    // Advanced ITAM & Simulator States
-    const [activeTab, setActiveTab] = useState('match'); // 'match' | 'simulator'
-    const [topCandidate, setTopCandidate] = useState(null);
-    const [alternativeComparisons, setAlternativeComparisons] = useState([]);
-    const [selectedAuditDevice, setSelectedAuditDevice] = useState(null);
-    const [expandedSubscoreIds, setExpandedSubscoreIds] = useState([]);
-
-    // "What If" Headcount Simulator State
-    const [simulatorForm, setSimulatorForm] = useState({
-        quantity: 3,
-        role_profile_id: '',
-        min_cpu_tier: 'mid',
-        min_ram_gb: 16,
-        min_storage_gb: 512,
-        requires_gpu: false,
-        min_gpu_tier: 'none',
-        portability_required: true,
-    });
-    const [isSimulating, setIsSimulating] = useState(false);
-    const [simulationResult, setSimulationResult] = useState(null);
 
     // Quick Workload Templates State
     const [templates, setTemplates] = useState(() => {
@@ -266,7 +245,7 @@ export default function MatchRequest({
     };
 
     const handleExtract = async () => {
-        if (!rawInput.trim()) return;
+        if (!rawInput.trim() || isExtracting || isRanking) return;
         setIsExtracting(true);
         setErrorMsg(null);
         try {
@@ -287,7 +266,7 @@ export default function MatchRequest({
     };
 
     const handleRank = async (requirementsToRank = extracted) => {
-        if (!requirementsToRank) return;
+        if (!requirementsToRank || isRanking) return;
         setIsRanking(true);
         setErrorMsg(null);
         try {
@@ -296,9 +275,8 @@ export default function MatchRequest({
                 employee_id: employeeId || null,
             });
             setRankedResults(res.data.results);
-            setTopCandidate(res.data.top_candidate || null);
-            setAlternativeComparisons(res.data.alternative_comparisons || []);
             setProcurementRecommended(res.data.procurement_recommended);
+            setProcurementAdvisory(res.data.procurement_advisory || null);
             setBridgeSwaps(res.data.bridge_swaps || []);
             setRecoFilter('top');
             setShowAllInTop(false);
@@ -307,51 +285,6 @@ export default function MatchRequest({
         } finally {
             setIsRanking(false);
         }
-    };
-
-    const toggleSubscoreAudit = (deviceId) => {
-        setExpandedSubscoreIds((prev) =>
-            prev.includes(deviceId) ? prev.filter((id) => id !== deviceId) : [...prev, deviceId]
-        );
-    };
-
-    const handleRunSimulation = async (customForm = null) => {
-        const formToUse = customForm || simulatorForm;
-        setIsSimulating(true);
-        setErrorMsg(null);
-        try {
-            const res = await axios.post(route('match.simulate'), {
-                requirements: {
-                    min_cpu_tier: formToUse.min_cpu_tier,
-                    min_ram_gb: parseInt(formToUse.min_ram_gb) || 8,
-                    min_storage_gb: parseInt(formToUse.min_storage_gb) || 256,
-                    requires_gpu: Boolean(formToUse.requires_gpu),
-                    min_gpu_tier: formToUse.min_gpu_tier || 'none',
-                    portability_required: Boolean(formToUse.portability_required),
-                },
-                quantity: parseInt(formToUse.quantity) || 1,
-            });
-            setSimulationResult(res.data);
-        } catch (err) {
-            setErrorMsg(err.response?.data?.message || 'Headcount simulation failed.');
-        } finally {
-            setIsSimulating(false);
-        }
-    };
-
-    const handleSimulatorPreset = (preset) => {
-        const updated = {
-            ...simulatorForm,
-            quantity: preset.quantity,
-            min_cpu_tier: preset.min_cpu_tier,
-            min_ram_gb: preset.min_ram_gb,
-            min_storage_gb: preset.min_storage_gb,
-            requires_gpu: preset.requires_gpu,
-            min_gpu_tier: preset.min_gpu_tier,
-            portability_required: preset.portability_required,
-        };
-        setSimulatorForm(updated);
-        handleRunSimulation(updated);
     };
 
     const handleExecuteBridgeSwap = (swap = selectedBridgeSwap) => {
@@ -471,44 +404,6 @@ export default function MatchRequest({
                 </div>
             )}
 
-            {/* Top Mode Switcher: Single Workload Match vs Headcount Simulator */}
-            <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-slate-100 dark:bg-zinc-800/80 border border-slate-200/80 dark:border-zinc-700/60 w-fit mb-6">
-                <button
-                    type="button"
-                    onClick={() => setActiveTab('match')}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 ${
-                        activeTab === 'match'
-                            ? 'bg-white dark:bg-zinc-900 text-slate-900 dark:text-zinc-100 shadow-xs'
-                            : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200'
-                    }`}
-                >
-                    <svg className="w-4 h-4 text-[#026eff]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                    <span>Single Workload Match</span>
-                </button>
-                <button
-                    type="button"
-                    onClick={() => {
-                        setActiveTab('simulator');
-                        if (!simulationResult) {
-                            handleRunSimulation();
-                        }
-                    }}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 ${
-                        activeTab === 'simulator'
-                            ? 'bg-white dark:bg-zinc-900 text-slate-900 dark:text-zinc-100 shadow-xs'
-                            : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200'
-                    }`}
-                >
-                    <span className="text-base leading-none">🔮</span>
-                    <span>&quot;What If&quot; Headcount &amp; Fleet Simulator</span>
-                    <span className="px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-[#0aceb3]/20 text-[#0aceb3] border border-[#0aceb3]/30">
-                        Interactive
-                    </span>
-                </button>
-            </div>
-
             {/* Fleet Inventory Deployment Status Bar */}
             <div className="mb-6 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 p-5 shadow-xs">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -557,8 +452,7 @@ export default function MatchRequest({
                 </div>
             </div>
 
-            {activeTab === 'match' ? (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 {/* Left Column: Request & Extraction Input (5 cols) - Sticky on Desktop */}
                 <div className="lg:col-span-5 w-full space-y-6 lg:sticky lg:top-6 self-start">
                     {/* Step 1: Employee & Request */}
@@ -1070,7 +964,7 @@ export default function MatchRequest({
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                                     </svg>
                                                 </div>
-                                                <div>
+                                                <div className="flex-1">
                                                     <div className="flex items-center gap-2">
                                                         <span className="font-extrabold text-rose-900 dark:text-rose-200 text-sm">
                                                             PROCUREMENT RECOMMENDED (Threshold &lt; 0.65)
@@ -1079,6 +973,18 @@ export default function MatchRequest({
                                                     <p className="text-xs text-rose-700 dark:text-rose-300 mt-1 leading-relaxed">
                                                         Constraint #1 Enforced: Available company inventory was thoroughly inspected first. No currently idle device satisfies the minimum performance threshold (0.65) without severe mismatch or workflow degradation.
                                                     </p>
+                                                    {procurementAdvisory && (
+                                                        <div className="mt-3 p-3.5 rounded-xl bg-rose-100/70 dark:bg-rose-900/40 border border-rose-200 dark:border-rose-800 text-xs text-rose-900 dark:text-rose-200 space-y-1.5">
+                                                            <div className="font-bold flex items-center gap-1.5 text-rose-800 dark:text-rose-200">
+                                                                <span>Strategy:</span>
+                                                                <span className="capitalize">{procurementAdvisory.strategy || 'Procure Replacement'}</span>
+                                                            </div>
+                                                            <p className="leading-relaxed">{procurementAdvisory.recommendation}</p>
+                                                            {procurementAdvisory.justification && (
+                                                                <p className="text-[11px] opacity-80 italic leading-relaxed">{procurementAdvisory.justification}</p>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         )}
@@ -1324,31 +1230,16 @@ export default function MatchRequest({
                                                                             </span>
                                                                         ) : (
                                                                             <div className="text-right">
-                                                                                <div className="flex items-center justify-end gap-2 flex-wrap">
+                                                                                <div className="flex items-center justify-end gap-2">
                                                                                     {fit_grade && (
                                                                                         <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                                                                                            fit_grade === 'Perfect Fit' || fit_grade === 'Optimal Fit' ? 'bg-[#0aceb3]/20 text-[#0aceb3] border border-[#0aceb3]/30' :
-                                                                                            fit_grade === 'Strong Fit' || fit_grade === 'Capable Match' ? 'bg-[#026eff]/20 text-[#0b79ff] border border-[#026eff]/30' :
+                                                                                            fit_grade === 'Perfect Fit' ? 'bg-[#0aceb3]/20 text-[#0aceb3] border border-[#0aceb3]/30' :
+                                                                                            fit_grade === 'Strong Fit' ? 'bg-[#026eff]/20 text-[#0b79ff] border border-[#026eff]/30' :
                                                                                             fit_grade === 'Good Fit' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
-                                                                                            fit_grade === 'Acceptable' || fit_grade === 'Marginal Fit' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                                                                                            fit_grade === 'Acceptable' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
                                                                                             'bg-rose-500/20 text-rose-400 border border-rose-500/30'
                                                                                         }`}>
                                                                                             {fit_grade}
-                                                                                        </span>
-                                                                                    )}
-                                                                                    {item.confidence_level && (
-                                                                                        <span
-                                                                                            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                                                                                                item.confidence_level === 'High Confidence'
-                                                                                                    ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
-                                                                                                    : item.confidence_level === 'Moderate Confidence'
-                                                                                                    ? 'bg-sky-500/15 text-sky-700 dark:text-sky-300 border border-sky-500/30'
-                                                                                                    : 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30'
-                                                                                            }`}
-                                                                                            title={item.confidence_explanation || `${item.confidence_score}% Confidence`}
-                                                                                        >
-                                                                                            <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                                                                                            {item.confidence_score ?? 85}% {item.confidence_level}
                                                                                         </span>
                                                                                     )}
                                                                                     {overprovisioning_risk && (
@@ -1363,22 +1254,9 @@ export default function MatchRequest({
                                                                                 </div>
                                                                                 <div className="flex items-center justify-end gap-2 mt-0.5">
                                                                                     {capex_saved_php > 0 && (
-                                                                                        <div className="flex items-center gap-1">
-                                                                                            <span className="text-[10px] font-bold text-[#0aceb3]">
-                                                                                                ₱{Number(capex_saved_php).toLocaleString()} CapEx Saved
-                                                                                            </span>
-                                                                                            {item.procurement_avoidance_audit && (
-                                                                                                <button
-                                                                                                    type="button"
-                                                                                                    onClick={() => setSelectedAuditDevice(item)}
-                                                                                                    className="text-[10px] font-bold text-[#026eff] dark:text-[#0b79ff] hover:underline cursor-pointer bg-[#026eff]/10 px-1.5 py-0.5 rounded border border-[#026eff]/20 flex items-center gap-1"
-                                                                                                    title="View Traceable CapEx Avoidance Audit Formula"
-                                                                                                >
-                                                                                                    <span>Audit</span>
-                                                                                                    <RiInformationLine className="w-3 h-3" />
-                                                                                                </button>
-                                                                                            )}
-                                                                                        </div>
+                                                                                        <span className="text-[10px] font-bold text-[#0aceb3]">
+                                                                                            ₱{Number(capex_saved_php).toLocaleString()} CapEx Saved
+                                                                                        </span>
                                                                                     )}
                                                                                     <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
                                                                                         passes_threshold ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300' : 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
@@ -1391,11 +1269,8 @@ export default function MatchRequest({
                                                                     </div>
                                                                 </div>
 
-
-
-                                                            {/* Subscore Breakdown Bars (Contest Constraint #2) */}
-                                                            {!disqualified && (
-                                                                <>
+                                                                {/* Subscore Breakdown Bars (Contest Constraint #2) */}
+                                                                {!disqualified && (
                                                                     <div className="grid grid-cols-5 gap-2 my-3 text-[11px]">
                                                                         <div>
                                                                             <div className="text-slate-400 dark:text-zinc-500 text-[10px] font-semibold uppercase">CPU (30%)</div>
@@ -1433,252 +1308,71 @@ export default function MatchRequest({
                                                                             <span className="font-mono text-slate-700 dark:text-zinc-300 text-[10px]">{Math.round(subscores.portability * 100)}%</span>
                                                                         </div>
                                                                     </div>
+                                                                )}
 
-                                                                    {/* Collapsible Multi-Dimensional Criteria & Modifiers Audit */}
-                                                                    {item.subscore_audit && (
-                                                                        <div className="my-2.5">
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => toggleSubscoreAudit(device.id)}
-                                                                                className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 hover:text-[#026eff] dark:hover:text-[#0b79ff] flex items-center gap-1.5 cursor-pointer transition select-none"
-                                                                            >
-                                                                                <svg
-                                                                                    className={`w-3.5 h-3.5 transition-transform ${expandedSubscoreIds.includes(device.id) ? 'rotate-90 text-[#026eff]' : ''}`}
-                                                                                    fill="none"
-                                                                                    viewBox="0 0 24 24"
-                                                                                    stroke="currentColor"
-                                                                                >
-                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                                                                                </svg>
-                                                                                <span>Inspect Multi-Dimensional Criteria &amp; Modifiers</span>
-                                                                            </button>
+                                                                {/* Deterministic Objective Rationale Box (Contest Constraint #2) */}
+                                                                <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-200/60 dark:border-zinc-800 text-xs text-slate-700 dark:text-zinc-300 leading-relaxed mt-2">
+                                                                    <span className="font-bold text-slate-900 dark:text-zinc-100">Deterministic Rationale:</span> {rationale}
+                                                                </div>
 
-                                                                            {expandedSubscoreIds.includes(device.id) && (
-                                                                                <div className="mt-2 p-3 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200/80 dark:border-zinc-700/60 space-y-2.5 text-xs animate-in fade-in duration-150">
-                                                                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                                                                                        {/* CPU */}
-                                                                                        <div className="p-2 rounded-lg bg-white dark:bg-zinc-800 border border-slate-200/60 dark:border-zinc-700/60">
-                                                                                            <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500">
-                                                                                                <span>CPU Alignment (30%)</span>
-                                                                                                <span className={`px-1.5 py-0.2 rounded font-extrabold text-[9px] ${item.subscore_audit.cpu.status === 'Deficit' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400'}`}>
-                                                                                                    {item.subscore_audit.cpu.status}
-                                                                                                </span>
-                                                                                            </div>
-                                                                                            <div className="mt-1 font-semibold text-slate-800 dark:text-zinc-200 text-xs">
-                                                                                                {item.subscore_audit.cpu.provided}
-                                                                                            </div>
-                                                                                            <div className="text-[10px] text-slate-400 dark:text-zinc-500 mt-0.5">
-                                                                                                Target: {item.subscore_audit.cpu.required}
-                                                                                            </div>
-                                                                                        </div>
-
-                                                                                        {/* RAM */}
-                                                                                        <div className="p-2 rounded-lg bg-white dark:bg-zinc-800 border border-slate-200/60 dark:border-zinc-700/60">
-                                                                                            <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500">
-                                                                                                <span>RAM Headroom (25%)</span>
-                                                                                                <span className={`px-1.5 py-0.2 rounded font-extrabold text-[9px] ${item.subscore_audit.ram.status === 'Deficit' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400'}`}>
-                                                                                                    {item.subscore_audit.ram.delta_gb >= 0 ? `+${item.subscore_audit.ram.delta_gb}GB` : `${item.subscore_audit.ram.delta_gb}GB`}
-                                                                                                </span>
-                                                                                            </div>
-                                                                                            <div className="mt-1 font-semibold text-slate-800 dark:text-zinc-200 text-xs">
-                                                                                                {item.subscore_audit.ram.provided}
-                                                                                            </div>
-                                                                                            <div className="text-[10px] text-slate-400 dark:text-zinc-500 mt-0.5">
-                                                                                                Target: {item.subscore_audit.ram.required}
-                                                                                            </div>
-                                                                                        </div>
-
-                                                                                        {/* Storage */}
-                                                                                        <div className="p-2 rounded-lg bg-white dark:bg-zinc-800 border border-slate-200/60 dark:border-zinc-700/60">
-                                                                                            <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500">
-                                                                                                <span>Storage (15%)</span>
-                                                                                                <span className={`px-1.5 py-0.2 rounded font-extrabold text-[9px] ${item.subscore_audit.storage.status === 'Deficit' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400'}`}>
-                                                                                                    {item.subscore_audit.storage.delta_gb >= 0 ? `+${item.subscore_audit.storage.delta_gb}GB` : `${item.subscore_audit.storage.delta_gb}GB`}
-                                                                                                </span>
-                                                                                            </div>
-                                                                                            <div className="mt-1 font-semibold text-slate-800 dark:text-zinc-200 text-xs">
-                                                                                                {item.subscore_audit.storage.provided}
-                                                                                            </div>
-                                                                                            <div className="text-[10px] text-slate-400 dark:text-zinc-500 mt-0.5">
-                                                                                                Target: {item.subscore_audit.storage.required}
-                                                                                            </div>
-                                                                                        </div>
-
-                                                                                        {/* GPU */}
-                                                                                        <div className="p-2 rounded-lg bg-white dark:bg-zinc-800 border border-slate-200/60 dark:border-zinc-700/60">
-                                                                                            <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500">
-                                                                                                <span>GPU Graphics (20%)</span>
-                                                                                                <span className="px-1.5 py-0.2 rounded font-extrabold text-[9px] bg-slate-100 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300">
-                                                                                                    {item.subscore_audit.gpu.status}
-                                                                                                </span>
-                                                                                            </div>
-                                                                                            <div className="mt-1 font-semibold text-slate-800 dark:text-zinc-200 text-xs">
-                                                                                                {item.subscore_audit.gpu.provided}
-                                                                                            </div>
-                                                                                            <div className="text-[10px] text-slate-400 dark:text-zinc-500 mt-0.5">
-                                                                                                Target: {item.subscore_audit.gpu.required}
-                                                                                            </div>
-                                                                                        </div>
-
-                                                                                        {/* Portability */}
-                                                                                        <div className="p-2 rounded-lg bg-white dark:bg-zinc-800 border border-slate-200/60 dark:border-zinc-700/60">
-                                                                                            <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500">
-                                                                                                <span>Mobility (10%)</span>
-                                                                                                <span className="px-1.5 py-0.2 rounded font-extrabold text-[9px] bg-slate-100 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300">
-                                                                                                    {item.subscore_audit.portability.status}
-                                                                                                </span>
-                                                                                            </div>
-                                                                                            <div className="mt-1 font-semibold text-slate-800 dark:text-zinc-200 text-xs">
-                                                                                                {item.subscore_audit.portability.provided}
-                                                                                            </div>
-                                                                                            <div className="text-[10px] text-slate-400 dark:text-zinc-500 mt-0.5">
-                                                                                                Target: {item.subscore_audit.portability.required}
-                                                                                            </div>
-                                                                                        </div>
-
-                                                                                        {/* Modifiers */}
-                                                                                        <div className="p-2 rounded-lg bg-white dark:bg-zinc-800 border border-slate-200/60 dark:border-zinc-700/60">
-                                                                                            <div className="text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500">
-                                                                                                ITAM Calibrated Modifiers
-                                                                                            </div>
-                                                                                            <div className="mt-1 flex items-center justify-between text-[11px]">
-                                                                                                <span className="text-slate-600 dark:text-zinc-400">Condition ({item.subscore_audit.modifiers.condition.label}):</span>
-                                                                                                <span className={`font-mono font-bold ${item.subscore_audit.modifiers.condition.adjustment >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                                                                                                    {item.subscore_audit.modifiers.condition.adjustment >= 0 ? `+${item.subscore_audit.modifiers.condition.adjustment}` : item.subscore_audit.modifiers.condition.adjustment}
-                                                                                                </span>
-                                                                                            </div>
-                                                                                            <div className="flex items-center justify-between text-[11px] mt-0.5">
-                                                                                                <span className="text-slate-600 dark:text-zinc-400">Stage ({item.subscore_audit.modifiers.lifecycle.label}):</span>
-                                                                                                <span className={`font-mono font-bold ${item.subscore_audit.modifiers.lifecycle.adjustment >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                                                                                                    {item.subscore_audit.modifiers.lifecycle.adjustment >= 0 ? `+${item.subscore_audit.modifiers.lifecycle.adjustment}` : item.subscore_audit.modifiers.lifecycle.adjustment}
-                                                                                                </span>
-                                                                                            </div>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </div>
-                                                                            )}
-                                                                        </div>
-                                                                    )}
-                                                                </>
-                                                            )}
-
-                                                            {/* Deterministic Objective Rationale Box (Contest Constraint #2) */}
-                                                            <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-200/60 dark:border-zinc-800 text-xs text-slate-700 dark:text-zinc-300 leading-relaxed mt-2">
-                                                                <span className="font-bold text-slate-900 dark:text-zinc-100">Deterministic Rationale:</span> {rationale}
-                                                            </div>
-
-                                                            {/* Why Not The Others? (Comparative Gap Analysis) - Shown directly on Top Pick card */}
-                                                            {isTop && alternativeComparisons && alternativeComparisons.length > 0 && (
-                                                                <div className="mt-3 pt-3 border-t border-slate-100 dark:border-zinc-800">
-                                                                    <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-800/40 border border-slate-200/70 dark:border-zinc-700/60">
-                                                                        <div className="flex items-center justify-between mb-2.5">
-                                                                            <div className="flex items-center gap-1.5">
-                                                                                <RiScales3Line className="w-4 h-4 text-[#026eff] dark:text-[#0b79ff]" />
-                                                                                <h5 className="font-bold text-xs uppercase tracking-wider text-slate-800 dark:text-zinc-200">
-                                                                                    Why Not The Others? (Comparative Gap Analysis)
-                                                                                </h5>
-                                                                            </div>
-                                                                            <span className="text-[10px] text-slate-400 dark:text-zinc-500">
-                                                                                Evaluating Candidates #2 &amp; #3 Against Top Pick
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                                                                            {alternativeComparisons.map((alt) => (
-                                                                                <div
-                                                                                    key={alt.device_id}
-                                                                                    className="p-2.5 rounded-lg bg-white dark:bg-zinc-800 border border-slate-200/70 dark:border-zinc-700/70 space-y-1.5"
-                                                                                >
-                                                                                    <div className="flex items-center justify-between">
-                                                                                        <div className="flex items-center gap-2 min-w-0">
-                                                                                            <span className="w-5 h-5 rounded-md bg-slate-100 dark:bg-zinc-700 text-slate-600 dark:text-zinc-300 flex items-center justify-center text-[10px] font-bold">
-                                                                                                #{alt.rank}
-                                                                                            </span>
-                                                                                            <div className="truncate font-bold text-xs text-slate-900 dark:text-zinc-100">
-                                                                                                {alt.brand} {alt.model}
-                                                                                            </div>
-                                                                                        </div>
-                                                                                        <span className="text-xs font-mono font-bold text-amber-600 dark:text-amber-400 shrink-0">
-                                                                                            -{alt.score_delta_pct}% vs #1
-                                                                                        </span>
-                                                                                    </div>
-
-                                                                                    <div className="space-y-1">
-                                                                                        {alt.why_not_reasons.map((r, rIdx) => (
-                                                                                            <div key={rIdx} className="flex items-start gap-1.5 text-[11px] text-slate-600 dark:text-zinc-400">
-                                                                                                <span className="text-rose-500 font-bold shrink-0">&times;</span>
-                                                                                                <span>{r}</span>
-                                                                                            </div>
-                                                                                        ))}
-                                                                                    </div>
-
-                                                                                    <div className="pt-1 border-t border-slate-100 dark:border-zinc-700/60 text-[10px] text-slate-500 dark:text-zinc-400 italic">
-                                                                                        Verdict: {alt.verdict}
-                                                                                    </div>
-                                                                                </div>
-                                                                            ))}
-                                                                        </div>
+                                                                {/* Assign Button */}
+                                                                {!disqualified && (
+                                                                    <div className="mt-3.5 pt-3 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between">
+                                                                        <span className="text-xs text-slate-500 dark:text-zinc-400 font-medium">
+                                                                            {device.ram_gb}GB RAM &bull; {device.storage_gb}GB {device.storage_type} &bull; <span className="capitalize">{device.condition}</span> condition
+                                                                        </span>
+                                                                        <StatefulButton
+                                                                            type="button"
+                                                                            variant="primary"
+                                                                            disabled={isAssigning}
+                                                                            onClick={() => handleAssign(device, score)}
+                                                                            className="px-4 py-2 rounded-xl text-xs font-semibold"
+                                                                        >
+                                                                            {employeeId ? `Assign to ${selectedEmployee?.name || 'Selected Staff'}` : 'Select Employee to Assign'}
+                                                                        </StatefulButton>
                                                                     </div>
-                                                                </div>
-                                                            )}
-
-                                                            {/* Assign Button */}
-                                                            {!disqualified && (
-                                                                <div className="mt-3.5 pt-3 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between">
-                                                                    <span className="text-xs text-slate-500 dark:text-zinc-400 font-medium">
-                                                                        {device.ram_gb}GB RAM &bull; {device.storage_gb}GB {device.storage_type} &bull; <span className="capitalize">{device.condition}</span> condition
-                                                                    </span>
-                                                                    <StatefulButton
-                                                                        type="button"
-                                                                        variant="primary"
-                                                                        disabled={isAssigning}
-                                                                        onClick={() => handleAssign(device, score)}
-                                                                        className="px-4 py-2 rounded-xl text-xs font-semibold"
-                                                                    >
-                                                                        {employeeId ? `Assign to ${selectedEmployee?.name || 'Selected Staff'}` : 'Select Employee to Assign'}
-                                                                    </StatefulButton>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    );
-                                                })}
-
-                                                {/* Progressive Disclosure Expand / Collapse Banner */}
-                                                {recoFilter === 'top' && qualifiedResults.length > 3 && (
-                                                    <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-50 to-slate-100/80 dark:from-zinc-900 dark:to-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3 transition">
-                                                        <div>
-                                                            <div className="text-xs font-bold text-slate-900 dark:text-zinc-100 flex items-center gap-1.5">
-                                                                <RiCheckLine className="w-4 h-4 text-emerald-500 shrink-0" />
-                                                                <span>
-                                                                    {showAllInTop
-                                                                        ? `Showing all ${qualifiedResults.length} qualified fleet matches`
-                                                                        : `Showing top 3 of ${qualifiedResults.length} qualified matches`}
-                                                                </span>
+                                                                )}
                                                             </div>
-                                                            <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">
-                                                                {showAllInTop
-                                                                    ? 'All devices above satisfy minimum workload constraints.'
-                                                                    : `${qualifiedResults.length - 3} more fleet devices satisfy minimum workload constraints.`}
-                                                            </p>
+                                                        );
+                                                    })}
+
+                                                    {/* Progressive Disclosure Expand / Collapse Banner */}
+                                                    {recoFilter === 'top' && qualifiedResults.length > 3 && (
+                                                        <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-50 to-slate-100/80 dark:from-zinc-900 dark:to-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3 transition">
+                                                            <div>
+                                                                <div className="text-xs font-bold text-slate-900 dark:text-zinc-100 flex items-center gap-1.5">
+                                                                    <RiCheckLine className="w-4 h-4 text-emerald-500 shrink-0" />
+                                                                    <span>
+                                                                        {showAllInTop
+                                                                            ? `Showing all ${qualifiedResults.length} qualified fleet matches`
+                                                                            : `Showing top 3 of ${qualifiedResults.length} qualified matches`}
+                                                                    </span>
+                                                                </div>
+                                                                <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">
+                                                                    {showAllInTop
+                                                                        ? 'All devices above satisfy minimum workload constraints.'
+                                                                        : `${qualifiedResults.length - 3} more fleet devices satisfy minimum workload constraints.`}
+                                                                </p>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setShowAllInTop(!showAllInTop)}
+                                                                className="px-4 py-2 rounded-xl bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200 text-xs font-bold border border-slate-300 dark:border-zinc-600 shadow-2xs transition cursor-pointer shrink-0 flex items-center gap-1.5"
+                                                            >
+                                                                {showAllInTop ? (
+                                                                    <>
+                                                                        <RiArrowUpSLine className="w-4 h-4" />
+                                                                        <span>Collapse to Top 3</span>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <RiArrowDownSLine className="w-4 h-4" />
+                                                                        <span>Show {qualifiedResults.length - 3} More Qualified Units</span>
+                                                                    </>
+                                                                )}
+                                                            </button>
                                                         </div>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setShowAllInTop(!showAllInTop)}
-                                                            className="px-4 py-2 rounded-xl bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200 text-xs font-bold border border-slate-300 dark:border-zinc-600 shadow-2xs transition cursor-pointer shrink-0 flex items-center gap-1.5"
-                                                        >
-                                                            {showAllInTop ? (
-                                                                <>
-                                                                    <RiArrowUpSLine className="w-4 h-4" />
-                                                                    <span>Collapse to Top 3</span>
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <RiArrowDownSLine className="w-4 h-4" />
-                                                                    <span>Show {qualifiedResults.length - 3} More Qualified Units</span>
-                                                                </>
-                                                            )}
-                                                        </button>
-                                                    </div>
-                                                )}
+                                                    )}
                                                 </div>
                                             )
                                         )}
@@ -1689,408 +1383,6 @@ export default function MatchRequest({
                     )}
                 </div>
             </div>
-            ) : (
-                /* "What If" Headcount & Fleet Capacity Simulator View */
-                <div className="space-y-6 animate-in fade-in duration-200">
-                    {/* Simulator Header & Info Banner */}
-                    <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 p-6 shadow-xs">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <span className="p-1.5 rounded-lg bg-[#026eff]/10 text-[#026eff] dark:text-[#0b79ff]">
-                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                        </svg>
-                                    </span>
-                                    <h2 className="text-lg font-bold text-slate-900 dark:text-zinc-100">
-                                        &quot;What If&quot; Headcount &amp; Fleet Capacity Simulator
-                                    </h2>
-                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#0aceb3]/20 text-[#0aceb3] border border-[#0aceb3]/30">
-                                        FinOps Capacity Planning
-                                    </span>
-                                </div>
-                                <p className="text-xs text-slate-500 dark:text-zinc-400 max-w-2xl leading-relaxed">
-                                    Simulate hypothetical hiring waves or department restructurings against current stockroom inventory. Calculates stockroom coverage %, CapEx avoided from existing hardware, and purchase deficit.
-                                </p>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => handleRunSimulation()}
-                                    disabled={isSimulating}
-                                    className="px-4 py-2.5 rounded-xl bg-[#026eff] hover:bg-[#0256cc] text-white font-bold text-xs shadow-sm transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
-                                >
-                                    {isSimulating ? (
-                                        <>
-                                            <svg className="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                            </svg>
-                                            Simulating Capacity...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <span>⚡ Run Capacity Simulation</span>
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Quick Presets Bar */}
-                        <div className="mt-5 pt-4 border-t border-slate-100 dark:border-zinc-800">
-                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-zinc-500 block mb-2">
-                                Quick Scenario Presets:
-                            </span>
-                            <div className="flex flex-wrap gap-2">
-                                {[
-                                    {
-                                        label: '🚀 5x Backend Engineers (32GB, i7/R7, Laptop)',
-                                        quantity: 5,
-                                        min_cpu_tier: 'high',
-                                        min_ram_gb: 32,
-                                        min_storage_gb: 512,
-                                        requires_gpu: false,
-                                        min_gpu_tier: 'none',
-                                        portability_required: true,
-                                    },
-                                    {
-                                        label: '🎨 3x 4K Video Editors (High GPU, 32GB, Laptop)',
-                                        quantity: 3,
-                                        min_cpu_tier: 'high',
-                                        min_ram_gb: 32,
-                                        min_storage_gb: 1024,
-                                        requires_gpu: true,
-                                        min_gpu_tier: 'dedicated-high',
-                                        portability_required: true,
-                                    },
-                                    {
-                                        label: '🏢 10x Office & Administrative Staff (8GB, Laptop)',
-                                        quantity: 10,
-                                        min_cpu_tier: 'entry',
-                                        min_ram_gb: 8,
-                                        min_storage_gb: 256,
-                                        requires_gpu: false,
-                                        min_gpu_tier: 'none',
-                                        portability_required: true,
-                                    },
-                                    {
-                                        label: '🤖 2x AI / 3D Simulation Workstations (Xeon/High GPU)',
-                                        quantity: 2,
-                                        min_cpu_tier: 'workstation',
-                                        min_ram_gb: 64,
-                                        min_storage_gb: 1024,
-                                        requires_gpu: true,
-                                        min_gpu_tier: 'dedicated-high',
-                                        portability_required: false,
-                                    },
-                                ].map((preset, pIdx) => (
-                                    <button
-                                        key={pIdx}
-                                        type="button"
-                                        onClick={() => handleSimulatorPreset(preset)}
-                                        className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-zinc-800 hover:bg-[#026eff]/10 hover:text-[#026eff] dark:hover:text-[#0b79ff] text-slate-700 dark:text-zinc-300 font-semibold text-xs border border-slate-200/80 dark:border-zinc-700/80 transition cursor-pointer shadow-2xs"
-                                    >
-                                        {preset.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Simulator Form Controls & Inputs */}
-                    <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 p-6 shadow-xs">
-                        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-4">
-                            Headcount &amp; Technical Target Parameters
-                        </h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                            <div>
-                                <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400 block mb-1">
-                                    Headcount (Seats)
-                                </label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    max="50"
-                                    value={simulatorForm.quantity}
-                                    onChange={(e) => setSimulatorForm({ ...simulatorForm, quantity: Math.max(1, parseInt(e.target.value) || 1) })}
-                                    className="w-full text-xs rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 font-bold py-2 px-3 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400 block mb-1">
-                                    Min CPU Tier
-                                </label>
-                                <select
-                                    value={simulatorForm.min_cpu_tier}
-                                    onChange={(e) => setSimulatorForm({ ...simulatorForm, min_cpu_tier: e.target.value })}
-                                    className="w-full text-xs rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 font-medium capitalize py-2 px-3 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
-                                >
-                                    <option value="entry">Entry (i3/Ryzen 3)</option>
-                                    <option value="mid">Mid (i5/Ryzen 5)</option>
-                                    <option value="high">High (i7/Ryzen 7/M-series)</option>
-                                    <option value="workstation">Workstation (Xeon/Threadripper)</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400 block mb-1">
-                                    Min RAM (GB)
-                                </label>
-                                <input
-                                    type="number"
-                                    step="4"
-                                    value={simulatorForm.min_ram_gb}
-                                    onChange={(e) => setSimulatorForm({ ...simulatorForm, min_ram_gb: parseInt(e.target.value) || 8 })}
-                                    className="w-full text-xs rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 font-medium py-2 px-3 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400 block mb-1">
-                                    Min Storage (GB)
-                                </label>
-                                <input
-                                    type="number"
-                                    step="128"
-                                    value={simulatorForm.min_storage_gb}
-                                    onChange={(e) => setSimulatorForm({ ...simulatorForm, min_storage_gb: parseInt(e.target.value) || 256 })}
-                                    className="w-full text-xs rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 font-medium py-2 px-3 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400 block mb-1">
-                                    GPU Tier
-                                </label>
-                                <select
-                                    value={simulatorForm.min_gpu_tier}
-                                    onChange={(e) => setSimulatorForm({
-                                        ...simulatorForm,
-                                        min_gpu_tier: e.target.value,
-                                        requires_gpu: e.target.value !== 'none',
-                                    })}
-                                    className="w-full text-xs rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 font-medium capitalize py-2 px-3 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
-                                >
-                                    <option value="none">None / Optional</option>
-                                    <option value="integrated">Integrated</option>
-                                    <option value="dedicated-entry">Dedicated Entry</option>
-                                    <option value="dedicated-high">Dedicated High</option>
-                                </select>
-                            </div>
-                            <div className="flex flex-col justify-end pb-1.5">
-                                <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 dark:text-zinc-300">
-                                    <input
-                                        type="checkbox"
-                                        checked={simulatorForm.portability_required}
-                                        onChange={(e) => setSimulatorForm({ ...simulatorForm, portability_required: e.target.checked })}
-                                        className="rounded border-slate-300 dark:border-zinc-700 text-[#026eff] focus:ring-[#026eff]"
-                                    />
-                                    <span>Laptop Required</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Simulation Output Section */}
-                    {simulationResult && (
-                        <div className="space-y-6">
-                            {/* Visual Coverage Gauge & Financial KPIs */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                                {/* Coverage Gauge Card */}
-                                <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-slate-200/80 dark:border-zinc-800 shadow-xs relative overflow-hidden">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
-                                            Stockroom Coverage
-                                        </span>
-                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
-                                            simulationResult.coverage_percentage >= 80
-                                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400'
-                                                : simulationResult.coverage_percentage >= 40
-                                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400'
-                                                : 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400'
-                                        }`}>
-                                            {simulationResult.coverage_percentage >= 80 ? 'Full / High Surplus' : simulationResult.coverage_percentage >= 40 ? 'Partial Coverage' : 'Deficit Alert'}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-baseline gap-2 mt-1">
-                                        <span className="text-3xl font-black text-slate-900 dark:text-zinc-100">
-                                            {simulationResult.coverage_percentage}%
-                                        </span>
-                                        <span className="text-xs text-slate-500 dark:text-zinc-400">
-                                            ({simulationResult.covered_count} of {simulationResult.quantity_requested} Seats)
-                                        </span>
-                                    </div>
-                                    <div className="w-full bg-slate-100 dark:bg-zinc-800 rounded-full h-2.5 mt-3 overflow-hidden">
-                                        <div
-                                            className={`h-2.5 rounded-full transition-all duration-500 ${
-                                                simulationResult.coverage_percentage >= 80
-                                                    ? 'bg-[#0aceb3]'
-                                                    : simulationResult.coverage_percentage >= 40
-                                                    ? 'bg-amber-500'
-                                                    : 'bg-rose-500'
-                                            }`}
-                                            style={{ width: `${Math.min(100, simulationResult.coverage_percentage)}%` }}
-                                        />
-                                    </div>
-                                    <p className="mt-3 text-xs text-slate-500 dark:text-zinc-400 leading-snug">
-                                        {simulationResult.deficit_count === 0
-                                            ? 'All requested seats are satisfied by verified stockroom hardware.'
-                                            : `${simulationResult.deficit_count} additional machines must be purchased to complete onboarding.`}
-                                    </p>
-                                </div>
-
-                                {/* CapEx Avoided Card */}
-                                <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-slate-200/80 dark:border-zinc-800 shadow-xs relative overflow-hidden">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
-                                            CapEx Avoided (Stockroom)
-                                        </span>
-                                        <span className="p-1.5 rounded-lg bg-emerald-500/10 text-[#0aceb3] text-xs font-black">
-                                            ₱ SAVED
-                                        </span>
-                                    </div>
-                                    <div className="flex items-baseline gap-2 mt-1">
-                                        <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-                                            ₱{Number(simulationResult.capex_avoided_php || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                                        </span>
-                                    </div>
-                                    <p className="mt-3 text-xs text-slate-500 dark:text-zinc-400 leading-snug">
-                                        Commercial procurement avoided by reallocating {simulationResult.covered_count} ready idle units.
-                                    </p>
-                                </div>
-
-                                {/* CapEx Required / Purchase Deficit */}
-                                <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-slate-200/80 dark:border-zinc-800 shadow-xs relative overflow-hidden">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
-                                            Purchase CapEx Deficit
-                                        </span>
-                                        <span className={`p-1.5 rounded-lg text-xs font-black ${
-                                            simulationResult.deficit_count > 0 ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400' : 'bg-slate-100 dark:bg-zinc-800 text-slate-500'
-                                        }`}>
-                                            {simulationResult.deficit_count} NEEDED
-                                        </span>
-                                    </div>
-                                    <div className="flex items-baseline gap-2 mt-1">
-                                        <span className={`text-2xl font-black ${simulationResult.deficit_count > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-zinc-100'}`}>
-                                            ₱{Number(simulationResult.capex_required_php || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                                        </span>
-                                    </div>
-                                    <p className="mt-3 text-xs text-slate-500 dark:text-zinc-400 leading-snug">
-                                        {simulationResult.deficit_count > 0
-                                            ? `Estimated market purchase expenditure required for ${simulationResult.deficit_count} deficit seats.`
-                                            : '₱0 procurement expenditure needed! Fleet capacity fully covers workload.'}
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Simulation Summary Box */}
-                            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-200/80 dark:border-zinc-700/60 flex items-start gap-3">
-                                <span className="text-xl mt-0.5">📋</span>
-                                <div>
-                                    <h4 className="font-bold text-slate-900 dark:text-zinc-100 text-xs uppercase tracking-wider">
-                                        Executive Capacity Summary
-                                    </h4>
-                                    <p className="text-xs text-slate-600 dark:text-zinc-400 mt-1 leading-relaxed">
-                                        {simulationResult.summary}
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Matched Deployable Hardware Table */}
-                            <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 overflow-hidden shadow-xs">
-                                <div className="p-5 border-b border-slate-100 dark:border-zinc-800 flex items-center justify-between">
-                                    <div>
-                                        <h3 className="font-bold text-slate-900 dark:text-zinc-100 text-sm">
-                                            Recommended Stockroom Allocations ({simulationResult.deployable_units?.length || 0} Units Cleared)
-                                        </h3>
-                                        <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
-                                            Prioritized by highest deterministic score alignment and hardware condition.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {simulationResult.deployable_units?.length === 0 ? (
-                                    <div className="p-8 text-center text-slate-400 dark:text-zinc-500 text-sm">
-                                        No deployable stockroom units cleared the threshold for this specification.
-                                    </div>
-                                ) : (
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-left text-xs">
-                                            <thead>
-                                                <tr className="border-b border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/50 text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500">
-                                                    <th className="py-3 px-4">Rank / Hardware</th>
-                                                    <th className="py-3 px-4">Specifications</th>
-                                                    <th className="py-3 px-4">Stockroom Location</th>
-                                                    <th className="py-3 px-4">Fit &amp; Confidence</th>
-                                                    <th className="py-3 px-4 text-right">CapEx Avoided</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
-                                                {simulationResult.deployable_units.map((unit, uIdx) => (
-                                                    <tr key={unit.id} className="hover:bg-slate-50/60 dark:hover:bg-zinc-800/40 transition">
-                                                        <td className="py-3 px-4">
-                                                            <div className="flex items-center gap-3">
-                                                                <span className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 flex items-center justify-center text-xs font-black shrink-0">
-                                                                    #{uIdx + 1}
-                                                                </span>
-                                                                <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/60 flex items-center justify-center shrink-0 overflow-hidden">
-                                                                    <HardwareImage
-                                                                        src={unit.image_clip_url}
-                                                                        alt={unit.model}
-                                                                        className="w-full h-full object-cover"
-                                                                    />
-                                                                </div>
-                                                                <div className="min-w-0">
-                                                                    <div className="font-bold text-slate-900 dark:text-zinc-100 truncate">
-                                                                        {unit.brand} {unit.model}
-                                                                    </div>
-                                                                    <div className="font-mono text-[10px] text-slate-500 dark:text-zinc-400">
-                                                                        {unit.asset_tag} &bull; <span className="capitalize">{unit.device_type}</span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td className="py-3 px-4 text-slate-600 dark:text-zinc-300">
-                                                            <div>{unit.cpu} ({unit.cpu_tier} tier)</div>
-                                                            <div className="text-[11px] text-slate-400 dark:text-zinc-500 mt-0.5">
-                                                                {unit.ram_gb}GB RAM &bull; {unit.storage_gb}GB {unit.storage_type}
-                                                            </div>
-                                                        </td>
-                                                        <td className="py-3 px-4 text-slate-600 dark:text-zinc-400">
-                                                            <div>📍 {unit.location || 'Central Stockroom'}</div>
-                                                            <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5 capitalize">
-                                                                {unit.condition} condition
-                                                            </div>
-                                                        </td>
-                                                        <td className="py-3 px-4">
-                                                            <div className="flex items-center gap-1.5 flex-wrap">
-                                                                <span className="font-black text-slate-900 dark:text-zinc-100">
-                                                                    {Math.round(unit.match_score * 100)}%
-                                                                </span>
-                                                                <span className="px-2 py-0.2 rounded-full text-[9px] font-bold bg-[#026eff]/10 text-[#026eff] border border-[#026eff]/20">
-                                                                    {unit.fit_grade}
-                                                                </span>
-                                                                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-medium bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400">
-                                                                    {unit.confidence_level}
-                                                                </span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="py-3 px-4 text-right">
-                                                            <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                                                                ₱{Number(unit.capex_saved_php || 0).toLocaleString()}
-                                                            </span>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            )}
 
             {/* Bridge Swap Execution Modal */}
             {showBridgeModal && selectedBridgeSwap && (
@@ -2617,92 +1909,6 @@ export default function MatchRequest({
                                 className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 text-xs font-bold transition cursor-pointer"
                             >
                                 Done
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Traceable CapEx Avoidance Audit Modal */}
-            {selectedAuditDevice && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl max-w-xl w-full p-6 shadow-2xl space-y-5 relative overflow-hidden">
-                        <div className="flex items-start justify-between">
-                            <div className="flex items-center gap-2.5">
-                                <span className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-lg flex items-center justify-center font-bold">
-                                    ₱
-                                </span>
-                                <div>
-                                    <h3 className="text-lg font-bold text-slate-900 dark:text-zinc-100">
-                                        Traceable CapEx Avoidance Audit
-                                    </h3>
-                                    <p className="text-xs text-slate-500 dark:text-zinc-400">
-                                        Defensible procurement-avoidance accounting breakdown
-                                    </p>
-                                </div>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => setSelectedAuditDevice(null)}
-                                className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 transition cursor-pointer"
-                            >
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-
-                        {/* Formula & Financial Values */}
-                        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200/80 dark:border-zinc-700/60 space-y-3">
-                            <div className="flex items-center justify-between text-xs">
-                                <span className="text-slate-600 dark:text-zinc-400">Target Asset:</span>
-                                <span className="font-bold text-slate-900 dark:text-zinc-100">
-                                    {selectedAuditDevice.device.brand} {selectedAuditDevice.device.model} ({selectedAuditDevice.device.asset_tag})
-                                </span>
-                            </div>
-                            <div className="flex items-center justify-between text-xs">
-                                <span className="text-slate-600 dark:text-zinc-400">Market Replacement Benchmark:</span>
-                                <span className="font-mono font-bold text-slate-900 dark:text-zinc-100">
-                                    ₱{Number(selectedAuditDevice.procurement_avoidance_audit?.market_replacement_benchmark_php || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                                </span>
-                            </div>
-                            <div className="flex items-center justify-between text-xs">
-                                <span className="text-slate-600 dark:text-zinc-400">Redeployment Direct Cost:</span>
-                                <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                                    ₱0.00 (Zero Out-of-Pocket)
-                                </span>
-                            </div>
-                            <div className="pt-2 border-t border-slate-200/70 dark:border-zinc-700/70 flex items-center justify-between text-sm">
-                                <span className="font-extrabold text-slate-900 dark:text-zinc-100">Net Avoided CapEx:</span>
-                                <span className="font-mono font-black text-emerald-600 dark:text-emerald-400 text-base">
-                                    ₱{Number(selectedAuditDevice.procurement_avoidance_audit?.avoided_capex_php || selectedAuditDevice.capex_saved_php || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Mathematical Formula Box */}
-                        <div className="p-3.5 rounded-xl bg-slate-900 text-emerald-400 font-mono text-xs shadow-inner">
-                            <span className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1">Audit Math Formula:</span>
-                            {selectedAuditDevice.procurement_avoidance_audit?.formula || 'Net CapEx Avoided = Benchmark Replacement - Redeployment Cost'}
-                        </div>
-
-                        {/* Benchmark & Audit Justification */}
-                        <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 text-xs text-emerald-800 dark:text-emerald-300 space-y-1">
-                            <div className="font-bold text-emerald-950 dark:text-emerald-200">
-                                Benchmark Source: {selectedAuditDevice.procurement_avoidance_audit?.benchmark_source || 'Commercial IT Hardware Pricing Standard'}
-                            </div>
-                            <p className="leading-relaxed">
-                                {selectedAuditDevice.procurement_avoidance_audit?.audit_note || 'Reallocating existing stockroom unit directly saves capital expenditure.'}
-                            </p>
-                        </div>
-
-                        <div className="flex items-center justify-end pt-2 border-t border-slate-100 dark:border-zinc-800">
-                            <button
-                                type="button"
-                                onClick={() => setSelectedAuditDevice(null)}
-                                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 text-xs font-bold transition cursor-pointer"
-                            >
-                                Close Audit
                             </button>
                         </div>
                     </div>

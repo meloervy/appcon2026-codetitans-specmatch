@@ -1,17 +1,27 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import HardwareImage from '@/Components/HardwareImage';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 
-export default function Dashboard({ metrics, mismatches, recent_assignments, available_fleet, itam }) {
-    const stageBreakdown = metrics.stage_breakdown || {
+export default function Dashboard({
+    metrics = {},
+    mismatches = [],
+    recent_assignments = [],
+    available_fleet = [],
+    itam = {},
+}) {
+    const { auth } = usePage().props;
+    const user = auth?.user;
+    const isAdminOrManager = ['admin', 'manager'].includes(user?.role);
+
+    const stageBreakdown = metrics?.stage_breakdown || {
         acquisition: 0,
-        deployment: metrics.total_devices || 0,
+        deployment: metrics?.total_devices || 0,
         reclaimed: 0,
-        maintenance: metrics.in_repair_devices || 0,
-        retirement: metrics.retired_devices || 0,
+        maintenance: metrics?.in_repair_devices || 0,
+        retirement: metrics?.retired_devices || 0,
     };
 
-    const fleetRisk = metrics.fleet_risk || {
+    const fleetRisk = metrics?.fleet_risk || {
         risk_score: 0,
         risk_tier: 'Low Risk',
         status_label: 'Healthy Fleet',
@@ -31,21 +41,33 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                         </p>
                     </div>
                     <div className="flex items-center gap-3">
-                        <Link
-                            href={route('devices.create')}
-                            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-xs transition"
-                        >
-                            + Register Asset
-                        </Link>
-                        <Link
-                            href={route('match.index')}
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#026eff] text-sm font-semibold text-white hover:bg-[#0256cc] shadow-sm transition"
-                        >
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
-                            Run Match Pipeline
-                        </Link>
+                        {isAdminOrManager && (
+                            <Link
+                                href={route('devices.create')}
+                                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-xs transition"
+                            >
+                                + Register Asset
+                            </Link>
+                        )}
+                        {isAdminOrManager && (
+                            <Link
+                                href={route('match.index')}
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#026eff] text-sm font-semibold text-white hover:bg-[#0256cc] shadow-sm transition"
+                            >
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                Run Match Pipeline
+                            </Link>
+                        )}
+                        {!isAdminOrManager && (
+                            <Link
+                                href={route('devices.index')}
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#026eff] text-sm font-semibold text-white hover:bg-[#0256cc] shadow-sm transition"
+                            >
+                                View Fleet Inventory
+                            </Link>
+                        )}
                     </div>
                 </div>
             }
@@ -56,7 +78,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
             <div className="mb-6 bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 p-6 shadow-xs">
                 <div className="flex items-center justify-between mb-3">
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Fleet Lifecycle Phase Distribution</span>
-                    <span className="text-xs text-slate-400 dark:text-zinc-500">Total Authoritative Inventory: {metrics.total_devices + (metrics.retired_devices || 0)} Units</span>
+                    <span className="text-xs text-slate-400 dark:text-zinc-500">Total Authoritative Inventory: {(metrics?.total_devices ?? 0) + (metrics?.retired_devices ?? 0)} Units</span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                     <div className="p-3 rounded-xl bg-sky-50/70 dark:bg-sky-950/30 border border-sky-100 dark:border-sky-900/50 flex items-center justify-between">
@@ -122,7 +144,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                     </div>
                     <div className="mt-4 flex items-baseline gap-2">
                         <span className="text-2xl font-black text-slate-900 dark:text-zinc-100">
-                            ₱{Number(metrics.total_acquisition_cost || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            ₱{Number(metrics?.total_acquisition_cost || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                         </span>
                     </div>
                     <p className="mt-3 text-xs text-slate-500 dark:text-zinc-400">
@@ -142,7 +164,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                     </div>
                     <div className="mt-4 flex items-baseline gap-2">
                         <span className="text-2xl font-black text-slate-900 dark:text-zinc-100">
-                            ₱{Number(metrics.current_book_value || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            ₱{Number(metrics?.current_book_value || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                         </span>
                     </div>
                     <p className="mt-3 text-xs text-slate-500 dark:text-zinc-400">
@@ -162,11 +184,11 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                     </div>
                     <div className="mt-4 flex items-baseline gap-2">
                         <span className="text-2xl font-black text-slate-900 dark:text-zinc-100">
-                            ₱{Number(metrics.total_maintenance_spend || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            ₱{Number(metrics?.total_maintenance_spend || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                         </span>
                     </div>
                     <div className="mt-3 text-xs text-slate-500 dark:text-zinc-400 flex items-center justify-between">
-                        <span className="font-semibold text-amber-700 dark:text-amber-400">{metrics.active_maintenance_count} in servicing</span>
+                        <span className="font-semibold text-amber-700 dark:text-amber-400">{metrics?.active_maintenance_count ?? 0} in servicing</span>
                         <Link href={route('maintenance.index')} className="text-[#026eff] dark:text-[#0b79ff] font-semibold hover:underline">
                             Open Hub
                         </Link>
@@ -185,7 +207,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                     </div>
                     <div className="mt-4 flex items-baseline gap-2">
                         <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-                            ₱{metrics.procurement_savings.toLocaleString()}
+                            ₱{Number(metrics?.procurement_savings ?? 0).toLocaleString()}
                         </span>
                         <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded">Saved</span>
                     </div>
@@ -372,7 +394,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
             {/* Critical ITAM Alerts Banner Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                 {/* Warranty Alert */}
-                {metrics.expiring_warranties_count > 0 && (
+                {(metrics?.expiring_warranties_count ?? 0) > 0 && (
                     <div className="rounded-2xl bg-amber-500/10 dark:bg-amber-950/20 border border-amber-300 dark:border-amber-900/60 p-5 flex items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
                             <div className="p-2 rounded-xl bg-amber-500 text-white shrink-0">
@@ -382,7 +404,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                             </div>
                             <div>
                                 <h4 className="font-bold text-slate-900 dark:text-zinc-100 text-sm">
-                                    {metrics.expiring_warranties_count} Warranties Expiring Soon (&le; 60 Days)
+                                    {metrics?.expiring_warranties_count ?? 0} Warranties Expiring Soon (&le; 60 Days)
                                 </h4>
                                 <p className="text-xs text-slate-600 dark:text-zinc-400 mt-0.5">
                                     Service contracts approaching expiration. Review extended coverage options.
@@ -399,7 +421,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                 )}
 
                 {/* Redundancy / Efficiency Optimization Alert */}
-                {metrics.idle_high_spec_count > 0 && (
+                {(metrics?.idle_high_spec_count ?? 0) > 0 && (
                     <div className="rounded-2xl bg-[#026eff]/10 dark:bg-[#031a40]/20 border border-[#026eff]/20 dark:border-[#031a40]/60 p-5 flex items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
                             <div className="p-2 rounded-xl bg-[#026eff] text-white shrink-0">
@@ -409,7 +431,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                             </div>
                             <div>
                                 <h4 className="font-bold text-slate-900 dark:text-zinc-100 text-sm">
-                                    {metrics.idle_high_spec_count} Redundant High-Spec Assets Available
+                                    {metrics?.idle_high_spec_count ?? 0} Redundant High-Spec Assets Available
                                 </h4>
                                 <p className="text-xs text-slate-600 dark:text-zinc-400 mt-0.5">
                                     High-performance machines currently idle. Optimize fleet efficiency before procuring.
@@ -417,17 +439,17 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                             </div>
                         </div>
                         <Link
-                            href={route('match.index')}
+                            href={isAdminOrManager ? route('match.index') : route('devices.index')}
                             className="px-3 py-1.5 rounded-lg border border-[#026eff] text-[#026eff] dark:text-[#0b79ff] text-xs font-bold hover:bg-[#026eff]/10 shrink-0 transition"
                         >
-                            Assign Assets
+                            {isAdminOrManager ? 'Assign Assets' : 'View Assets'}
                         </Link>
                     </div>
                 )}
             </div>
 
             {/* Mismatch Alert Banner */}
-            {metrics.mismatch_count > 0 && (
+            {(metrics?.mismatch_count ?? 0) > 0 && (
                 <div className="mb-8 rounded-2xl bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-amber-500/10 dark:from-amber-950/20 dark:via-rose-950/20 dark:to-amber-950/20 border border-amber-300 dark:border-amber-900/60 p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-start gap-3.5">
                         <div className="p-2 rounded-xl bg-amber-500 text-white shadow-sm shrink-0">
@@ -437,7 +459,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                         </div>
                         <div>
                             <h3 className="font-bold text-slate-900 dark:text-zinc-100 text-base">
-                                {metrics.mismatch_count} Active Assignment Mismatches Detected
+                                {metrics?.mismatch_count ?? 0} Active Assignment Mismatches Detected
                             </h3>
                             <p className="text-sm text-slate-600 dark:text-zinc-400 mt-0.5">
                                 Devices currently assigned fail workload benchmarks (under-provisioned or over-allocated waste).
@@ -466,60 +488,66 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                             <p className="text-xs text-slate-500 dark:text-zinc-400">Currently idle units ready to be circulation-matched</p>
                         </div>
                         <Link href={route('devices.index', { status: 'available' })} className="text-xs font-semibold text-[#026eff] dark:text-[#0b79ff] hover:underline">
-                            View All Available ({metrics.idle_devices})
+                            View All Available ({metrics?.idle_devices ?? 0})
                         </Link>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {available_fleet.map((device) => (
-                            <div key={device.id} className="p-4 rounded-xl border border-slate-200/80 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/40 hover:bg-slate-50 dark:hover:bg-zinc-800/70 transition flex flex-col justify-between">
-                                <div>
-                                    <div className="flex items-start gap-3">
-                                        <div className="w-14 h-14 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/60 shrink-0 overflow-hidden shadow-xs">
-                                            <HardwareImage
-                                                src={device.image_clip_url || device.image_url}
-                                                alt={`${device.brand} ${device.model}`}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <div className="flex items-center justify-between gap-1">
-                                                <span className="text-xs font-mono font-bold text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-700">
-                                                    {device.asset_tag}
-                                                </span>
-                                                <span className="text-[10px] uppercase font-bold tracking-wide text-emerald-700 dark:text-emerald-400 bg-emerald-100/60 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full">
-                                                    {device.status}
-                                                </span>
-                                            </div>
-                                            <h4 className="font-bold text-slate-900 dark:text-zinc-100 mt-1.5 text-sm truncate">{device.brand} {device.model}</h4>
-                                            <p className="text-xs text-slate-500 dark:text-zinc-400 truncate">{device.cpu}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-wrap gap-1.5 mt-3">
-                                        <span className="text-[11px] px-2 py-0.5 rounded bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 font-medium text-slate-700 dark:text-zinc-300">
-                                            {device.ram_gb}GB RAM
-                                        </span>
-                                        <span className="text-[11px] px-2 py-0.5 rounded bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 font-medium text-slate-700 dark:text-zinc-300">
-                                            {device.storage_gb}GB {device.storage_type}
-                                        </span>
-                                        <span className="text-[11px] px-2 py-0.5 rounded bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 font-medium text-slate-700 dark:text-zinc-300 capitalize">
-                                            {device.cpu_tier} CPU
-                                        </span>
-                                        {device.gpu_tier !== 'none' && (
-                                            <span className="text-[11px] px-2 py-0.5 rounded bg-[#026eff]/10 dark:bg-[#031a40]/60 border border-[#026eff]/15 dark:border-[#031a40]/50 font-medium text-[#026eff] dark:text-[#0b79ff]">
-                                                {device.gpu_tier}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="mt-4 pt-3 border-t border-slate-200/60 dark:border-zinc-800 flex items-center justify-between text-xs">
-                                    <span className="text-slate-400 dark:text-zinc-500 capitalize">{device.device_type} &bull; {device.condition}</span>
-                                    <Link href={route('devices.show', device.id)} className="font-semibold text-[#026eff] dark:text-[#0b79ff] hover:text-[#026eff] dark:hover:text-[#0b79ff]">
-                                        Details
-                                    </Link>
-                                </div>
+                        {(!available_fleet || available_fleet.length === 0) ? (
+                            <div className="col-span-full py-12 text-center text-slate-400 dark:text-zinc-500 rounded-xl bg-slate-50/50 dark:bg-zinc-800/30 border border-dashed border-slate-200 dark:border-zinc-700 text-xs">
+                                No idle devices currently available in pool.
                             </div>
-                        ))}
+                        ) : (
+                            available_fleet.map((device) => (
+                                <div key={device.id} className="p-4 rounded-xl border border-slate-200/80 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/40 hover:bg-slate-50 dark:hover:bg-zinc-800/70 transition flex flex-col justify-between">
+                                    <div>
+                                        <div className="flex items-start gap-3">
+                                            <div className="w-14 h-14 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/60 shrink-0 overflow-hidden shadow-xs">
+                                                <HardwareImage
+                                                    src={device.image_clip_url || device.image_url}
+                                                    alt={`${device.brand} ${device.model}`}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center justify-between gap-1">
+                                                    <span className="text-xs font-mono font-bold text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-700">
+                                                        {device.asset_tag}
+                                                    </span>
+                                                    <span className="text-[10px] uppercase font-bold tracking-wide text-emerald-700 dark:text-emerald-400 bg-emerald-100/60 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full">
+                                                        {device.status}
+                                                    </span>
+                                                </div>
+                                                <h4 className="font-bold text-slate-900 dark:text-zinc-100 mt-1.5 text-sm truncate">{device.brand} {device.model}</h4>
+                                                <p className="text-xs text-slate-500 dark:text-zinc-400 truncate">{device.cpu}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-wrap gap-1.5 mt-3">
+                                            <span className="text-[11px] px-2 py-0.5 rounded bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 font-medium text-slate-700 dark:text-zinc-300">
+                                                {device.ram_gb}GB RAM
+                                            </span>
+                                            <span className="text-[11px] px-2 py-0.5 rounded bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 font-medium text-slate-700 dark:text-zinc-300">
+                                                {device.storage_gb}GB {device.storage_type}
+                                            </span>
+                                            <span className="text-[11px] px-2 py-0.5 rounded bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 font-medium text-slate-700 dark:text-zinc-300 capitalize">
+                                                {device.cpu_tier} CPU
+                                            </span>
+                                            {device.gpu_tier !== 'none' && (
+                                                <span className="text-[11px] px-2 py-0.5 rounded bg-[#026eff]/10 dark:bg-[#031a40]/60 border border-[#026eff]/15 dark:border-[#031a40]/50 font-medium text-[#026eff] dark:text-[#0b79ff]">
+                                                    {device.gpu_tier}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="mt-4 pt-3 border-t border-slate-200/60 dark:border-zinc-800 flex items-center justify-between text-xs">
+                                        <span className="text-slate-400 dark:text-zinc-500 capitalize">{device.device_type} &bull; {device.condition}</span>
+                                        <Link href={route('devices.show', device.id)} className="font-semibold text-[#026eff] dark:text-[#0b79ff] hover:text-[#026eff] dark:hover:text-[#0b79ff]">
+                                            Details
+                                        </Link>
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
 
@@ -553,10 +581,10 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                     </div>
 
                     <Link
-                        href={route('match.index')}
+                        href={isAdminOrManager ? route('match.index') : route('devices.index')}
                         className="mt-6 w-full py-3 rounded-xl bg-white text-[#031a40] font-bold text-center text-sm hover:bg-[#026eff]/10 transition shadow-sm"
                     >
-                        Launch Match Engine
+                        {isAdminOrManager ? 'Launch Match Engine' : 'Explore Fleet Inventory'}
                     </Link>
                 </div>
             </div>
@@ -577,53 +605,67 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                     <table className="w-full text-left text-sm">
                         <thead className="bg-slate-50/80 dark:bg-zinc-800/60 border-b border-slate-200 dark:border-zinc-800 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
                             <tr>
-                                <th className="py-3 px-4">Device</th>
-                                <th className="py-3 px-4">Employee</th>
-                                <th className="py-3 px-4">Department / Profile</th>
-                                <th className="py-3 px-4">Match Fit</th>
-                                <th className="py-3 px-4">Source</th>
-                                <th className="py-3 px-4">Assigned Date</th>
+                                <th className="py-3.5 px-5">Device</th>
+                                <th className="py-3.5 px-5">Employee</th>
+                                <th className="py-3.5 px-5">Department / Profile</th>
+                                <th className="py-3.5 px-5">Match Fit</th>
+                                <th className="py-3.5 px-5">Source</th>
+                                <th className="py-3.5 px-5">Assigned Date</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
-                            {recent_assignments.map((asg) => (
-                                <tr key={asg.id} className="hover:bg-slate-50/60 dark:hover:bg-zinc-800/40 transition">
-                                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-zinc-100">
-                                        <Link href={route('devices.show', asg.device.id)} className="text-[#026eff] dark:text-[#0b79ff] hover:underline">
-                                            {asg.device.asset_tag}
-                                        </Link>
-                                        <div className="text-xs text-slate-400 dark:text-zinc-500 font-normal">{asg.device.brand} {asg.device.model}</div>
-                                    </td>
-                                    <td className="py-3.5 px-4 font-semibold text-slate-900 dark:text-zinc-100">
-                                        {asg.employee.name}
-                                    </td>
-                                    <td className="py-3.5 px-4 text-xs text-slate-600 dark:text-zinc-400">
-                                        <div>{asg.employee.department}</div>
-                                        <div className="text-slate-400 dark:text-zinc-500">{asg.employee.role_profile?.name || 'Custom Role'}</div>
-                                    </td>
-                                    <td className="py-3.5 px-4">
-                                        {asg.match_score ? (
-                                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                                                asg.match_score >= 0.8 ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300' :
-                                                asg.match_score >= 0.65 ? 'bg-[#026eff]/15 dark:bg-[#031a40]/60 text-[#026eff] dark:text-[#0b79ff]' :
-                                                'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300'
-                                            }`}>
-                                                {Math.round(asg.match_score * 100)}%
-                                            </span>
-                                        ) : (
-                                            <span className="text-xs text-slate-400 dark:text-zinc-500">N/A</span>
-                                        )}
-                                    </td>
-                                    <td className="py-3.5 px-4">
-                                        <span className="text-[11px] uppercase font-semibold text-slate-500 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded">
-                                            {asg.assignment_source.replace('_', ' ')}
-                                        </span>
-                                    </td>
-                                    <td className="py-3.5 px-4 text-xs text-slate-500 dark:text-zinc-400">
-                                        {new Date(asg.assigned_at).toLocaleDateString()}
+                        <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/80">
+                            {(!recent_assignments || recent_assignments.length === 0) ? (
+                                <tr>
+                                    <td colSpan="6" className="py-8 text-center text-slate-400 dark:text-zinc-500 text-xs">
+                                        No recent fleet assignments recorded yet.
                                     </td>
                                 </tr>
-                            ))}
+                            ) : (
+                                recent_assignments.map((asg) => (
+                                    <tr key={asg.id} className="hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition">
+                                        <td className="py-4 px-5">
+                                            {asg.device ? (
+                                                <Link href={route('devices.show', asg.device.id)} className="font-mono text-sm font-bold text-[#026eff] dark:text-[#38bdf8] hover:underline">
+                                                    {asg.device.asset_tag}
+                                                </Link>
+                                            ) : (
+                                                <span className="font-mono text-sm text-slate-400">N/A</span>
+                                            )}
+                                            <div className="text-xs text-slate-500 dark:text-zinc-400 font-medium mt-0.5">
+                                                {asg.device ? `${asg.device.brand} ${asg.device.model}` : 'Unassigned'}
+                                            </div>
+                                        </td>
+                                        <td className="py-4 px-5 font-bold text-slate-900 dark:text-zinc-100 text-sm">
+                                            {asg.employee?.name || 'Unknown Staff'}
+                                        </td>
+                                        <td className="py-4 px-5">
+                                            <div className="text-sm font-semibold text-slate-800 dark:text-zinc-200">{asg.employee?.department || 'General'}</div>
+                                            <div className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">{asg.employee?.role_profile?.name || 'Custom Role'}</div>
+                                        </td>
+                                        <td className="py-4 px-5">
+                                            {asg.match_score ? (
+                                                <span className={`inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-full border shadow-2xs ${
+                                                    asg.match_score >= 0.8 ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200/70 dark:border-emerald-800/60' :
+                                                    asg.match_score >= 0.65 ? 'bg-[#026eff]/10 dark:bg-[#031a40]/60 text-[#026eff] dark:text-[#38bdf8] border-[#026eff]/20 dark:border-[#031a40]/60' :
+                                                    'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-200/70 dark:border-rose-900/60'
+                                                }`}>
+                                                    {Math.round(asg.match_score * 100)}% Match
+                                                </span>
+                                            ) : (
+                                                <span className="text-xs text-slate-400 dark:text-zinc-500">N/A</span>
+                                            )}
+                                        </td>
+                                        <td className="py-4 px-5">
+                                            <span className="text-xs uppercase font-bold text-slate-600 dark:text-zinc-300 bg-slate-100 dark:bg-zinc-800 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-zinc-700">
+                                                {(asg.assignment_source || 'manual').replace('_', ' ')}
+                                            </span>
+                                        </td>
+                                        <td className="py-4 px-5 text-xs font-medium text-slate-600 dark:text-zinc-400">
+                                            {asg.assigned_at ? new Date(asg.assigned_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>

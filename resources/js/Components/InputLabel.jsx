@@ -1,6 +1,7 @@
 export default function InputLabel({
     value,
     className = '',
+    required = false,
     children,
     ...props
 }) {
@@ -13,6 +14,7 @@ export default function InputLabel({
             }
         >
             {value ? value : children}
+            {required && <span className="text-rose-500 font-bold ml-0.5">*</span>}
         </label>
     );
 }
