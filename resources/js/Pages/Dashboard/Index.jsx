@@ -149,7 +149,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                     <div className="mt-3 text-xs text-slate-500 dark:text-zinc-400 flex items-center justify-between">
                         <span className="font-semibold text-amber-700 dark:text-amber-400">{metrics.active_maintenance_count} in servicing</span>
                         <Link href={route('maintenance.index')} className="text-[#026eff] dark:text-[#0b79ff] font-semibold hover:underline">
-                            Open Hub &rarr;
+                            Open Hub
                         </Link>
                     </div>
                 </div>
@@ -273,7 +273,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                             <p className="text-xs text-slate-500 dark:text-zinc-400">Currently idle units ready to be circulation-matched</p>
                         </div>
                         <Link href={route('devices.index', { status: 'available' })} className="text-xs font-semibold text-[#026eff] dark:text-[#0b79ff] hover:underline">
-                            View All Available ({metrics.idle_devices}) &rarr;
+                            View All Available ({metrics.idle_devices})
                         </Link>
                     </div>
 
@@ -322,7 +322,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                                 <div className="mt-4 pt-3 border-t border-slate-200/60 dark:border-zinc-800 flex items-center justify-between text-xs">
                                     <span className="text-slate-400 dark:text-zinc-500 capitalize">{device.device_type} &bull; {device.condition}</span>
                                     <Link href={route('devices.show', device.id)} className="font-semibold text-[#026eff] dark:text-[#0b79ff] hover:text-[#026eff] dark:hover:text-[#0b79ff]">
-                                        Details &rarr;
+                                        Details
                                     </Link>
                                 </div>
                             </div>
@@ -363,7 +363,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                         href={route('match.index')}
                         className="mt-6 w-full py-3 rounded-xl bg-white text-[#031a40] font-bold text-center text-sm hover:bg-[#026eff]/10 transition shadow-sm"
                     >
-                        Launch Match Engine &rarr;
+                        Launch Match Engine
                     </Link>
                 </div>
             </div>
@@ -376,7 +376,7 @@ export default function Dashboard({ metrics, mismatches, recent_assignments, ava
                         <p className="text-xs text-slate-500 dark:text-zinc-400">Audit trail of equipment deployments and match scores</p>
                     </div>
                     <Link href={route('employees.index')} className="text-xs font-semibold text-[#026eff] dark:text-[#0b79ff] hover:underline">
-                        View All Employees &rarr;
+                        View All Employees
                     </Link>
                 </div>
 

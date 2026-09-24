@@ -129,7 +129,7 @@ export default function RoleProfilesIndex({ profiles }) {
 
             <div className="mt-5 pt-3 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between text-xs">
                 <span className="text-[11px] font-medium text-slate-400 dark:text-zinc-500">
-                    Click to view workload matrix &rarr;
+                    Click to view workload matrix
                 </span>
                 <span className="text-xs font-bold text-[#026eff] dark:text-[#0b79ff] group-hover:underline">
                     Inspect

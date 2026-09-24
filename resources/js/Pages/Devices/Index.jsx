@@ -456,10 +456,10 @@ export default function DevicesIndex({ devices, filters }) {
                                             </td>
 
                                             {/* 5. Action (Clean View Details Button) */}
-                                            <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                                            <td className="py-3.5 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                                                 <Link
                                                     href={route('devices.show', device.id)}
-                                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-zinc-800 hover:bg-[#026eff] hover:text-white dark:hover:bg-[#026eff] text-slate-700 dark:text-zinc-300 text-xs font-semibold transition cursor-pointer shadow-2xs"
+                                                    className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-[#026eff] hover:text-white dark:bg-zinc-800 dark:hover:bg-[#026eff] text-slate-700 dark:text-zinc-200 transition shadow-2xs cursor-pointer"
                                                 >
                                                     <span>View Details</span>
                                                 </Link>

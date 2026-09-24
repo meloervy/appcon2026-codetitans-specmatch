@@ -828,23 +828,22 @@ export default function EmployeesIndex({ employees, role_profiles = [], departme
                                                                 <Link
                                                                     key={actIdx}
                                                                     href={act.href}
-                                                                    className="inline-flex items-center gap-1 text-xs font-bold text-[#026eff] dark:text-[#0b79ff] hover:text-[#0256cc] dark:hover:text-[#3894ff] px-2.5 py-1 rounded-lg hover:bg-[#026eff]/10 dark:hover:bg-[#026eff]/20 transition shrink-0 whitespace-nowrap"
+                                                                    className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-[#026eff] hover:text-white dark:bg-zinc-800 dark:hover:bg-[#026eff] text-slate-700 dark:text-zinc-200 transition shadow-2xs shrink-0 whitespace-nowrap"
                                                                 >
                                                                     <span>{act.label}</span>
-                                                                    <span aria-hidden="true">&rarr;</span>
                                                                 </Link>
                                                             ) : (
                                                                 <button
                                                                     key={actIdx}
                                                                     type="button"
                                                                     onClick={act.onClick}
-                                                                    className={`text-xs font-medium px-2.5 py-1 rounded-lg transition cursor-pointer shrink-0 whitespace-nowrap ${
+                                                                    className={`inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-xl transition cursor-pointer shadow-2xs shrink-0 whitespace-nowrap ${
                                                                         act.variant === 'danger'
-                                                                            ? 'text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40'
-                                                                            : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800'
+                                                                            ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-600 hover:text-white'
+                                                                            : 'bg-slate-100 hover:bg-[#026eff] hover:text-white dark:bg-zinc-800 dark:hover:bg-[#026eff] text-slate-700 dark:text-zinc-200'
                                                                     }`}
                                                                 >
-                                                                    {act.label}
+                                                                    <span>{act.label}</span>
                                                                 </button>
                                                             )
                                                         )}
