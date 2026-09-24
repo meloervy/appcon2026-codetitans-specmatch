@@ -183,7 +183,7 @@ class MatchingController extends Controller
 
         return redirect()->route('dashboard')->with(
             'success',
-            "⚡ Dynamic Bridge Swap executed! Deployed stockroom unit {$bridgeDevice->asset_tag} to {$donor->name}, freeing up {$donorDevice->asset_tag} for {$requester->name}. Avoided ₱{$savings} in new hardware CapEx!"
+            "Dynamic Bridge Swap executed! Deployed stockroom unit {$bridgeDevice->asset_tag} to {$donor->name}, freeing up {$donorDevice->asset_tag} for {$requester->name}. Avoided ₱{$savings} in new hardware CapEx!"
         );
     }
 
