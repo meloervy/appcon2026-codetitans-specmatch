@@ -21,7 +21,10 @@ class DatabaseSeeder extends Seeder
         // 1. Seed Enterprise ITAM Staff Users (Covering Admin, Asset Manager, and Technician)
         $this->call(UserSeeder::class);
 
-        // 2. Seed Role Profiles (Covering Core Engineering, UI/UX, Product Design, Analytics, & Admin)
+        // Guard against duplicate seeding if database already contains records
+        if (RoleProfile::count() > 0) {
+            return;
+        }
         $developer = RoleProfile::create([
             'name' => 'Software Engineer',
             'min_cpu_tier' => 'high',

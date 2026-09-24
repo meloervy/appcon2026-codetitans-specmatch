@@ -13,6 +13,12 @@ require __DIR__.'/vendor/autoload.php';
 /** @var Application $app */
 $app = require_once __DIR__.'/bootstrap/app.php';
 
-$status = $app->handleCommand(new ArgvInput);
+// Auto-append --force if migrate or seed is invoked without it (e.g. automated Wasmer deployments)
+if (isset($_SERVER['argv'][1]) && (str_starts_with($_SERVER['argv'][1], 'migrate') || str_starts_with($_SERVER['argv'][1], 'db:seed')) && ! in_array('--force', $_SERVER['argv'], true)) {
+    $_SERVER['argv'][] = '--force';
+    $argv[] = '--force';
+}
+
+$status = $app->handleCommand(new ArgvInput($_SERVER['argv']));
 
 exit($status);
