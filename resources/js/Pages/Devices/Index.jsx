@@ -176,6 +176,7 @@ export default function DevicesIndex({ devices, filters }) {
                                 options={[
                                     { value: 'acquisition', label: 'Acquisition' },
                                     { value: 'deployment', label: 'Deployment' },
+                                    { value: 'reclaimed', label: 'Reclaimed (In Pool)' },
                                     { value: 'maintenance', label: 'Maintenance' },
                                     { value: 'retirement', label: 'Retirement' },
                                 ]}

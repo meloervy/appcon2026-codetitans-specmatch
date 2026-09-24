@@ -186,4 +186,28 @@ class MatchingController extends Controller
             "Dynamic Bridge Swap executed! Deployed stockroom unit {$bridgeDevice->asset_tag} to {$donor->name}, freeing up {$donorDevice->asset_tag} for {$requester->name}. Avoided ₱{$savings} in new hardware CapEx!"
         );
     }
+
+    /**
+     * Simulate hypothetical headcount and role requirements against current stockroom inventory.
+     */
+    public function simulate(Request $request, MatchingService $matchingService): JsonResponse
+    {
+        $validated = $request->validate([
+            'requirements' => ['required', 'array'],
+            'requirements.min_cpu_tier' => ['required', 'in:entry,mid,high,workstation'],
+            'requirements.min_ram_gb' => ['required', 'integer', 'min:4'],
+            'requirements.min_storage_gb' => ['required', 'integer', 'min:64'],
+            'requirements.requires_gpu' => ['required', 'boolean'],
+            'requirements.min_gpu_tier' => ['nullable', 'in:none,integrated,dedicated-entry,dedicated-high'],
+            'requirements.portability_required' => ['required', 'boolean'],
+            'quantity' => ['required', 'integer', 'min:1', 'max:50'],
+        ]);
+
+        $simulation = $matchingService->simulateHeadcount(
+            $validated['requirements'],
+            $validated['quantity']
+        );
+
+        return response()->json($simulation);
+    }
 }

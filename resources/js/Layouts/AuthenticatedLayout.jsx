@@ -1,4 +1,5 @@
 import Dropdown from '@/Components/Dropdown';
+import GeminiFleetAssistant from '@/Components/GeminiFleetAssistant';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
 import SpecMatchLogo from '@/Components/SpecMatchLogo';
@@ -12,14 +13,11 @@ import {
     RiTeamLine,
     RiSparklingLine,
     RiAlertLine,
-    RiUser3Line,
-    RiLogoutBoxRLine,
-    RiBuildingLine,
-    RiArrowDownSLine,
     RiSunLine,
     RiMoonLine,
-    RiArrowRightSLine,
-    RiSettings4Line,
+    RiUserLine,
+    RiLogoutBoxRLine,
+    RiArrowDownSLine,
 } from 'react-icons/ri';
 
 export default function AuthenticatedLayout({ header, children, maxWidth = 'max-w-[1600px]' }) {
@@ -28,6 +26,18 @@ export default function AuthenticatedLayout({ header, children, maxWidth = 'max-
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
     const [isDark, setIsDark] = useState(false);
+    const [isAssistantOpen, setIsAssistantOpen] = useState(false);
+
+    useEffect(() => {
+        const handleGlobalKeyDown = (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                setIsAssistantOpen((prev) => !prev);
+            }
+        };
+        window.addEventListener('keydown', handleGlobalKeyDown);
+        return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+    }, []);
 
     useEffect(() => {
         const hasDarkClass = document.documentElement.classList.contains('dark');
@@ -62,8 +72,8 @@ export default function AuthenticatedLayout({ header, children, maxWidth = 'max-
                 <div className={`mx-auto ${maxWidth} px-4 sm:px-6 lg:px-8`}>
                     <div className="flex h-14 justify-between items-center">
                         <div className="flex items-center gap-7">
-                            <Link href="/dashboard" className="flex items-center group">
-                                <SpecMatchLogo variant="full" size={26} />
+                            <Link href="/dashboard" className="flex items-center group shrink-0">
+                                <SpecMatchLogo variant="full" size={26} showBadge={true} />
                             </Link>
 
                             <div className="hidden lg:flex items-center space-x-1">
@@ -100,106 +110,106 @@ export default function AuthenticatedLayout({ header, children, maxWidth = 'max-
                             </div>
                         </div>
 
-                        <div className="hidden lg:flex lg:items-center lg:gap-3">
-
+                        <div className="hidden lg:flex lg:items-center lg:gap-2.5 shrink-0">
                             {/* Profile & Theme Toggle Dropdown */}
                             <Dropdown>
                                 <Dropdown.Trigger>
                                     <button
                                         type="button"
-                                        className="group inline-flex items-center gap-2 rounded-xl border border-slate-200/90 dark:border-zinc-800/90 bg-white dark:bg-zinc-900/90 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-zinc-200 hover:border-[#026eff]/40 dark:hover:border-[#026eff]/40 hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-2xs transition"
+                                        className="group inline-flex items-center gap-2 rounded-xl border border-slate-200/90 dark:border-zinc-800/90 bg-white dark:bg-zinc-900/90 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-zinc-200 hover:border-[#026eff]/40 dark:hover:border-[#026eff]/40 hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-2xs transition shrink-0 cursor-pointer"
                                     >
-                                        <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-[#026eff] to-sky-400 text-white flex items-center justify-center text-[10px] font-bold shadow-2xs ring-2 ring-white dark:ring-zinc-900">
-                                            {user.name.charAt(0)}
+                                        <div className="w-5 h-5 rounded-full overflow-hidden bg-gradient-to-tr from-[#026eff] to-sky-400 text-white flex items-center justify-center text-[10px] font-bold shadow-2xs ring-2 ring-white dark:ring-zinc-900 shrink-0">
+                                            {user.avatar_url ? (
+                                                <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <span>{user.name.charAt(0)}</span>
+                                            )}
                                         </div>
                                         <span className="font-semibold text-slate-800 dark:text-zinc-200 max-w-[120px] truncate">{user.name}</span>
                                         <span className="hidden sm:inline-block px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 border border-slate-200/60 dark:border-zinc-700/60">
-                                            {user.role === 'admin' ? 'Admin' : user.role === 'manager' ? 'Manager' : user.role === 'technician' ? 'Tech' : 'Staff'}
+                                            {user.role === 'admin' ? 'Admin' : user.role === 'manager' ? 'Manager' : user.role === 'technician' ? 'Tech' : (user.role_title || 'Staff')}
                                         </span>
-                                        <RiArrowDownSLine className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500 group-hover:text-slate-600 dark:group-hover:text-zinc-300 transition" />
+                                        <RiArrowDownSLine className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500 group-hover:text-slate-600 dark:group-hover:text-zinc-300 transition shrink-0" />
                                     </button>
                                 </Dropdown.Trigger>
 
-                                <Dropdown.Content width="64">
-                                    {/* User Identity Header Card */}
-                                    <div className="p-3 bg-gradient-to-br from-slate-50 to-slate-100/60 dark:from-zinc-800/60 dark:to-zinc-900/60 rounded-xl border border-slate-200/70 dark:border-zinc-800/80 mb-2">
-                                        <div className="flex items-center gap-2.5 mb-2">
-                                            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#026eff] to-sky-400 text-white flex items-center justify-center text-sm font-bold shadow-sm shrink-0">
-                                                {user.name.charAt(0)}
+                                <Dropdown.Content width="56">
+                                    <div className="px-3.5 py-2.5 border-b border-slate-100 dark:border-zinc-800 text-xs">
+                                        <div className="flex items-center gap-2.5 mb-1.5">
+                                            <div className="w-8 h-8 rounded-full overflow-hidden bg-[#026eff]/15 dark:bg-[#031a40]/60 text-[#026eff] dark:text-[#0b79ff] flex items-center justify-center text-xs font-bold shrink-0 border border-slate-200/60 dark:border-zinc-700/60">
+                                                {user.avatar_url ? (
+                                                    <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <span>{user.name.charAt(0)}</span>
+                                                )}
                                             </div>
                                             <div className="min-w-0 flex-1">
-                                                <div className="font-bold text-slate-900 dark:text-zinc-100 text-xs truncate">
-                                                    {user.name}
-                                                </div>
-                                                <div className="text-[11px] text-slate-500 dark:text-zinc-400 truncate">
-                                                    {user.email}
-                                                </div>
+                                                <div className="font-semibold text-slate-800 dark:text-zinc-200 truncate">{user.name}</div>
+                                                <div className="text-[11px] text-slate-400 dark:text-zinc-500 truncate">{user.email}</div>
                                             </div>
                                         </div>
-                                        <div className="flex items-center justify-between gap-1 pt-2 border-t border-slate-200/60 dark:border-zinc-700/60 text-[10px]">
-                                            <span className="inline-flex items-center gap-1 font-semibold text-slate-600 dark:text-zinc-300 truncate">
-                                                <RiBuildingLine className="w-3 h-3 text-slate-400" />
-                                                <span>{user.department || 'All Departments'}</span>
-                                            </span>
-                                            <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-[#026eff]/10 dark:bg-[#031a40]/60 text-[#026eff] dark:text-[#0b79ff] border border-[#026eff]/20 dark:border-[#031a40]/60">
-                                                {user.role_title || (user.role ? user.role.toUpperCase() : 'STAFF')}
-                                            </span>
+                                        <div className="pt-2 border-t border-slate-100 dark:border-zinc-800/80 space-y-1">
+                                            <div>
+                                                <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-[#026eff]/10 dark:bg-[#031a40]/60 text-[#026eff] dark:text-[#0b79ff] border border-[#026eff]/20 dark:border-[#031a40]/60">
+                                                    {user.role_title || (user.role === 'admin' ? 'IT Administrator' : user.role === 'manager' ? 'IT Manager' : 'Staff')}
+                                                </span>
+                                            </div>
+                                            {(user.department || user.job_title) && (
+                                                <div className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium flex items-center gap-1.5 truncate">
+                                                    <span>🏢</span>
+                                                    <span className="truncate">{user.department || user.job_title}</span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
-                                    {/* Appearance Switch */}
-                                    <div className="px-2 py-1.5 mb-1 bg-slate-50/50 dark:bg-zinc-800/30 rounded-xl border border-slate-100 dark:border-zinc-800/60">
-                                        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 px-1 mb-1 flex items-center justify-between">
-                                            <span>Theme Mode</span>
-                                            <span className="text-[9px] font-medium text-slate-400 capitalize">{isDark ? 'Dark' : 'Light'}</span>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-1 bg-slate-200/60 dark:bg-zinc-800/90 p-0.5 rounded-lg text-xs">
+                                    {/* Appearance: Simple switch toggle (icon only, no text) */}
+                                    <div className="px-3.5 py-2.5 border-b border-slate-100 dark:border-zinc-800 flex items-center justify-between">
+                                        <span className="text-xs font-medium text-slate-600 dark:text-zinc-400">
+                                            Appearance
+                                        </span>
+                                        <div className="inline-flex items-center p-0.5 bg-slate-100 dark:bg-zinc-800/90 rounded-lg border border-slate-200/60 dark:border-zinc-700/60">
                                             <button
                                                 type="button"
                                                 onClick={() => setThemeMode('light')}
-                                                className={`flex items-center justify-center gap-1.5 py-1 px-2 rounded-md text-[11px] font-semibold transition cursor-pointer ${
+                                                className={`p-1.5 rounded-md transition cursor-pointer ${
                                                     !isDark
-                                                        ? 'bg-white text-slate-900 shadow-2xs'
-                                                        : 'text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
+                                                        ? 'bg-white dark:bg-zinc-700 text-amber-500 shadow-2xs'
+                                                        : 'text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300'
                                                 }`}
+                                                title="Light mode"
+                                                aria-label="Light mode"
                                             >
-                                                <RiSunLine className="w-3.5 h-3.5 text-amber-500" />
-                                                <span>Light</span>
+                                                <RiSunLine className="w-3.5 h-3.5" />
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => setThemeMode('dark')}
-                                                className={`flex items-center justify-center gap-1.5 py-1 px-2 rounded-md text-[11px] font-semibold transition cursor-pointer ${
+                                                className={`p-1.5 rounded-md transition cursor-pointer ${
                                                     isDark
-                                                        ? 'bg-zinc-700 text-white shadow-2xs'
-                                                        : 'text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
+                                                        ? 'bg-white dark:bg-zinc-700 text-[#026eff] dark:text-[#38bdf8] shadow-2xs'
+                                                        : 'text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300'
                                                 }`}
+                                                title="Dark mode"
+                                                aria-label="Dark mode"
                                             >
-                                                <RiMoonLine className="w-3.5 h-3.5 text-sky-400" />
-                                                <span>Dark</span>
+                                                <RiMoonLine className="w-3.5 h-3.5" />
                                             </button>
                                         </div>
                                     </div>
 
-                                    <div className="space-y-0.5 pt-0.5">
-                                        <Dropdown.Link
-                                            href={route('profile.edit')}
-                                            icon={RiSettings4Line}
-                                            description="Account security & preferences"
-                                        >
-                                            Profile Settings
-                                        </Dropdown.Link>
-                                        <Dropdown.Link
-                                            href={route('logout')}
-                                            method="post"
-                                            as="button"
-                                            icon={RiLogoutBoxRLine}
-                                            variant="danger"
-                                            description="End session & lock screen"
-                                        >
-                                            Log Out
-                                        </Dropdown.Link>
-                                    </div>
+                                    <Dropdown.Link href={route('profile.edit')}>
+                                        <div className="flex items-center gap-2">
+                                            <RiUserLine className="w-4 h-4 text-slate-400 dark:text-zinc-500 shrink-0" />
+                                            <span>Profile Settings</span>
+                                        </div>
+                                    </Dropdown.Link>
+                                    <Dropdown.Link href={route('logout')} method="post" as="button">
+                                        <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
+                                            <RiLogoutBoxRLine className="w-4 h-4 shrink-0" />
+                                            <span>Log Out</span>
+                                        </div>
+                                    </Dropdown.Link>
                                 </Dropdown.Content>
                             </Dropdown>
                         </div>
@@ -242,6 +252,26 @@ export default function AuthenticatedLayout({ header, children, maxWidth = 'max-
                 {/* Mobile Dropdown */}
                 {showingNavigationDropdown && (
                     <div className="lg:hidden border-t border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 space-y-1">
+                        {/* Mobile User Profile Header */}
+                        <div className="flex items-center gap-3 p-2.5 mb-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200/70 dark:border-zinc-800">
+                            <div className="w-9 h-9 rounded-full overflow-hidden bg-[#026eff]/15 dark:bg-[#031a40]/60 text-[#026eff] dark:text-[#38bdf8] flex items-center justify-center text-xs font-bold shrink-0 border border-slate-200/60 dark:border-zinc-700/60">
+                                {user.avatar_url ? (
+                                    <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
+                                ) : (
+                                    <span>{user.name.charAt(0)}</span>
+                                )}
+                            </div>
+                            <div className="flex flex-col min-w-0 flex-1 leading-tight">
+                                <div className="flex items-center justify-between gap-1">
+                                    <span className="font-bold text-xs text-slate-800 dark:text-zinc-100 truncate">{user.name}</span>
+                                    <span className="text-[9px] font-extrabold uppercase tracking-wider text-[#026eff] dark:text-[#38bdf8] px-1.5 py-0.5 rounded bg-[#026eff]/10 dark:bg-[#026eff]/20 shrink-0">
+                                        {user.role === 'admin' ? 'Admin' : user.role === 'manager' ? 'Manager' : user.role === 'technician' ? 'Tech' : (user.role_title || 'Staff')}
+                                    </span>
+                                </div>
+                                <span className="text-[11px] text-slate-400 dark:text-zinc-500 truncate mt-0.5">{user.email}</span>
+                            </div>
+                        </div>
+
                         <ResponsiveNavLink href={route('dashboard')} active={route().current('dashboard')}>
                             <span className="flex items-center gap-2">
                                 <RiDashboard3Line className="w-4 h-4 shrink-0" />
@@ -305,9 +335,17 @@ export default function AuthenticatedLayout({ header, children, maxWidth = 'max-
                                     </button>
                                 </div>
                             </div>
-                            <ResponsiveNavLink href={route('profile.edit')}>Profile Settings</ResponsiveNavLink>
+                            <ResponsiveNavLink href={route('profile.edit')}>
+                                <span className="flex items-center gap-2">
+                                    <RiUserLine className="w-4 h-4 shrink-0" />
+                                    Profile Settings
+                                </span>
+                            </ResponsiveNavLink>
                             <ResponsiveNavLink method="post" href={route('logout')} as="button">
-                                Log Out
+                                <span className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
+                                    <RiLogoutBoxRLine className="w-4 h-4 shrink-0" />
+                                    Log Out
+                                </span>
                             </ResponsiveNavLink>
                         </div>
                     </div>
@@ -351,6 +389,13 @@ export default function AuthenticatedLayout({ header, children, maxWidth = 'max-
                     {children}
                 </div>
             </main>
+
+            {/* Gemini Fleet Assistant Floating Copilot */}
+            <GeminiFleetAssistant
+                isOpen={isAssistantOpen}
+                onClose={() => setIsAssistantOpen(false)}
+                onOpen={() => setIsAssistantOpen(true)}
+            />
         </div>
     );
 }

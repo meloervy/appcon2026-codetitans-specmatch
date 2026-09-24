@@ -55,6 +55,7 @@ const statusOptions = [
 const lifecycleStageOptions = [
     { value: 'acquisition', label: 'Acquisition (Intake / Staging)', badge: 'Phase 1', icon: RiPulseLine },
     { value: 'deployment', label: 'Deployment (Active In-Service)', badge: 'Phase 2', icon: RiCheckboxCircleLine },
+    { value: 'reclaimed', label: 'Reclaimed (Sanitized in Pool Stock)', badge: 'Stock', icon: RiCheckboxCircleLine },
     { value: 'maintenance', label: 'Maintenance (Servicing / In-Repair)', badge: 'Phase 3', icon: RiToolsLine },
     { value: 'retirement', label: 'Retirement (Decommissioned)', badge: 'Phase 4', icon: RiArchiveLine },
 ];
@@ -264,8 +265,9 @@ export default function DevicesShow({ device }) {
     const stages = [
         { key: 'acquisition', label: '1. Acquisition', desc: 'Procurement & Staging' },
         { key: 'deployment', label: '2. Deployment', desc: 'Active Production' },
-        { key: 'maintenance', label: '3. Maintenance', desc: 'Repairs & Servicing' },
-        { key: 'retirement', label: '4. Retirement', desc: 'Decommissioned / EOL' },
+        { key: 'reclaimed', label: '3. Reclaimed', desc: 'Sanitized in Pool' },
+        { key: 'maintenance', label: '4. Maintenance', desc: 'Repairs & Servicing' },
+        { key: 'retirement', label: '5. Retirement', desc: 'Decommissioned / EOL' },
     ];
 
     const currentStageIndex = stages.findIndex((s) => s.key === device.lifecycle_stage);
@@ -503,7 +505,7 @@ export default function DevicesShow({ device }) {
                         </button>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
                         {stages.map((stage, idx) => {
                             const isCurrent = stage.key === device.lifecycle_stage;
                             const isPast = currentStageIndex > idx;
@@ -568,7 +570,7 @@ export default function DevicesShow({ device }) {
                                         <h2 className="text-xl font-bold text-slate-900 dark:text-zinc-100 tracking-tight">
                                             {device.brand} {device.model}
                                         </h2>
-                                        
+
                                         {/* Live Pulsing Status Badge */}
                                         <div className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-0.5 rounded-full border ${currentStatus.bg} ${currentStatus.text} ${currentStatus.border}`}>
                                             <span className="relative flex h-2 w-2">
