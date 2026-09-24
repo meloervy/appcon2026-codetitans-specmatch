@@ -22,6 +22,338 @@ class GeminiService
     }
 
     /**
+     * Identify hardware specifications for a device model name using Gemini AI.
+     *
+     * Replaces TechSpecs API — given a query like "Dell XPS 15 2024" or "MacBook Pro 16 M3 Max",
+     * Gemini returns structured specs that auto-fill the device registration form.
+     *
+     * @return array{success: bool, specs: ?array, source: string, error: ?string}
+     */
+    public function identifyDeviceSpecs(string $query): array
+    {
+        $cleanQuery = $this->sanitizeInput($query);
+
+        if (mb_strlen($cleanQuery) < 2) {
+            return ['success' => false, 'specs' => null, 'source' => 'validation', 'error' => 'Query too short.'];
+        }
+
+        // Cache check
+        $cacheKey = 'gemini_device_specs_'.md5(strtolower($cleanQuery));
+        if ($cached = Cache::get($cacheKey)) {
+            return ['success' => true, 'specs' => $cached, 'source' => 'cache', 'error' => null];
+        }
+
+        // Circuit breaker check
+        if (Cache::get('gemini_rate_limited') || Cache::get('gemini_assistant_quota_exceeded')) {
+            $specs = $this->heuristicDeviceSpecsFallback($cleanQuery);
+            Cache::put($cacheKey, $specs, now()->addHours(24));
+
+            return [
+                'success' => true,
+                'specs' => $specs,
+                'source' => 'heuristic_fallback',
+                'error' => null,
+            ];
+        }
+
+        // Offline mode
+        if (filter_var(env('GEMINI_DEMO_OFFLINE', false), FILTER_VALIDATE_BOOLEAN)) {
+            $specs = $this->heuristicDeviceSpecsFallback($cleanQuery);
+            Cache::put($cacheKey, $specs, now()->addHours(24));
+
+            return [
+                'success' => true,
+                'specs' => $specs,
+                'source' => 'offline_heuristic',
+                'error' => null,
+            ];
+        }
+
+        $apiKey = config('services.gemini.api_key', env('GEMINI_API_KEY'));
+        if (empty($apiKey)) {
+            $specs = $this->heuristicDeviceSpecsFallback($cleanQuery);
+            Cache::put($cacheKey, $specs, now()->addHours(24));
+
+            return [
+                'success' => true,
+                'specs' => $specs,
+                'source' => 'heuristic_fallback',
+                'error' => null,
+            ];
+        }
+
+        $model = config('services.gemini.model', env('GEMINI_MODEL', 'gemini-3.1-flash-lite'));
+        if (in_array($model, ['gemini-2.5-flash', 'gemini-3.6-flash', 'gemini-3.8-flash'])) {
+            $model = 'gemini-3.1-flash-lite';
+        }
+
+        try {
+            $systemPrompt = <<<'PROMPT'
+You are a hardware specification expert. Given a device model name or description, return accurate technical specifications.
+
+Respond with ONLY a JSON object matching this exact schema:
+{
+  "brand": "string — manufacturer name (Dell, Apple, Lenovo, HP, etc.)",
+  "model": "string — full model name without brand prefix",
+  "device_type": "laptop | desktop",
+  "cpu": "string — full processor name (e.g. Intel Core i7-13700H, Apple M3 Max)",
+  "cpu_tier": "entry | mid | high | workstation",
+  "ram_gb": "integer — RAM in GB (common: 8, 16, 32, 64)",
+  "storage_type": "SSD | HDD",
+  "storage_gb": "integer — storage capacity in GB (common: 256, 512, 1024, 2048)",
+  "gpu": "string — GPU name (e.g. NVIDIA RTX 4070, Intel Iris Xe, Apple 30-core GPU)",
+  "gpu_tier": "none | integrated | dedicated-entry | dedicated-high",
+  "year_acquired": "integer — release year of this model"
+}
+
+CPU tier rules:
+- entry: Celeron, Pentium, Core i3, Ryzen 3, Apple A-series
+- mid: Core i5, Ryzen 5, Apple M1/M2/M3 base
+- high: Core i7/i9, Ryzen 7/9, M1/M2/M3 Pro/Max
+- workstation: Xeon, Threadripper, EPYC
+
+GPU tier rules:
+- none: No GPU
+- integrated: Intel UHD/Iris, AMD Radeon integrated, Apple integrated GPU
+- dedicated-entry: GTX 1650, RTX 3050/4050, Radeon RX 6500
+- dedicated-high: RTX 4070+, RTX 4500/6000 Ada, Quadro, Apple 30c+ GPU
+
+Use the most common / base configuration if the user doesn't specify a variant.
+If the device has multiple common configurations, use the standard/popular SKU.
+PROMPT;
+
+            $response = Http::timeout(10)->post(
+                "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}",
+                [
+                    'system_instruction' => ['parts' => [['text' => $systemPrompt]]],
+                    'contents' => [
+                        [
+                            'parts' => [
+                                ['text' => "Identify the hardware specifications for this device:\n\n{$cleanQuery}\n\nRespond ONLY with valid JSON. Do not include markdown fences."],
+                            ],
+                        ],
+                    ],
+                    'generationConfig' => [
+                        'temperature' => 0.1,
+                        'responseMimeType' => 'application/json',
+                    ],
+                ]
+            );
+
+            if ($response->successful()) {
+                $body = $response->json();
+                $text = $body['candidates'][0]['content']['parts'][0]['text'] ?? null;
+
+                if ($text) {
+                    $cleanJson = trim(preg_replace('/^```(?:json)?\s*|\s*```$/i', '', trim($text)));
+                    $decoded = json_decode($cleanJson, true);
+
+                    if (is_array($decoded) && isset($decoded['brand'], $decoded['cpu'])) {
+                        $specs = $this->sanitizeDeviceSpecs($decoded);
+
+                        // Cache for 24 hours
+                        Cache::put($cacheKey, $specs, now()->addHours(24));
+
+                        return ['success' => true, 'specs' => $specs, 'source' => 'gemini_ai', 'error' => null];
+                    }
+                }
+
+                Log::warning('Gemini device identification returned unparseable response', ['query' => $cleanQuery]);
+
+                return ['success' => false, 'specs' => null, 'source' => 'gemini_parse_error', 'error' => 'AI returned an unparseable response. Please try again or enter specs manually.'];
+            }
+
+            $status = $response->status();
+            Log::warning("Gemini device identification returned HTTP {$status}", ['query' => $cleanQuery]);
+
+            if ($status === 429) {
+                Cache::put('gemini_rate_limited', true, now()->addMinutes(30));
+                Cache::put('gemini_assistant_quota_exceeded', true, now()->addMinutes(30));
+            }
+
+            return [
+                'success' => true,
+                'specs' => $this->heuristicDeviceSpecsFallback($cleanQuery),
+                'source' => 'heuristic_fallback',
+                'error' => null,
+            ];
+        } catch (\Throwable $e) {
+            Log::error('Gemini device identification failed: '.$e->getMessage());
+
+            return [
+                'success' => true,
+                'specs' => $this->heuristicDeviceSpecsFallback($cleanQuery),
+                'source' => 'heuristic_fallback',
+                'error' => null,
+            ];
+        }
+    }
+
+    /**
+     * Intelligent local heuristic device specs parser for offline and fallback modes.
+     */
+    public function heuristicDeviceSpecsFallback(string $input): array
+    {
+        $clean = trim($input);
+        $lower = strtolower($clean);
+
+        // Brand inference
+        $brand = 'Lenovo';
+        if (str_contains($lower, 'apple') || str_contains($lower, 'macbook') || str_contains($lower, 'mac') || str_contains($lower, 'imac')) {
+            $brand = 'Apple';
+        } elseif (str_contains($lower, 'dell') || str_contains($lower, 'xps') || str_contains($lower, 'latitude') || str_contains($lower, 'optiplex') || str_contains($lower, 'precision')) {
+            $brand = 'Dell';
+        } elseif (str_contains($lower, 'hp') || str_contains($lower, 'elitebook') || str_contains($lower, 'probook') || str_contains($lower, 'zbook') || str_contains($lower, 'pavilion') || str_contains($lower, 'omen')) {
+            $brand = 'HP';
+        } elseif (str_contains($lower, 'lenovo') || str_contains($lower, 'thinkpad') || str_contains($lower, 'ideapad') || str_contains($lower, 'legion') || str_contains($lower, 'thinkcentre')) {
+            $brand = 'Lenovo';
+        } elseif (str_contains($lower, 'asus') || str_contains($lower, 'zenbook') || str_contains($lower, 'rog')) {
+            $brand = 'ASUS';
+        } elseif (str_contains($lower, 'acer') || str_contains($lower, 'aspire') || str_contains($lower, 'predator')) {
+            $brand = 'Acer';
+        } elseif (str_contains($lower, 'microsoft') || str_contains($lower, 'surface')) {
+            $brand = 'Microsoft';
+        }
+
+        // Form factor
+        $isDesktop = str_contains($lower, 'desktop') || str_contains($lower, 'optiplex') || str_contains($lower, 'tower') || str_contains($lower, 'mac studio') || str_contains($lower, 'mac pro') || str_contains($lower, 'imac') || str_contains($lower, 'thinkcentre');
+        $deviceType = $isDesktop ? 'desktop' : 'laptop';
+
+        // CPU & Tier
+        $isWorkstation = str_contains($lower, 'xeon') || str_contains($lower, 'threadripper') || str_contains($lower, 'epyc');
+        $isHigh = str_contains($lower, 'i9') || str_contains($lower, 'i7') || str_contains($lower, 'ryzen 9') || str_contains($lower, 'ryzen 7') || str_contains($lower, 'm3 pro') || str_contains($lower, 'm3 max') || str_contains($lower, 'm2 pro') || str_contains($lower, 'm2 max') || str_contains($lower, 'm1 max') || str_contains($lower, 'm1 pro');
+        $isMid = str_contains($lower, 'i5') || str_contains($lower, 'ryzen 5') || str_contains($lower, 'apple m') || str_contains($lower, 'core ultra 5');
+
+        if ($isWorkstation) {
+            $cpuTier = 'workstation';
+            $cpuName = str_contains($lower, 'threadripper') ? 'AMD Ryzen Threadripper PRO' : 'Intel Xeon W-series';
+        } elseif ($isHigh) {
+            $cpuTier = 'high';
+            if ($brand === 'Apple') {
+                $cpuName = str_contains($lower, 'max') ? 'Apple M3 Max' : (str_contains($lower, 'm2') ? 'Apple M2 Pro' : 'Apple M3 Pro');
+            } elseif (str_contains($lower, 'ryzen') || str_contains($lower, 'amd')) {
+                $cpuName = 'AMD Ryzen 7 7840U';
+            } else {
+                $cpuName = 'Intel Core i7-13700H';
+            }
+        } elseif ($isMid) {
+            $cpuTier = 'mid';
+            if ($brand === 'Apple') {
+                $cpuName = 'Apple M2';
+            } elseif (str_contains($lower, 'ryzen') || str_contains($lower, 'amd')) {
+                $cpuName = 'AMD Ryzen 5 7530U';
+            } else {
+                $cpuName = 'Intel Core i5-1335U';
+            }
+        } else {
+            $cpuTier = 'entry';
+            $cpuName = 'Intel Core i3-1215U';
+        }
+
+        // RAM (GB)
+        $ram = 16;
+        if (preg_match('/(\d+)\s*(?:gb|g)?\s*(?:ram|memory)/i', $input, $m)) {
+            $ram = (int) $m[1];
+        } elseif (preg_match('/\b(8|16|24|32|36|48|64|128)\s*(?:gb)?\b/i', $input, $m)) {
+            $ram = (int) $m[1];
+        } elseif ($cpuTier === 'workstation') {
+            $ram = 64;
+        } elseif ($cpuTier === 'high') {
+            $ram = 32;
+        } elseif ($cpuTier === 'entry') {
+            $ram = 8;
+        }
+
+        // Storage & Type
+        $storage = 512;
+        if (preg_match('/(\d+)\s*(?:gb|tb)\s*(?:ssd|hdd|nvme|storage|drive)/i', $input, $m)) {
+            $val = (int) $m[1];
+            if (str_contains(strtolower($m[0]), 'tb')) {
+                $storage = $val * 1024;
+            } elseif ($val >= 128) {
+                $storage = $val;
+            }
+        } elseif (preg_match('/\b(128|256|512|1024|2048)\s*(?:gb)?\b/i', $input, $m)) {
+            $storage = (int) $m[1];
+        } elseif (preg_match('/\b(1|2|4)\s*tb\b/i', $input, $m)) {
+            $storage = ((int) $m[1]) * 1024;
+        } elseif ($cpuTier === 'workstation') {
+            $storage = 1024;
+        } elseif ($cpuTier === 'entry') {
+            $storage = 256;
+        }
+        $storageType = str_contains($lower, 'hdd') ? 'HDD' : 'SSD';
+
+        // GPU & Tier
+        $isDedicatedHigh = str_contains($lower, 'rtx 40') || str_contains($lower, 'rtx 3080') || str_contains($lower, 'rtx 3090') || str_contains($lower, 'ada') || str_contains($lower, 'quadro');
+        $isDedicatedEntry = str_contains($lower, 'gtx') || str_contains($lower, 'rtx 3050') || str_contains($lower, 'rtx 4050') || str_contains($lower, 'radeon rx');
+        if ($isDedicatedHigh) {
+            $gpu = 'NVIDIA RTX 4070';
+            $gpuTier = 'dedicated-high';
+        } elseif ($isDedicatedEntry) {
+            $gpu = 'NVIDIA RTX 3050';
+            $gpuTier = 'dedicated-entry';
+        } elseif ($brand === 'Apple') {
+            $gpu = $cpuTier === 'high' ? 'Apple 18-core GPU' : 'Apple 10-core GPU';
+            $gpuTier = 'integrated';
+        } else {
+            $gpu = $cpuTier === 'high' ? 'Intel Iris Xe Graphics' : ($cpuTier === 'entry' ? 'Intel UHD Graphics' : 'Integrated Graphics');
+            $gpuTier = 'integrated';
+        }
+
+        // Year Acquired
+        $year = (int) date('Y');
+        if (preg_match('/\b(201\d|202\d)\b/', $input, $m)) {
+            $year = (int) $m[1];
+        }
+
+        // Model name: remove brand prefix if present
+        $model = preg_replace('/^'.preg_quote($brand, '/').'\s+/i', '', $clean);
+        if (empty($model)) {
+            $model = $clean;
+        }
+
+        return [
+            'brand' => $brand,
+            'model' => $model,
+            'device_type' => $deviceType,
+            'cpu' => $cpuName,
+            'cpu_tier' => $cpuTier,
+            'ram_gb' => max(4, min(512, $ram)),
+            'storage_type' => $storageType,
+            'storage_gb' => max(128, min(16384, $storage)),
+            'gpu' => $gpu,
+            'gpu_tier' => $gpuTier,
+            'year_acquired' => $year,
+        ];
+    }
+
+    /**
+     * Sanitize and validate device spec output from Gemini.
+     */
+    private function sanitizeDeviceSpecs(array $data): array
+    {
+        $validCpuTiers = ['entry', 'mid', 'high', 'workstation'];
+        $validGpuTiers = ['none', 'integrated', 'dedicated-entry', 'dedicated-high'];
+        $validDeviceTypes = ['laptop', 'desktop'];
+        $validStorageTypes = ['SSD', 'HDD'];
+
+        return [
+            'brand' => mb_substr(trim((string) ($data['brand'] ?? '')), 0, 100) ?: 'Unknown',
+            'model' => mb_substr(trim((string) ($data['model'] ?? '')), 0, 100) ?: 'Unknown Model',
+            'device_type' => in_array($data['device_type'] ?? '', $validDeviceTypes) ? $data['device_type'] : 'laptop',
+            'cpu' => mb_substr(trim((string) ($data['cpu'] ?? '')), 0, 150) ?: 'Generic Processor',
+            'cpu_tier' => in_array($data['cpu_tier'] ?? '', $validCpuTiers) ? $data['cpu_tier'] : 'mid',
+            'ram_gb' => max(1, min(512, (int) ($data['ram_gb'] ?? 16))),
+            'storage_type' => in_array(strtoupper($data['storage_type'] ?? ''), $validStorageTypes) ? strtoupper($data['storage_type']) : 'SSD',
+            'storage_gb' => max(1, min(16384, (int) ($data['storage_gb'] ?? 512))),
+            'gpu' => mb_substr(trim((string) ($data['gpu'] ?? '')), 0, 150) ?: 'Integrated Graphics',
+            'gpu_tier' => in_array($data['gpu_tier'] ?? '', $validGpuTiers) ? $data['gpu_tier'] : 'integrated',
+            'year_acquired' => max(2010, min((int) date('Y') + 1, (int) ($data['year_acquired'] ?? date('Y')))),
+        ];
+    }
+
+    /**
      * Extract structured hardware requirements from free-form text.
      */
     public function extractRequirements(string $rawInput, ?int $employeeId = null): array

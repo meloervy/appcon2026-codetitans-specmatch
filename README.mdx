@@ -81,8 +81,8 @@ IT describes a need (role profile or free text)
 - Lifecycle stages: `available` → `assigned` → `maintenance` → `retired` → `reclaimed`.
 - Maintenance log with cost tracking, technician name, and notes.
 - Lifecycle event trail (every status change is recorded with timestamp and actor).
+- **Automated Asset Identification (Gemini 3.1 Flash-Lite)**: Type any device model (e.g. "ThinkPad T14 AMD Ryzen 7" or "MacBook Pro 16 M3 Max") to instantly auto-identify CPU architecture, RAM, GPU tier, and storage specifications using AI with structured JSON output and intelligent local heuristic fallback.
 - Export device list to PDF.
-- TechSpecs API integration: search the global hardware database and auto-populate specs when registering a device.
 
 ### 👥 Employee Management
 - Register employees with department, position, and profile picture.
@@ -326,6 +326,7 @@ extractRequirements(text)
 |--------|------|-------------|
 | `GET`  | `/devices` | List all devices with filters |
 | `POST` | `/devices` | Register a new device |
+| `POST` | `/devices/identify-specs` | Auto-identify hardware specs from device name via Gemini 3.1 Flash-Lite |
 | `GET`  | `/devices/{id}` | View device detail + history |
 | `PUT`  | `/devices/{id}` | Update device record |
 | `DELETE` | `/devices/{id}` | Delete device |

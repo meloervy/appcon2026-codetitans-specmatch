@@ -104,4 +104,72 @@ class DeviceManagementTest extends TestCase
         $this->assertEquals('retired', $device->fresh()->status);
         $this->assertEquals('retired', $device->fresh()->condition);
     }
+
+    public function test_guest_cannot_access_identify_specs_endpoint(): void
+    {
+        $response = $this->postJson('/devices/identify-specs', [
+            'query' => 'ThinkPad T14',
+        ]);
+
+        $response->assertUnauthorized();
+    }
+
+    public function test_identify_specs_validates_query_length(): void
+    {
+        $response = $this->actingAs($this->user)->postJson('/devices/identify-specs', [
+            'query' => 'a',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['query']);
+    }
+
+    public function test_authenticated_user_can_identify_specs_for_hardware(): void
+    {
+        $response = $this->actingAs($this->user)->postJson('/devices/identify-specs', [
+            'query' => 'MacBook Pro 16 M3 Max 64GB',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonStructure([
+                'success',
+                'specs' => [
+                    'brand',
+                    'model',
+                    'device_type',
+                    'cpu',
+                    'cpu_tier',
+                    'ram_gb',
+                    'storage_type',
+                    'storage_gb',
+                    'gpu',
+                    'gpu_tier',
+                    'year_acquired',
+                ],
+                'source',
+                'error',
+            ])
+            ->assertJson([
+                'success' => true,
+            ]);
+
+        $this->assertEquals('Apple', $response->json('specs.brand'));
+    }
+
+    public function test_identify_specs_uses_cache_on_subsequent_request(): void
+    {
+        $query = 'Dell XPS 15 Intel i7 32GB SSD';
+
+        $first = $this->actingAs($this->user)->postJson('/devices/identify-specs', [
+            'query' => $query,
+        ]);
+        $first->assertOk();
+
+        // Second call should return cache source
+        $second = $this->actingAs($this->user)->postJson('/devices/identify-specs', [
+            'query' => $query,
+        ]);
+        $second->assertOk();
+        $this->assertEquals('cache', $second->json('source'));
+    }
 }

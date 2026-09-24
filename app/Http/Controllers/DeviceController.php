@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Device;
 use App\Models\LifecycleEvent;
+use App\Services\GeminiService;
 use App\Services\MatchingService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
@@ -89,6 +90,20 @@ class DeviceController extends Controller
     public function create(): Response
     {
         return Inertia::render('Devices/Create');
+    }
+
+    /**
+     * Identify hardware specifications using Gemini AI.
+     */
+    public function identifySpecs(Request $request, GeminiService $geminiService): JsonResponse
+    {
+        $validated = $request->validate([
+            'query' => ['required', 'string', 'min:2', 'max:200'],
+        ]);
+
+        $result = $geminiService->identifyDeviceSpecs($validated['query']);
+
+        return response()->json($result, $result['success'] ? 200 : 422);
     }
 
     public function store(Request $request): RedirectResponse

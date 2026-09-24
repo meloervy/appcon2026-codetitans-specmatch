@@ -75,6 +75,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/techspecs/search', [TechSpecsController::class, 'search'])->name('techspecs.search');
         Route::post('/techspecs/details', [TechSpecsController::class, 'details'])->name('techspecs.details');
 
+        // AI-Powered Device Spec Identification (Gemini)
+        Route::post('/devices/identify-specs', [DeviceController::class, 'identifySpecs'])->name('devices.identify-specs');
+
         // Role Profiles (Configuration Mutations)
         Route::post('/role-profiles', [RoleProfileController::class, 'store'])->name('role-profiles.store');
         Route::put('/role-profiles/{id}', [RoleProfileController::class, 'update'])->whereNumber('id')->name('role-profiles.update');

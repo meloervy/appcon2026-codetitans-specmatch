@@ -102,14 +102,12 @@ export default function DevicesCreate() {
         notes: '',
     });
 
-    // TechSpecs API Integration State
+    // AI Spec Identification State (Gemini 3.1 Flash-Lite)
     const [searchQuery, setSearchQuery] = useState('');
-    const [searching, setSearching] = useState(false);
-    const [searchResults, setSearchResults] = useState([]);
-    const [selectedProduct, setSelectedProduct] = useState(null);
-    const [loadingDetails, setLoadingDetails] = useState(false);
+    const [identifying, setIdentifying] = useState(false);
     const [apiError, setApiError] = useState(null);
     const [autoFilledNotice, setAutoFilledNotice] = useState(null);
+    const [aiSource, setAiSource] = useState(null);
 
     // Hardware Photo Lookup State
     const [fetchingPhoto, setFetchingPhoto] = useState(false);
@@ -150,41 +148,18 @@ export default function DevicesCreate() {
         }
     };
 
-    const handleTechSpecsSearch = async (e) => {
+    const handleAiIdentify = async (e) => {
         if (e) e.preventDefault();
         if (!searchQuery || searchQuery.trim().length < 2) return;
 
-        setSearching(true);
+        setIdentifying(true);
         setApiError(null);
-        setSearchResults([]);
+        setAutoFilledNotice(null);
+        setAiSource(null);
 
         try {
-            const res = await axios.post(route('techspecs.search'), {
+            const res = await axios.post(route('devices.identify-specs'), {
                 query: searchQuery.trim(),
-                category: data.device_type === 'desktop' ? 'Desktops' : 'Laptops',
-            });
-
-            if (res.data.results && res.data.results.length > 0) {
-                setSearchResults(res.data.results);
-            } else {
-                setSearchResults([]);
-                setApiError('No hardware matched this query in TechSpecs catalog.');
-            }
-        } catch (err) {
-            setApiError(err.response?.data?.message || 'Failed to search TechSpecs catalog.');
-        } finally {
-            setSearching(false);
-        }
-    };
-
-    const handleSelectProduct = async (product) => {
-        setSelectedProduct(product);
-        setLoadingDetails(true);
-        setApiError(null);
-
-        try {
-            const res = await axios.post(route('techspecs.details'), {
-                product_id: product.id,
             });
 
             if (res.data.success && res.data.specs) {
@@ -193,6 +168,7 @@ export default function DevicesCreate() {
                     ...prev,
                     brand: specs.brand || prev.brand,
                     model: specs.model || prev.model,
+                    device_type: specs.device_type || prev.device_type,
                     cpu: specs.cpu || prev.cpu,
                     cpu_tier: specs.cpu_tier || prev.cpu_tier,
                     ram_gb: specs.ram_gb || prev.ram_gb,
@@ -201,18 +177,18 @@ export default function DevicesCreate() {
                     gpu: specs.gpu || prev.gpu,
                     gpu_tier: specs.gpu_tier || prev.gpu_tier,
                     year_acquired: specs.year_acquired || prev.year_acquired,
-                    techspecs_id: specs.techspecs_id || product.id,
-                    image_url: specs.image_url || prev.image_url || '',
                     vendor: prev.vendor || specs.brand,
                 }));
 
-                setAutoFilledNotice(`Successfully auto-populated hardware specs for "${specs.brand} ${specs.model}" via TechSpecs API.`);
-                setSearchResults([]);
+                setAutoFilledNotice(`AI identified and auto-populated hardware specs for "${specs.brand} ${specs.model}" via Gemini 3.1 Flash-Lite.`);
+                setAiSource(res.data.source);
+            } else {
+                setApiError(res.data.error || 'AI could not identify this device. Please enter specs manually.');
             }
         } catch (err) {
-            setApiError('Failed to fetch full specification details for this product.');
+            setApiError(err.response?.data?.error || 'Failed to identify device. Please enter specs manually.');
         } finally {
-            setLoadingDetails(false);
+            setIdentifying(false);
         }
     };
 
@@ -241,7 +217,7 @@ export default function DevicesCreate() {
                             Register Hardware Asset
                         </h1>
                         <p className="text-sm text-slate-500 dark:text-zinc-400 mt-0.5 max-w-2xl">
-                            Hardware enrollment with TechSpecs v5 automated specification identification and enterprise ITAM lifecycle tracking.
+                            Hardware enrollment with Gemini 3.1 Flash-Lite automated specification identification and enterprise ITAM lifecycle tracking.
                         </p>
                     </div>
                     <Link
@@ -257,23 +233,23 @@ export default function DevicesCreate() {
             <Head title="Register Hardware Asset - SpecMatch" />
 
             <div className="max-w-5xl mx-auto space-y-6">
-                {/* TechSpecs API Identification Card */}
+                {/* AI-Powered Spec Identification Card */}
                 <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white rounded-3xl p-6 sm:p-7 shadow-md border border-slate-700/60 dark:border-zinc-800">
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
                         <div className="space-y-1.5 max-w-xl">
                             <div className="flex items-center gap-2">
                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider bg-[#026eff]/30 text-[#38bdf8] rounded-lg border border-[#026eff]/40">
                                     <RiSparklingLine className="w-3.5 h-3.5" />
-                                    TechSpecs v5 Catalog API
+                                    Gemini 3.1 Flash-Lite
                                 </span>
                             </div>
                             <h2 className="text-lg font-bold text-white tracking-tight">Automated Asset Identification</h2>
                             <p className="text-xs text-slate-300 leading-relaxed">
-                                Search over 180,000+ verified hardware models to auto-fill CPU architecture, RAM, GPU tier, and storage specifications.
+                                Enter a device name or model to auto-identify CPU architecture, RAM, GPU tier, and storage specifications using AI.
                             </p>
                         </div>
 
-                        <form onSubmit={handleTechSpecsSearch} className="flex gap-2 w-full lg:w-auto">
+                        <form onSubmit={handleAiIdentify} className="flex gap-2 w-full lg:w-auto">
                             <div className="relative flex-1 lg:w-72">
                                 <RiSearchLine className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
                                 <input
@@ -286,13 +262,13 @@ export default function DevicesCreate() {
                             </div>
                             <button
                                 type="submit"
-                                disabled={searching || searchQuery.trim().length < 2}
+                                disabled={identifying || searchQuery.trim().length < 2}
                                 className="shrink-0 px-4 py-2.5 rounded-xl bg-[#026eff] hover:bg-[#0256cc] text-white text-xs font-bold shadow-sm disabled:opacity-50 transition flex items-center gap-1.5 cursor-pointer"
                             >
-                                {searching ? (
+                                {identifying ? (
                                     <>
                                         <RiLoader4Line className="animate-spin w-4 h-4" />
-                                        <span>Searching...</span>
+                                        <span>Identifying...</span>
                                     </>
                                 ) : (
                                     <>
@@ -313,58 +289,16 @@ export default function DevicesCreate() {
                         </div>
                     )}
 
-                    {/* Search Results Dropdown List */}
-                    {searchResults.length > 0 && (
-                        <div className="mt-4 bg-slate-950/95 border border-slate-700/80 rounded-2xl overflow-hidden divide-y divide-slate-800 shadow-xl">
-                            <div className="px-4 py-2.5 bg-white/5 text-xs font-semibold text-[#38bdf8] flex justify-between items-center">
-                                <span>Verified Catalog Matches ({searchResults.length})</span>
-                                <button type="button" onClick={() => setSearchResults([])} className="text-slate-400 hover:text-white text-xs font-medium">
-                                    Dismiss
-                                </button>
-                            </div>
-                            <div className="max-h-64 overflow-y-auto divide-y divide-slate-800/60">
-                                {searchResults.map((prod) => (
-                                    <div
-                                        key={prod.id}
-                                        className="p-3.5 hover:bg-white/5 transition flex items-center justify-between gap-4"
-                                    >
-                                        <div>
-                                            <div className="text-xs font-bold text-white">
-                                                {prod.brand} {prod.model}
-                                            </div>
-                                            <div className="text-[11px] text-slate-400 mt-0.5">
-                                                Category: {prod.category || 'Laptop / Workstation'} &bull; Release Year: {prod.release_year || 'Recent'}
-                                            </div>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleSelectProduct(prod)}
-                                            disabled={loadingDetails}
-                                            className="px-3.5 py-1.5 rounded-xl bg-[#026eff] hover:bg-[#0256cc] text-white text-xs font-bold shrink-0 transition flex items-center gap-1.5 cursor-pointer"
-                                        >
-                                            {loadingDetails && selectedProduct?.id === prod.id ? (
-                                                <>
-                                                    <RiLoader4Line className="animate-spin w-3.5 h-3.5" />
-                                                    <span>Populating...</span>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <RiCheckLine className="w-3.5 h-3.5" />
-                                                    <span>Auto-Fill Specs</span>
-                                                </>
-                                            )}
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
                     {autoFilledNotice && (
                         <div className="mt-4 p-3.5 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-200 text-xs flex items-center justify-between">
                             <span className="flex items-center gap-2">
                                 <RiCheckLine className="w-4 h-4 text-emerald-400 shrink-0" />
                                 <span>{autoFilledNotice}</span>
+                                {aiSource && (
+                                    <span className="ml-1 px-1.5 py-0.5 text-[10px] font-mono bg-emerald-500/20 rounded-md text-emerald-300">
+                                        {aiSource}
+                                    </span>
+                                )}
                             </span>
                             <button
                                 type="button"
@@ -507,7 +441,7 @@ export default function DevicesCreate() {
                                         type="url"
                                         value={data.image_url}
                                         onChange={(e) => setData('image_url', e.target.value)}
-                                        placeholder="https://... (Populated automatically via Wikimedia / TechSpecs or enter custom URL)"
+                                        placeholder="https://... (Populated automatically via Wikimedia / Gemini AI or enter custom URL)"
                                         className="w-full text-xs rounded-xl border border-slate-300 dark:border-zinc-700 bg-slate-50/50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 py-2 px-3 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
                                     />
                                     {photoNotice && (
