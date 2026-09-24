@@ -171,7 +171,7 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                         <div className="flex items-center gap-2">
                             <button
                                 type="submit"
-                                className="w-full py-2 px-3 text-sm font-semibold rounded-xl bg-slate-900 dark:bg-zinc-800 border border-transparent dark:border-zinc-700 text-white hover:bg-slate-800 dark:hover:bg-zinc-750 transition"
+                                className="w-full py-2 px-3 text-sm font-semibold rounded-xl bg-slate-900 dark:bg-zinc-800 border border-transparent dark:border-zinc-700 text-white hover:bg-slate-800 dark:hover:bg-zinc-700 transition"
                             >
                                 Filter Logs
                             </button>
@@ -203,7 +203,7 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                                 className={`px-2.5 py-1 rounded-lg border text-[11px] font-medium transition cursor-pointer flex items-center gap-1.5 ${
                                     wrapText
                                         ? 'bg-[#026eff]/15 text-[#026eff] border-[#026eff]/30 dark:bg-[#026eff]/20 dark:text-sky-300'
-                                        : 'bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 border-slate-200 dark:border-zinc-750 hover:bg-slate-50 dark:hover:bg-zinc-700/60'
+                                        : 'bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700/60'
                                 }`}
                                 title="Toggle text wrapping to reveal full maintenance descriptions without truncation"
                             >
@@ -215,7 +215,7 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                             <button
                                 type="button"
                                 onClick={resetWidths}
-                                className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-zinc-750 bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200 text-[11px] font-medium transition cursor-pointer"
+                                className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200 text-[11px] font-medium transition cursor-pointer"
                                 title="Reset column widths to default"
                             >
                                 Reset Columns
@@ -432,7 +432,7 @@ export default function MaintenanceIndex({ logs, stats, filters }) {
                                 <button
                                     type="button"
                                     onClick={() => setSelectedLogToUpdate(null)}
-                                    className="px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-750 transition"
+                                    className="px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700 transition"
                                 >
                                     Cancel
                                 </button>
