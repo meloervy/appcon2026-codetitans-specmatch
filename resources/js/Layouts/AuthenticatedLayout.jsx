@@ -20,7 +20,7 @@ import {
     RiArrowDownSLine,
 } from 'react-icons/ri';
 
-export default function AuthenticatedLayout({ header, children }) {
+export default function AuthenticatedLayout({ header, children, maxWidth = 'max-w-[1600px]' }) {
     const { auth, flash } = usePage().props;
     const user = auth.user;
     const isAdminOrManager = ['admin', 'manager'].includes(user?.role);
@@ -70,7 +70,7 @@ export default function AuthenticatedLayout({ header, children }) {
         <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 transition-colors duration-150 font-sans">
             {/* Top Navigation Bar */}
             <nav className="border-b border-slate-200/80 dark:border-zinc-800/80 bg-white/95 dark:bg-zinc-900/95 sticky top-0 z-30 backdrop-blur-md">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div className={`mx-auto ${maxWidth} px-4 sm:px-6 lg:px-8`}>
                     <div className="flex h-14 justify-between items-center">
                         <div className="flex items-center gap-7">
                             <Link href="/dashboard" className="flex items-center group shrink-0">
@@ -359,7 +359,7 @@ export default function AuthenticatedLayout({ header, children }) {
 
             {/* Flash Alerts */}
             {flash?.success && (
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4">
+                <div className={`mx-auto ${maxWidth} px-4 sm:px-6 lg:px-8 mt-4`}>
                     <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 p-3.5 flex items-center gap-3 text-emerald-800 dark:text-emerald-300 text-xs shadow-2xs">
                         <svg className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -369,7 +369,7 @@ export default function AuthenticatedLayout({ header, children }) {
                 </div>
             )}
             {flash?.error && (
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4">
+                <div className={`mx-auto ${maxWidth} px-4 sm:px-6 lg:px-8 mt-4`}>
                     <div className="rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 p-3.5 flex items-center gap-3 text-rose-800 dark:text-rose-300 text-xs shadow-2xs">
                         <svg className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -382,7 +382,7 @@ export default function AuthenticatedLayout({ header, children }) {
             {/* Page Header */}
             {header && (
                 <header className="bg-white dark:bg-zinc-900 border-b border-slate-200/80 dark:border-zinc-800/80 py-4 transition-colors">
-                    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div className={`mx-auto ${maxWidth} px-4 sm:px-6 lg:px-8`}>
                         {header}
                     </div>
                 </header>
@@ -390,7 +390,7 @@ export default function AuthenticatedLayout({ header, children }) {
 
             {/* Main Content */}
             <main className="py-6">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div className={`mx-auto ${maxWidth} px-4 sm:px-6 lg:px-8`}>
                     {children}
                 </div>
             </main>

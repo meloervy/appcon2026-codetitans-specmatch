@@ -605,15 +605,15 @@ export default function Dashboard({
                     <table className="w-full text-left text-sm">
                         <thead className="bg-slate-50/80 dark:bg-zinc-800/60 border-b border-slate-200 dark:border-zinc-800 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
                             <tr>
-                                <th className="py-3 px-4">Device</th>
-                                <th className="py-3 px-4">Employee</th>
-                                <th className="py-3 px-4">Department / Profile</th>
-                                <th className="py-3 px-4">Match Fit</th>
-                                <th className="py-3 px-4">Source</th>
-                                <th className="py-3 px-4">Assigned Date</th>
+                                <th className="py-3.5 px-5">Device</th>
+                                <th className="py-3.5 px-5">Employee</th>
+                                <th className="py-3.5 px-5">Department / Profile</th>
+                                <th className="py-3.5 px-5">Match Fit</th>
+                                <th className="py-3.5 px-5">Source</th>
+                                <th className="py-3.5 px-5">Assigned Date</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
+                        <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/80">
                             {(!recent_assignments || recent_assignments.length === 0) ? (
                                 <tr>
                                     <td colSpan="6" className="py-8 text-center text-slate-400 dark:text-zinc-500 text-xs">
@@ -622,46 +622,46 @@ export default function Dashboard({
                                 </tr>
                             ) : (
                                 recent_assignments.map((asg) => (
-                                    <tr key={asg.id} className="hover:bg-slate-50/60 dark:hover:bg-zinc-800/40 transition">
-                                        <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-zinc-100">
+                                    <tr key={asg.id} className="hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition">
+                                        <td className="py-4 px-5">
                                             {asg.device ? (
-                                                <Link href={route('devices.show', asg.device.id)} className="text-[#026eff] dark:text-[#0b79ff] hover:underline">
+                                                <Link href={route('devices.show', asg.device.id)} className="font-mono text-sm font-bold text-[#026eff] dark:text-[#38bdf8] hover:underline">
                                                     {asg.device.asset_tag}
                                                 </Link>
                                             ) : (
-                                                <span>N/A</span>
+                                                <span className="font-mono text-sm text-slate-400">N/A</span>
                                             )}
-                                            <div className="text-xs text-slate-400 dark:text-zinc-500 font-normal">
+                                            <div className="text-xs text-slate-500 dark:text-zinc-400 font-medium mt-0.5">
                                                 {asg.device ? `${asg.device.brand} ${asg.device.model}` : 'Unassigned'}
                                             </div>
                                         </td>
-                                        <td className="py-3.5 px-4 font-semibold text-slate-900 dark:text-zinc-100">
+                                        <td className="py-4 px-5 font-bold text-slate-900 dark:text-zinc-100 text-sm">
                                             {asg.employee?.name || 'Unknown Staff'}
                                         </td>
-                                        <td className="py-3.5 px-4 text-xs text-slate-600 dark:text-zinc-400">
-                                            <div>{asg.employee?.department || 'General'}</div>
-                                            <div className="text-slate-400 dark:text-zinc-500">{asg.employee?.role_profile?.name || 'Custom Role'}</div>
+                                        <td className="py-4 px-5">
+                                            <div className="text-sm font-semibold text-slate-800 dark:text-zinc-200">{asg.employee?.department || 'General'}</div>
+                                            <div className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">{asg.employee?.role_profile?.name || 'Custom Role'}</div>
                                         </td>
-                                        <td className="py-3.5 px-4">
+                                        <td className="py-4 px-5">
                                             {asg.match_score ? (
-                                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                                                    asg.match_score >= 0.8 ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300' :
-                                                    asg.match_score >= 0.65 ? 'bg-[#026eff]/15 dark:bg-[#031a40]/60 text-[#026eff] dark:text-[#0b79ff]' :
-                                                    'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300'
+                                                <span className={`inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-full border shadow-2xs ${
+                                                    asg.match_score >= 0.8 ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200/70 dark:border-emerald-800/60' :
+                                                    asg.match_score >= 0.65 ? 'bg-[#026eff]/10 dark:bg-[#031a40]/60 text-[#026eff] dark:text-[#38bdf8] border-[#026eff]/20 dark:border-[#031a40]/60' :
+                                                    'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-200/70 dark:border-rose-900/60'
                                                 }`}>
-                                                    {Math.round(asg.match_score * 100)}%
+                                                    {Math.round(asg.match_score * 100)}% Match
                                                 </span>
                                             ) : (
                                                 <span className="text-xs text-slate-400 dark:text-zinc-500">N/A</span>
                                             )}
                                         </td>
-                                        <td className="py-3.5 px-4">
-                                            <span className="text-[11px] uppercase font-semibold text-slate-500 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded">
+                                        <td className="py-4 px-5">
+                                            <span className="text-xs uppercase font-bold text-slate-600 dark:text-zinc-300 bg-slate-100 dark:bg-zinc-800 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-zinc-700">
                                                 {(asg.assignment_source || 'manual').replace('_', ' ')}
                                             </span>
                                         </td>
-                                        <td className="py-3.5 px-4 text-xs text-slate-500 dark:text-zinc-400">
-                                            {asg.assigned_at ? new Date(asg.assigned_at).toLocaleDateString() : 'N/A'}
+                                        <td className="py-4 px-5 text-xs font-medium text-slate-600 dark:text-zinc-400">
+                                            {asg.assigned_at ? new Date(asg.assigned_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
                                         </td>
                                     </tr>
                                 ))

@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import CustomSelect from '@/Components/CustomSelect';
 import HardwareImage from '@/Components/HardwareImage';
 import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import axios from 'axios';
@@ -35,7 +36,22 @@ import {
     RiTv2Line,
     RiDatabase2Line,
     RiEqualizerLine,
+    RiCheckboxCircleLine,
 } from 'react-icons/ri';
+
+const conditionOptions = [
+    { value: 'excellent', label: 'Excellent (Like New / Minimal Wear)', badge: 'Like New', icon: RiCheckboxCircleLine },
+    { value: 'good', label: 'Good (Normal Operational Wear)', badge: 'Standard', icon: RiCheckboxCircleLine },
+    { value: 'fair', label: 'Fair (Noticeable Scratches / Moderate Wear)', badge: 'Used', icon: RiInformationLine },
+    { value: 'poor', label: 'Poor (Requires Servicing / Degraded)', badge: 'Degraded', icon: RiToolsLine },
+];
+
+const statusOptions = [
+    { value: 'available', label: 'Available in Pool Stock', badge: 'Stockroom', icon: RiCheckboxCircleLine },
+    { value: 'assigned', label: 'Assigned to Employee', badge: 'In Use', icon: RiUser3Line },
+    { value: 'in_repair', label: 'Under Servicing / In Repair', badge: 'Servicing', icon: RiToolsLine },
+    { value: 'retired', label: 'Decommissioned / Retired', badge: 'Archived', icon: RiArchiveLine },
+];
 
 export default function DevicesShow({ device }) {
     const { auth } = usePage().props;
@@ -923,17 +939,14 @@ export default function DevicesShow({ device }) {
                                             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
                                                 Physical Condition <span className="text-rose-500">*</span>
                                             </label>
-                                            <select
+                                            <CustomSelect
                                                 value={editData.condition}
-                                                onChange={(e) => setEditData('condition', e.target.value)}
-                                                className="w-full text-sm rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 font-semibold py-2.5 px-3.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
-                                                required
-                                            >
-                                                <option value="excellent">Excellent (Like New / Minimal Wear)</option>
-                                                <option value="good">Good (Normal Operational Wear)</option>
-                                                <option value="fair">Fair (Noticeable Scratches / Moderate Wear)</option>
-                                                <option value="poor">Poor (Requires Servicing / Degraded)</option>
-                                            </select>
+                                                onChange={(val) => setEditData('condition', val)}
+                                                options={conditionOptions}
+                                                placeholder="Select physical condition..."
+                                                size="md"
+                                                className="w-full"
+                                            />
                                             {editErrors.condition && (
                                                 <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400 font-medium flex items-center gap-1">
                                                     <RiErrorWarningLine className="w-3.5 h-3.5 shrink-0" />
@@ -946,17 +959,14 @@ export default function DevicesShow({ device }) {
                                             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
                                                 Fleet Availability Status <span className="text-rose-500">*</span>
                                             </label>
-                                            <select
+                                            <CustomSelect
                                                 value={editData.status}
-                                                onChange={(e) => setEditData('status', e.target.value)}
-                                                className="w-full text-sm rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 font-semibold py-2.5 px-3.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
-                                                required
-                                            >
-                                                <option value="available">Available in Pool Stock</option>
-                                                <option value="assigned">Assigned to Employee</option>
-                                                <option value="in_repair">Under Servicing / In Repair</option>
-                                                <option value="retired">Decommissioned / Retired</option>
-                                            </select>
+                                                onChange={(val) => setEditData('status', val)}
+                                                options={statusOptions}
+                                                placeholder="Select fleet status..."
+                                                size="md"
+                                                className="w-full"
+                                            />
                                             {editErrors.status && (
                                                 <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400 font-medium flex items-center gap-1">
                                                     <RiErrorWarningLine className="w-3.5 h-3.5 shrink-0" />

@@ -4,7 +4,7 @@ import HardwareImage from '@/Components/HardwareImage';
 import ResizableTh from '@/Components/ResizableTh';
 import { useResizableColumns } from '@/Hooks/useResizableColumns';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
     RiSearchLine,
     RiLayoutGridLine,
@@ -33,14 +33,42 @@ export default function DevicesIndex({ devices, filters }) {
     const [wrapText, setWrapText] = useState(false);
 
     const initialWidths = {
-        device: 270,
-        specs: 230,
-        lifecycle: 160,
-        user: 180,
-        action: 110,
+        device: 340,
+        specs: 280,
+        lifecycle: 190,
+        user: 220,
+        action: 140,
     };
 
-    const { widths, startResize, autoExpandCol, resetWidths, isResizing, resizingCol } = useResizableColumns(initialWidths, 'devices_table_v5');
+    const { widths, startResize, autoExpandCol, resetWidths, isResizing, resizingCol } = useResizableColumns(initialWidths, 'devices_table_v6');
+
+    const isFirstRender = useRef(true);
+
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            router.get(
+                route('devices.index'),
+                {
+                    search,
+                    status,
+                    lifecycle_stage: lifecycleStage,
+                    device_type: deviceType,
+                    cpu_tier: cpuTier,
+                    condition,
+                    sort: filters?.sort,
+                    direction: filters?.direction,
+                },
+                { preserveState: true, replace: true, preserveScroll: true }
+            );
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [search, status, lifecycleStage, deviceType, cpuTier, condition]);
 
     const handleSort = (sortKey) => {
         const currentSort = filters.sort || 'asset_tag';
@@ -156,7 +184,6 @@ export default function DevicesIndex({ devices, filters }) {
                                 options={[
                                     { value: 'acquisition', label: 'Acquisition' },
                                     { value: 'deployment', label: 'Deployment' },
-                                    { value: 'reclaimed', label: 'Reclaimed (In Pool)' },
                                     { value: 'maintenance', label: 'Maintenance' },
                                     { value: 'retirement', label: 'Retirement' },
                                 ]}
@@ -378,9 +405,9 @@ export default function DevicesIndex({ devices, filters }) {
                                             className="hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition-colors cursor-pointer group"
                                         >
                                             {/* 1. Device & Asset */}
-                                            <td className="py-3.5 px-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200/70 dark:border-zinc-700/60 shrink-0 overflow-hidden shadow-2xs p-0.5 group-hover:scale-105 transition-transform">
+                                            <td className="py-4 px-5">
+                                                <div className="flex items-center gap-3.5">
+                                                    <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700/80 shrink-0 overflow-hidden shadow-2xs p-0.5 group-hover:scale-105 transition-transform">
                                                         <HardwareImage
                                                             src={device.image_clip_url || device.image_url}
                                                             alt={`${device.brand} ${device.model}`}
@@ -388,15 +415,15 @@ export default function DevicesIndex({ devices, filters }) {
                                                         />
                                                     </div>
                                                     <div className="min-w-0 flex-1">
-                                                        <div className="flex items-center gap-1.5">
-                                                            <span className="font-mono text-[11px] font-bold text-[#026eff] dark:text-[#38bdf8]">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-mono text-xs font-bold text-[#026eff] dark:text-[#38bdf8] bg-[#026eff]/10 dark:bg-[#026eff]/20 px-2 py-0.5 rounded-md border border-[#026eff]/20">
                                                                 {device.asset_tag}
                                                             </span>
-                                                            <span className="text-[10px] text-slate-400 dark:text-zinc-500 capitalize">
-                                                                &bull; {device.device_type}
+                                                            <span className="text-xs text-slate-500 dark:text-zinc-400 capitalize font-medium">
+                                                                {device.device_type}
                                                             </span>
                                                         </div>
-                                                        <h4 className={`font-bold text-slate-900 dark:text-zinc-100 text-xs mt-0.5 ${wrapText ? 'break-words whitespace-normal' : 'truncate'}`}>
+                                                        <h4 className={`font-bold text-slate-900 dark:text-zinc-100 text-sm mt-1 leading-snug ${wrapText ? 'break-words whitespace-normal' : 'truncate'}`}>
                                                             {device.brand} {device.model}
                                                         </h4>
                                                     </div>
@@ -404,19 +431,19 @@ export default function DevicesIndex({ devices, filters }) {
                                             </td>
 
                                             {/* 2. Specifications */}
-                                            <td className="py-3.5 px-4">
-                                                <div className={`font-semibold text-slate-800 dark:text-zinc-200 text-xs ${wrapText ? 'break-words whitespace-normal' : 'truncate'}`} title={device.cpu}>
+                                            <td className="py-4 px-5">
+                                                <div className={`font-bold text-slate-900 dark:text-zinc-100 text-sm ${wrapText ? 'break-words whitespace-normal' : 'truncate'}`} title={device.cpu}>
                                                     {device.cpu}
                                                 </div>
-                                                <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                                                    <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-medium border border-slate-200 dark:border-zinc-700">
+                                                <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                                                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 border border-slate-200/80 dark:border-zinc-700/80">
                                                         {device.ram_gb}GB RAM
                                                     </span>
-                                                    <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-medium border border-slate-200 dark:border-zinc-700">
+                                                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 border border-slate-200/80 dark:border-zinc-700/80">
                                                         {device.storage_gb}GB {device.storage_type}
                                                     </span>
-                                                    {device.gpu_tier !== 'none' && (
-                                                        <span className="text-[10px] px-2 py-0.5 rounded bg-[#026eff]/10 dark:bg-[#026eff]/20 text-[#026eff] dark:text-[#38bdf8] font-bold border border-[#026eff]/20">
+                                                    {device.gpu_tier && device.gpu_tier !== 'none' && (
+                                                        <span className="text-xs font-bold px-2 py-0.5 rounded-lg bg-[#026eff]/10 dark:bg-[#026eff]/20 text-[#026eff] dark:text-[#38bdf8] border border-[#026eff]/20 uppercase">
                                                             {device.gpu_tier}
                                                         </span>
                                                     )}
@@ -424,51 +451,51 @@ export default function DevicesIndex({ devices, filters }) {
                                             </td>
 
                                             {/* 3. Lifecycle & Status */}
-                                            <td className="py-3.5 px-4">
-                                                <div className="flex flex-col gap-1 items-start">
-                                                    <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider inline-flex items-center gap-1 ${
+                                            <td className="py-4 px-5">
+                                                <div className="flex flex-col gap-1.5 items-start">
+                                                    <span className={`text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider inline-flex items-center gap-1.5 ${
                                                         device.status === 'available'
-                                                            ? 'bg-emerald-100/80 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-300/50'
+                                                            ? 'bg-emerald-100/80 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-300/60'
                                                             : device.status === 'assigned'
-                                                            ? 'bg-[#026eff]/15 text-[#026eff] dark:bg-[#031a40]/60 dark:text-[#0b79ff] border border-[#026eff]/20 dark:border-[#031a40]/60'
+                                                            ? 'bg-[#026eff]/15 text-[#026eff] dark:bg-[#031a40]/60 dark:text-[#0b79ff] border border-[#026eff]/25 dark:border-[#031a40]/60'
                                                             : device.status === 'in_repair'
-                                                            ? 'bg-amber-100/80 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-300/50'
+                                                            ? 'bg-amber-100/80 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-300/60'
                                                             : 'bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300 border border-slate-200'
                                                     }`}>
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
+                                                        <span className="w-2 h-2 rounded-full bg-current"></span>
                                                         {device.status === 'available' ? 'Available' : device.status.replace('_', ' ')}
                                                     </span>
 
-                                                    <span className="text-[10px] text-slate-500 dark:text-zinc-400 capitalize">
-                                                        Phase: <strong className="font-semibold text-slate-700 dark:text-zinc-300">{device.lifecycle_stage}</strong>
+                                                    <span className="text-xs text-slate-500 dark:text-zinc-400 capitalize">
+                                                        Phase: <strong className="font-semibold text-slate-800 dark:text-zinc-200">{device.lifecycle_stage}</strong>
                                                     </span>
                                                 </div>
                                             </td>
 
                                             {/* 4. Current User / Allocation */}
-                                            <td className="py-3.5 px-4">
+                                            <td className="py-4 px-5">
                                                 {device.active_assignment?.employee ? (
                                                     <div className="min-w-0">
-                                                        <div className="font-bold text-slate-900 dark:text-zinc-100 text-xs truncate">
+                                                        <div className="font-bold text-slate-900 dark:text-zinc-100 text-sm truncate">
                                                             {device.active_assignment.employee.name}
                                                         </div>
-                                                        <div className="text-[10px] text-slate-500 dark:text-zinc-400 truncate">
+                                                        <div className="text-xs text-slate-500 dark:text-zinc-400 truncate mt-0.5 font-medium">
                                                             {device.active_assignment.employee.department}
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400 dark:text-zinc-500 bg-slate-100/70 dark:bg-zinc-800/70 px-2 py-0.5 rounded-md border border-slate-200/60 dark:border-zinc-700/50">
-                                                        <RiCheckboxCircleLine className="w-3.5 h-3.5 text-emerald-500" />
+                                                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-lg border border-emerald-200/80 dark:border-emerald-800/60">
+                                                        <RiCheckboxCircleLine className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                                                         <span>Pool Ready</span>
                                                     </span>
                                                 )}
                                             </td>
 
                                             {/* 5. Action (Clean View Details Button) */}
-                                            <td className="py-3.5 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                                            <td className="py-4 px-5 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                                                 <Link
                                                     href={route('devices.show', device.id)}
-                                                    className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-[#026eff] hover:text-white dark:bg-zinc-800 dark:hover:bg-[#026eff] text-slate-700 dark:text-zinc-200 transition shadow-2xs cursor-pointer"
+                                                    className="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-[#026eff] hover:text-white dark:bg-zinc-800 dark:hover:bg-[#026eff] text-slate-700 dark:text-zinc-200 transition shadow-2xs cursor-pointer"
                                                 >
                                                     <span>View Details</span>
                                                 </Link>
