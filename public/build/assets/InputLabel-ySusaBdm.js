@@ -1,1 +1,0 @@
-import{t as e}from"./app-B2ebmfO-.js";var t=e();function n({value:e,className:n=``,required:r=!1,children:i,...a}){return(0,t.jsxs)(`label`,{...a,className:`block text-sm font-medium text-slate-700 dark:text-zinc-300 `+n,children:[e||i,r&&(0,t.jsx)(`span`,{className:`text-rose-500 font-bold ml-0.5`,children:`*`})]})}export{n as t};
