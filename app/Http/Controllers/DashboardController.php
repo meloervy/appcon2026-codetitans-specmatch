@@ -27,7 +27,7 @@ class DashboardController extends Controller
 
         // Procurement avoidance savings calculation:
         // Each appropriately assigned existing device avoids purchasing a new commercial unit (~₱65,000 avg)
-        $properlyAssignedCount = max(0, $assignedDevices - count(array_filter($mismatches, fn($m) => $m['classification'] === 'under-provisioned')));
+        $properlyAssignedCount = max(0, $assignedDevices - count(array_filter($mismatches, fn ($m) => $m['classification'] === 'under-provisioned')));
         $procurementSavings = $properlyAssignedCount * 65000;
 
         $recentAssignments = Assignment::with(['device', 'employee.roleProfile'])
@@ -44,6 +44,7 @@ class DashboardController extends Controller
         $itamWarranties = $itamService->getWarrantyAlerts();
         $itamMaintenance = $itamService->getMaintenanceSummary();
         $itamRedundancy = $itamService->detectRedundantAssets();
+        $itamFleetRisk = $itamService->getFleetRiskScore();
 
         return Inertia::render('Dashboard/Index', [
             'metrics' => [
@@ -65,6 +66,7 @@ class DashboardController extends Controller
                 'total_maintenance_spend' => $itamMaintenance['total_maintenance_spend'],
                 'idle_high_spec_count' => $itamRedundancy['idle_high_spec_count'],
                 'stage_breakdown' => $itamFinancials['stage_breakdown'],
+                'fleet_risk' => $itamFleetRisk,
             ],
             'mismatches' => array_slice($mismatches, 0, 3),
             'recent_assignments' => $recentAssignments,
@@ -74,6 +76,7 @@ class DashboardController extends Controller
                 'warranties' => $itamWarranties,
                 'maintenance' => $itamMaintenance,
                 'redundancy' => $itamRedundancy,
+                'fleet_risk' => $itamFleetRisk,
             ],
         ]);
     }

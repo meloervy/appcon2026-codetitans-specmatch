@@ -3,6 +3,7 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\FleetAssistantController;
 use App\Http\Controllers\HardwareImageController;
 use App\Http\Controllers\MaintenanceController;
 use App\Http\Controllers\MatchingController;
@@ -32,6 +33,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/devices/{id}', [DeviceController::class, 'show'])->name('devices.show');
     Route::put('/devices/{id}', [DeviceController::class, 'update'])->name('devices.update');
     Route::post('/devices/{id}/lifecycle', [DeviceController::class, 'updateLifecycle'])->name('devices.lifecycle.update');
+    Route::post('/devices/{id}/reclaim', [DeviceController::class, 'reclaim'])->name('devices.reclaim');
     Route::post('/devices/{id}/retire', [DeviceController::class, 'retire'])->name('devices.retire');
 
     // Hardware Imagery Lookup (Wikimedia & Canonical Registry)
@@ -60,21 +62,27 @@ Route::middleware('auth')->group(function () {
     Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
     Route::match(['put', 'post'], '/employees/{id}', [EmployeeController::class, 'update'])->name('employees.update');
     Route::post('/employees/{id}/unassign', [EmployeeController::class, 'unassign'])->name('employees.unassign');
+    Route::post('/employees/{id}/offboard', [EmployeeController::class, 'offboard'])->name('employees.offboard');
 
     // Match & Recommendation Engine
     Route::get('/match', [MatchingController::class, 'index'])->name('match.index');
     Route::post('/match/extract', [MatchingController::class, 'extract'])->name('match.extract');
     Route::post('/match/rank', [MatchingController::class, 'rank'])->name('match.rank');
     Route::post('/match/assign', [MatchingController::class, 'assign'])->name('match.assign');
+    Route::post('/match/simulate', [MatchingController::class, 'simulate'])->name('match.simulate');
     Route::post('/match/bridge-swap', [MatchingController::class, 'executeBridgeSwap'])->name('match.bridge-swap');
     Route::post('/match/test-gemini', [MatchingController::class, 'testGemini'])->name('match.test-gemini');
 
     // Mismatch Detection & Fleet Audit
     Route::get('/mismatches', [MismatchController::class, 'index'])->name('mismatches.index');
 
+    // Gemini Fleet Assistant ("Talk to your Fleet")
+    Route::post('/fleet-assistant/query', [FleetAssistantController::class, 'query'])->name('fleet-assistant.query');
+    Route::get('/fleet-assistant/context', [FleetAssistantController::class, 'context'])->name('fleet-assistant.context');
+
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::match(['patch', 'post'], '/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 

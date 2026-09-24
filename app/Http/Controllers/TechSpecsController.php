@@ -40,7 +40,7 @@ class TechSpecsController extends Controller
 
         $specs = $techSpecsService->getProductDetail($validated['product_id']);
 
-        if (!$specs) {
+        if (! $specs) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to retrieve specifications for this product ID.',

@@ -15,13 +15,14 @@ class ItamTrackingService
     {
         $devices = Device::all();
 
-        $totalAcquisitionCost = $devices->sum(fn($d) => $d->purchase_cost ?? 65000.00);
-        $currentBookValue = $devices->sum(fn($d) => $d->current_book_value);
+        $totalAcquisitionCost = $devices->sum(fn ($d) => $d->purchase_cost ?? 65000.00);
+        $currentBookValue = $devices->sum(fn ($d) => $d->current_book_value);
         $totalDepreciation = max(0, $totalAcquisitionCost - $currentBookValue);
 
         $stageBreakdown = [
             'acquisition' => $devices->where('lifecycle_stage', 'acquisition')->count(),
             'deployment' => $devices->where('lifecycle_stage', 'deployment')->count(),
+            'reclaimed' => $devices->where('lifecycle_stage', 'reclaimed')->count(),
             'maintenance' => $devices->where('lifecycle_stage', 'maintenance')->count(),
             'retirement' => $devices->where('lifecycle_stage', 'retirement')->count(),
         ];
@@ -98,6 +99,110 @@ class ItamTrackingService
         return [
             'idle_high_spec_count' => $idleHighSpec->count(),
             'idle_high_spec_devices' => $idleHighSpec,
+        ];
+    }
+
+    /**
+     * Calculate composite Fleet Operational Risk Score (0 - 100).
+     * Combining warranty vulnerability, asset aging, and physical/maintenance health.
+     *
+     * @return array{
+     *   risk_score: int,
+     *   risk_tier: string,
+     *   status_label: string,
+     *   factors: array{
+     *     warranty_risk_pct: float,
+     *     aging_risk_pct: float,
+     *     condition_risk_pct: float
+     *   },
+     *   counts: array{
+     *     total_active: int,
+     *     warranty_at_risk: int,
+     *     aging_at_risk: int,
+     *     condition_at_risk: int
+     *   },
+     *   key_alerts: array<string>
+     * }
+     */
+    public function getFleetRiskScore(): array
+    {
+        $activeDevices = Device::where('status', '!=', 'retired')->get();
+        $totalActive = $activeDevices->count();
+
+        if ($totalActive === 0) {
+            return [
+                'risk_score' => 0,
+                'risk_tier' => 'Low Risk',
+                'status_label' => 'Healthy Fleet',
+                'factors' => [
+                    'warranty_risk_pct' => 0.0,
+                    'aging_risk_pct' => 0.0,
+                    'condition_risk_pct' => 0.0,
+                ],
+                'counts' => [
+                    'total_active' => 0,
+                    'warranty_at_risk' => 0,
+                    'aging_at_risk' => 0,
+                    'condition_at_risk' => 0,
+                ],
+                'key_alerts' => ['No active fleet hardware records.'],
+            ];
+        }
+
+        $warrantyAtRisk = $activeDevices->filter(fn ($d) => $d->isWarrantyAtRisk())->count();
+        $agingAtRisk = $activeDevices->filter(fn ($d) => $d->isAging())->count();
+        $conditionAtRisk = $activeDevices->filter(fn ($d) => $d->hasConditionRisk())->count();
+
+        $warrantyRiskPct = round(($warrantyAtRisk / $totalActive) * 100, 1);
+        $agingRiskPct = round(($agingAtRisk / $totalActive) * 100, 1);
+        $conditionRiskPct = round(($conditionAtRisk / $totalActive) * 100, 1);
+
+        // Weighted operational risk index: Warranty (35%) + Aging (35%) + Physical Condition (30%)
+        $compositeScore = (int) round(($warrantyRiskPct * 0.35) + ($agingRiskPct * 0.35) + ($conditionRiskPct * 0.30));
+        $compositeScore = max(0, min(100, $compositeScore));
+
+        $riskTier = match (true) {
+            $compositeScore <= 25 => 'Low Risk',
+            $compositeScore <= 55 => 'Moderate Risk',
+            default => 'Elevated Risk',
+        };
+
+        $statusLabel = match (true) {
+            $compositeScore <= 25 => 'Fleet Stable & Covered',
+            $compositeScore <= 55 => 'Attention Needed',
+            default => 'Urgent Lifecycle Refresh Required',
+        };
+
+        $alerts = [];
+        if ($warrantyAtRisk > 0) {
+            $alerts[] = "{$warrantyAtRisk} devices (".round($warrantyRiskPct).'%) have expired or expiring warranties';
+        }
+        if ($agingAtRisk > 0) {
+            $alerts[] = "{$agingAtRisk} devices (".round($agingRiskPct).'%) are ≥ 3 years old in service';
+        }
+        if ($conditionAtRisk > 0) {
+            $alerts[] = "{$conditionAtRisk} devices (".round($conditionRiskPct).'%) require maintenance or have degraded condition';
+        }
+        if (empty($alerts)) {
+            $alerts[] = 'All active units are within warranty, modern, and in prime condition.';
+        }
+
+        return [
+            'risk_score' => $compositeScore,
+            'risk_tier' => $riskTier,
+            'status_label' => $statusLabel,
+            'factors' => [
+                'warranty_risk_pct' => $warrantyRiskPct,
+                'aging_risk_pct' => $agingRiskPct,
+                'condition_risk_pct' => $conditionRiskPct,
+            ],
+            'counts' => [
+                'total_active' => $totalActive,
+                'warranty_at_risk' => $warrantyAtRisk,
+                'aging_at_risk' => $agingAtRisk,
+                'condition_at_risk' => $conditionAtRisk,
+            ],
+            'key_alerts' => $alerts,
         ];
     }
 }

@@ -46,7 +46,7 @@ class RoleProfileController extends Controller
         $profile = RoleProfile::findOrFail($id);
 
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:100', 'unique:role_profiles,name,' . $profile->id],
+            'name' => ['required', 'string', 'max:100', 'unique:role_profiles,name,'.$profile->id],
             'min_cpu_tier' => ['required', 'in:entry,mid,high,workstation'],
             'min_ram_gb' => ['required', 'integer', 'min:4'],
             'min_storage_gb' => ['required', 'integer', 'min:64'],
@@ -70,6 +70,6 @@ class RoleProfileController extends Controller
         $profile = RoleProfile::findOrFail($id);
         $profile->delete();
 
-        return back()->with('success', "Role profile deleted.");
+        return back()->with('success', 'Role profile deleted.');
     }
 }

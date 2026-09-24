@@ -1,0 +1,157 @@
+# SPECMATCH — ADDITIONAL FEATURES: TECHNICAL DESCRIPTION & RATIONALE
+
+**Ground rule used throughout:** SpecMatch is a records-and-reasoning system, not a fleet-monitoring agent. It reasons over data that already exists in the database (seeded or entered by IT staff). It cannot query a physical machine's hardware bus, cannot read live SMART/battery telemetry, and cannot detect what's physically inside a chassis. Any feature that implies otherwise is rejected or reframed as a simulation, explicitly labeled as such in the UI copy.
+
+---
+
+## 1. CLASSIFICATION SUMMARY
+
+| Feature | Classification | Est. Effort | Priority |
+|---|---|---|---|
+| Multi-dimension Allocation Scorecard | BUILD | Low | P0 |
+| TOPSIS-based scoring (replaces weighted-sum) | BUILD | Medium | P1 |
+| Simulated Procurement Comparison Row | BUILD | Low | P0 |
+| Modular Upgrade Suggestion (data-driven, not detected) | SIMULATE | Low–Medium | P2 |
+| Cascade Reallocation Notice (single-hop only) | BUILD | Low–Medium | P1 |
+| Physical hardware interrogation (DMI/WMI/SMART) | REJECT | — | — |
+| Live battery/thermal telemetry | REJECT | — | — |
+| Full multi-hop cascade graph engine | REJECT (descope to single-hop) | — | — |
+
+---
+
+## 2. FEATURE: MULTI-DIMENSION ALLOCATION SCORECARD
+
+### 2.1 Rationale
+Constraint #2 of the contest brief requires "understandable and objective reasoning." A single aggregate percentage (e.g. "94% match") does not satisfy this on its own — it asserts objectivity without demonstrating it. Research into explainable-matching systems in adjacent domains (AI recruiting/candidate-screening tools) consistently finds that a bare match score causes users to distrust and manually re-verify the recommendation anyway, defeating the purpose of automating it. The fix is well-established: **decompose the single score into labeled per-dimension sub-scores** so the reasoning is visible, not just claimed.
+
+### 2.2 What it is
+Every device recommendation already carries the sub-scores computed in the base spec's §8.4 (cpu_tier_match_score, ram_sufficiency_score, storage_sufficiency_score, gpu_match_score, portability_match_score). Currently these are collapsed into one final number. This feature exposes them as three grouped, human-labeled pillars instead of five raw internal variables (five is too granular for a UI; three reads cleanly):
+
+- **Compute Fit** — derived from cpu_tier_match_score and ram_sufficiency_score combined
+- **Capability Fit** — derived from storage_sufficiency_score and gpu_match_score combined
+- **Deployment Fit** — derived from portability_match_score, plus device `condition` field
+
+Each pillar renders as a short label (e.g. "Compute Fit: Strong — exceeds CPU and RAM requirement") rather than a bare number, generated from the same sub-score values already computed by `MatchingService`.
+
+### 2.3 Why this is feasible
+Zero new data collection required. Every value used already exists in the schema (§9.1, §9.2 of the base spec) and is already computed by the scoring function. This is purely a presentation-layer decomposition of existing math — no new backend logic, no new AI calls, just restructuring the return shape of `MatchingService::rankDevices()` to expose the pillar breakdown instead of only the final score, and a React component to render it.
+
+### 2.4 Implementation sketch
+```php
+// MatchingService — extend the existing return shape, no new computation
+[
+  'device' => $device,
+  'score' => $finalScore,
+  'disqualified' => false,
+  'pillars' => [
+    'compute_fit'    => ['label' => 'Strong', 'detail' => '...', 'value' => 0.92],
+    'capability_fit' => ['label' => 'Adequate', 'detail' => '...', 'value' => 0.71],
+    'deployment_fit' => ['label' => 'Strong', 'detail' => '...', 'value' => 0.95],
+  ],
+]
+```
+`label` is derived from `value` via simple thresholds (>0.85 = Strong, 0.6–0.85 = Adequate, <0.6 = Weak) — a lookup, not new logic.
+
+### 2.5 Effort and priority
+**Low effort, P0.** This should be built before anything else in this document — it directly hardens your existing, already-working matching feature against the most likely judge question ("how do I know this recommendation is actually objective?").
+
+---
+
+## 3. FEATURE: TOPSIS-BASED SCORING (Optional replacement for weighted-sum)
+
+### 3.1 Rationale
+The base spec's §8.4 uses a weighted linear sum. This is defensible but has a known weakness in multi-criteria decision literature: a device can compensate for a serious deficiency in one dimension by over-performing in another, which is not always desirable (e.g., a workstation-tier GPU should not fully offset insufficient RAM for a role that needs both). TOPSIS (Technique for Order Preference by Similarity to Ideal Solution) is a standard, well-documented multi-criteria decision method that instead measures each candidate's geometric distance from a "best possible" and "worst possible" profile, which is a more rigorous and more easily defended approach if a judge with a technical background asks how the ranking works.
+
+### 3.2 What it is, concretely
+1. Build a decision matrix: rows = eligible devices (post-pruning, per §8.3), columns = the same criteria already scored (CPU tier, RAM, storage, GPU tier, portability), values normalized to 0–1.
+2. Compute the **positive-ideal vector** A⁺ (the best value present in each column across all candidate devices) and the **negative-ideal vector** A⁻ (the worst value in each column).
+3. For each device, compute Euclidean distance to A⁺ (call it d⁺) and to A⁻ (call it d⁻).
+4. Final score = `d⁻ / (d⁺ + d⁻)` — ranges 0 to 1, higher is better (closer to ideal, farther from worst-case).
+
+### 3.3 Why this is feasible
+This is linear algebra over a small, already-normalized matrix (typically fewer than 30 rows given realistic seed inventory size). No external library required — implementable as a self-contained PHP class (`TopsisScorer`) of roughly 60–100 lines: normalize, compute ideal vectors, compute distances, divide. It is still fully deterministic (§12 of the base spec's non-functional requirement is preserved) and still explainable, since each device's distance can be broken down per-criterion for the scorecard in §2 above.
+
+### 3.4 Recommendation on whether to actually build this
+**Optional, P1, not P0.** The weighted-sum approach already satisfies the contest constraints correctly. TOPSIS is a genuine upgrade in rigor and a stronger talking point in the pitch ("we use a published multi-criteria decision method, not an ad-hoc formula"), but it is not required to meet the brief. Build it only if the team member most comfortable with the math has spare time after §2 and §4 are done and tested. Do not let this block the demo-critical path.
+
+---
+
+## 4. FEATURE: SIMULATED PROCUREMENT COMPARISON ROW
+
+### 4.1 Rationale
+Constraint #1 requires that existing inventory be considered before recommending new purchases. The current design satisfies this logically (procurement is only suggested when no device clears `MATCH_THRESHOLD`), but the constraint is currently only demonstrated by *absence* — the user has to trust that "no recommendation shown" means "we checked and nothing qualified." A stronger, more visual proof is to show the comparison explicitly, every time.
+
+### 4.2 What it is
+Add one synthetic row to the ranked results list, clearly labeled `New Procurement (estimated)`, scored on the exact same scale as real devices. Its "specs" are a config-defined generic adequate device (e.g., a config file listing 2–3 tiers of "typical new laptop" specs and an estimated price), and it is always scored using the identical scoring function as real inventory — not given a free pass.
+
+This turns an invisible policy ("we check inventory first") into a visible comparison ("here is exactly where a new purchase would rank against what you already own — and here's what it would cost").
+
+### 4.3 Why this is feasible
+The "device" here is not a real row in the `devices` table — it is a value object constructed in-memory at request time, from a small config array (e.g. `config/procurement_reference.php` listing 2-3 generic new-device profiles and estimated PHP prices per tier). It is passed through the same `MatchingService`/scoring function as any other candidate, so no separate logic path needs to be written or tested. This is a small, bounded addition — a config array, one service method to construct the synthetic candidate, and a UI label distinguishing it from real inventory (e.g. a distinct badge or muted row styling) so it's never mistaken for an actual asset.
+
+### 4.4 Effort and priority
+**Low effort, P0.** This is one of the cheapest, highest-payoff additions available — it makes Constraint #1 visually undeniable in the live demo ("watch — the system checks a new purchase against our fleet, and our fleet wins") without requiring any new subsystem.
+
+---
+
+## 5. FEATURE: MODULAR UPGRADE SUGGESTION (Data-Driven Simulation)
+
+### 5.1 Rationale, and an explicit correction
+An earlier reference document proposed detecting upgrade feasibility by physically interrogating a device's motherboard (DMI Type 16/17 structures via WMI) to check for soldered vs. socketed RAM and free M.2 bays. **This is rejected as literally specified** — it requires an agent running on physical hardware with low-level bus access, which SpecMatch, as a web application with no device agents, cannot do. Implementing this honestly would require hardware SpecMatch does not have access to.
+
+What is feasible is a **data-driven simulation** of the same underlying idea, using fields already in your schema plus a small number of new static fields.
+
+### 5.2 What it is
+Extend the `devices` table with two nullable boolean fields: `ram_upgradeable` and `storage_upgradeable`, set manually by IT staff when a device is registered (this is a one-time data entry decision a real IT admin can actually make by checking the spec sheet — not something the software detects on its own, and the UI must say so).
+
+When a device fails matching **solely** on RAM or storage sufficiency (i.e., it clears every other criterion) and `ram_upgradeable`/`storage_upgradeable` is true, the system surfaces a suggestion: *"This device would qualify if upgraded — estimated component cost vs. new purchase."* The estimated cost is a static config lookup (e.g. "RAM upgrade: ~₱2,500–4,000" as a flat config value, not a live price feed), not a real quote.
+
+### 5.3 Why this is feasible, and where the honesty line is
+- Feasible: this is a conditional check against two boolean fields plus a config-driven cost estimate — a few hours of work, reusing the existing disqualification logic from §8.3/§8.4 of the base spec (you already compute *why* a device failed; this just adds one more branch when the *only* failure reason is RAM or storage).
+- The honesty line: the UI copy must make clear this is a **suggestion based on IT-entered specifications**, not a live hardware scan. Do not use language implying the system "detected" or "scanned" the device. Suggested copy: *"Marked upgradeable by IT — verify physically before proceeding."*
+
+### 5.4 Effort and priority
+**Low–medium effort, P2.** Build this only after §2 and §4 are solid and tested. It's a good story for the pitch ("we don't just say retire it or keep it — we identify a third option: upgrade it") but it is not required to satisfy any of the three contest constraints directly, so it should not come at the cost of the core matching flow working reliably.
+
+---
+
+## 6. FEATURE: CASCADE REALLOCATION NOTICE (Single-Hop Only)
+
+### 6.1 Rationale, and an explicit descope
+An earlier reference document described a multi-hop "waterfall" reallocation engine: a released high-tier device triggers a chain of reassignments across multiple employees, each freeing up a progressively lower-tier device, terminating in a retirement. This is a legitimate and appealing narrative for *why* circulation matters, but implementing actual multi-hop graph traversal — finding chains of beneficial reassignments across the whole employee/device graph — is a nontrivial algorithmic problem (effectively a variant of assignment/matching optimization) that does not fit a 28.5-hour build alongside everything else already scoped.
+
+**Descoped to single-hop:** when a device newly becomes available (via retirement, reassignment, or offboarding), immediately re-run it once against the existing mismatch list (already computed per base spec §8.7) and surface: *"This newly available device would resolve N existing mismatch(es)."* This captures the core value — "don't let a freed device sit idle, check if it helps someone right now" — without building a graph search.
+
+### 6.2 Why this is feasible
+This reuses two things you already have: the device-just-became-available event (already a state transition in your lifecycle model) and the mismatch list (already computed by §8.7 of the base spec). The new work is small: on that state transition, loop through the existing (already-computed) mismatch list and re-score this one device against each mismatched employee's role profile, surfacing any that now clear `MATCH_THRESHOLD`. This is a bounded loop over an already-small dataset (your mismatch list will realistically be single digits in size for a demo), not a new optimization engine.
+
+### 6.3 Effort and priority
+**Low–medium effort, P1.** Build after §2 and §4. This is a strong "circulation" story for the pitch — it's literally the word used in the contest brief ("improve the circulation... of internal company assets") — and it's cheap because it reuses existing logic rather than introducing new algorithmic complexity.
+
+---
+
+## 7. FEATURES REJECTED OUTRIGHT
+
+| Feature | Why rejected |
+|---|---|
+| DMI/WMI hardware interrogation | Requires an agent running on physical endpoints with bus-level access. SpecMatch is a web app with no device agents — this is architecturally impossible in this build, not just time-constrained. |
+| Live SMART / battery wear / thermal telemetry | Same reason — requires live sensor data from physical hardware. Any value shown for this must be explicitly static, IT-entered seed data, never framed as "detected" or "monitored." |
+| Full multi-hop cascade graph engine | Real algorithmic complexity (chained assignment optimization across the full employee/device graph) disproportionate to time available. Descoped to single-hop (§6). |
+| Real-time market price lookups for procurement/component costs | Requires a live external pricing API/feed with no clear free source available in the time window. Use static config-defined estimates instead, clearly labeled as estimates. |
+
+**Standing instruction for both human developers and any AI coding assistant working from this document:** if a request comes in to implement anything in this section as originally described (i.e., as live hardware detection rather than IT-entered data), decline and point back to this section, or reframe it as the SIMULATE version described in §5/§6.
+
+---
+
+## 8. RECOMMENDED BUILD ORDER (feeds into existing work split)
+
+1. **§2 Multi-dimension Allocation Scorecard** — P0, build first, lowest risk, highest defensibility payoff.
+2. **§4 Simulated Procurement Comparison Row** — P0, build second, cheap and directly demonstrates Constraint #1.
+3. **§6 Cascade Reallocation Notice (single-hop)** — P1, build if §2 and §4 are done and tested with time remaining.
+4. **§3 TOPSIS scoring** — P1, optional upgrade to the scoring method itself, only if a team member has both the time and comfort with the math.
+5. **§5 Modular Upgrade Suggestion** — P2, nice-to-have narrative feature, build last.
+
+Do not begin §3, §5, or §6 while §2 or §4 are incomplete or untested — per the base specification's scope discipline (§4 of the base spec), a smaller feature set that works reliably in the live demo outperforms a larger one with any broken part.
+
+- If this feature were to be implemented, create a new separate branch away from main branch.
+- Test everything before committing and push.

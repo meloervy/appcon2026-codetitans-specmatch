@@ -23,15 +23,15 @@ class HardwareImageController extends Controller
         $brand = $validated['brand'] ?? '';
         $model = $validated['model'] ?? '';
         $deviceType = $validated['device_type'] ?? 'laptop';
-        $query = $validated['query'] ?? trim($brand . ' ' . $model);
+        $query = $validated['query'] ?? trim($brand.' '.$model);
 
         $resolved = HardwareImageService::resolveModelImage($brand, $model, $deviceType);
-        $results = !empty($query) ? HardwareImageService::searchHardwareImages($query, $brand, $model) : [];
+        $results = ! empty($query) ? HardwareImageService::searchHardwareImages($query, $brand, $model) : [];
 
         $primary = $resolved ?? ($results[0]['image_url'] ?? null);
 
         return response()->json([
-            'success' => !empty($primary),
+            'success' => ! empty($primary),
             'image_url' => $primary,
             'source' => $primary ? 'wikimedia' : 'none',
             'results' => $results,

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\HardwareImageService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -86,6 +87,52 @@ class Device extends Model
         return $query->where('status', 'available');
     }
 
+    public function scopeReclaimed($query)
+    {
+        return $query->where('lifecycle_stage', 'reclaimed');
+    }
+
+    public function scopeDeployment($query)
+    {
+        return $query->where('lifecycle_stage', 'deployment');
+    }
+
+    /**
+     * Determine if device is aging (>= 3 years old in service).
+     */
+    public function isAging(): bool
+    {
+        if ($this->purchase_date) {
+            return Carbon::parse($this->purchase_date)->diffInYears(Carbon::now()) >= 3;
+        }
+
+        if ($this->year_acquired) {
+            return (Carbon::now()->year - $this->year_acquired) >= 3;
+        }
+
+        return false;
+    }
+
+    /**
+     * Determine if warranty is expired or nearing expiry (<= 60 days).
+     */
+    public function isWarrantyAtRisk(): bool
+    {
+        return in_array($this->warranty_status, ['expired', 'expiring_soon', 'none'], true);
+    }
+
+    /**
+     * Determine if device has condition or maintenance risk.
+     */
+    public function hasConditionRisk(): bool
+    {
+        $cond = strtolower($this->condition ?? 'good');
+
+        return in_array($cond, ['fair', 'poor', 'degraded', 'needs_repair'], true)
+            || $this->status === 'in_repair'
+            || $this->lifecycle_stage === 'maintenance';
+    }
+
     /**
      * Compute current depreciated book value using straight-line annual depreciation.
      */
@@ -108,7 +155,7 @@ class Device extends Model
      */
     public function getWarrantyStatusAttribute(): string
     {
-        if (!$this->warranty_expiry) {
+        if (! $this->warranty_expiry) {
             return 'none';
         }
 
@@ -131,12 +178,13 @@ class Device extends Model
      */
     public function getDaysUntilWarrantyExpiryAttribute(): ?int
     {
-        if (!$this->warranty_expiry) {
+        if (! $this->warranty_expiry) {
             return null;
         }
 
         $expiry = Carbon::parse($this->warranty_expiry);
-        return (int)Carbon::now()->diffInDays($expiry, false);
+
+        return (int) Carbon::now()->diffInDays($expiry, false);
     }
 
     /**
@@ -144,6 +192,6 @@ class Device extends Model
      */
     public function getImageClipUrlAttribute(): string
     {
-        return \App\Services\HardwareImageService::resolveForDevice($this);
+        return HardwareImageService::resolveForDevice($this);
     }
 }

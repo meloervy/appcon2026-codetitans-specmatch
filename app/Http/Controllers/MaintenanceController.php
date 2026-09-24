@@ -116,7 +116,7 @@ class MaintenanceController extends Controller
         $log = $device->maintenanceLogs()->create($validated);
 
         // If maintenance is ongoing or user opted to transition stage
-        if (!empty($validated['send_to_maintenance_stage']) || in_array($validated['status'], ['scheduled', 'in_progress'])) {
+        if (! empty($validated['send_to_maintenance_stage']) || in_array($validated['status'], ['scheduled', 'in_progress'])) {
             if ($device->lifecycle_stage !== 'maintenance') {
                 $oldStage = $device->lifecycle_stage;
                 $device->update([
@@ -155,7 +155,7 @@ class MaintenanceController extends Controller
         $log->update($validated);
 
         // If completed and user wants to restore device to deployment/available
-        if ($validated['status'] === 'completed' && !empty($validated['restore_to_available'])) {
+        if ($validated['status'] === 'completed' && ! empty($validated['restore_to_available'])) {
             $device = $log->device;
             if ($device && $device->lifecycle_stage === 'maintenance') {
                 $device->update([
@@ -173,6 +173,6 @@ class MaintenanceController extends Controller
             }
         }
 
-        return back()->with('success', "Maintenance log updated successfully.");
+        return back()->with('success', 'Maintenance log updated successfully.');
     }
 }

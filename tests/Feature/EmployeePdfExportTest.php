@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Assignment;
 use App\Models\Device;
 use App\Models\Employee;
 use App\Models\RoleProfile;
@@ -59,7 +60,7 @@ class EmployeePdfExportTest extends TestCase
             'lifecycle_stage' => 'deployment',
         ]);
 
-        \App\Models\Assignment::create([
+        Assignment::create([
             'employee_id' => $employee->id,
             'device_id' => $device->id,
             'assigned_at' => now(),
