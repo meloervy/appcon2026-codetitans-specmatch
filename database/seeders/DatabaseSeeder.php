@@ -10,7 +10,6 @@ use App\Models\RoleProfile;
 use App\Models\User;
 use App\Services\HardwareImageService;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -20,38 +19,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // 1. Seed Enterprise ITAM Staff Users (Covering Admin, Asset Manager, and Technician)
-        User::updateOrCreate(
-            ['email' => 'admin@specmatch.local'],
-            [
-                'name' => 'IT Administrator',
-                'password' => Hash::make('password'),
-                'role' => 'admin',
-                'department' => 'IT Infrastructure & Systems',
-                'email_verified_at' => now(),
-            ]
-        );
-
-        User::updateOrCreate(
-            ['email' => 'manager@specmatch.local'],
-            [
-                'name' => 'IT Asset Manager',
-                'password' => Hash::make('password'),
-                'role' => 'manager',
-                'department' => 'Asset Lifecycle & Procurement',
-                'email_verified_at' => now(),
-            ]
-        );
-
-        User::updateOrCreate(
-            ['email' => 'tech@specmatch.local'],
-            [
-                'name' => 'Hardware Technician',
-                'password' => Hash::make('password'),
-                'role' => 'technician',
-                'department' => 'Hardware Diagnostics & Maintenance',
-                'email_verified_at' => now(),
-            ]
-        );
+        $this->call(UserSeeder::class);
 
         // 2. Seed Role Profiles (Covering Core Engineering, UI/UX, Product Design, Analytics, & Admin)
         $developer = RoleProfile::create([

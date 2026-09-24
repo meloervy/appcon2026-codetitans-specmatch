@@ -23,11 +23,16 @@ fi
 echo "==> Running database migrations..."
 php artisan migrate --force --no-interaction
 
-# Check if devices table is empty, seed if necessary
+# Check if devices or users table is empty, seed if necessary
 DEVICE_COUNT=$(php -r "require '/app/vendor/autoload.php'; \$app = require '/app/bootstrap/app.php'; \$kernel = \$app->make(Illuminate\Contracts\Console\Kernel::class); \$kernel->bootstrap(); echo \App\Models\Device::count();" 2>/dev/null || echo "0")
+USER_COUNT=$(php -r "require '/app/vendor/autoload.php'; \$app = require '/app/bootstrap/app.php'; \$kernel = \$app->make(Illuminate\Contracts\Console\Kernel::class); \$kernel->bootstrap(); echo \App\Models\User::count();" 2>/dev/null || echo "0")
+
 if [ "$DEVICE_COUNT" = "0" ]; then
-    echo "==> Seeding initial IT fleet catalog and employee profiles..."
+    echo "==> Seeding initial IT fleet catalog, employee profiles, and demo users..."
     php artisan db:seed --force --no-interaction
+elif [ "$USER_COUNT" = "0" ]; then
+    echo "==> Seeding demo administrative users..."
+    php artisan db:seed --class=UserSeeder --force --no-interaction
 fi
 
 # Optimize Laravel caching for production
