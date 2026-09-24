@@ -2,16 +2,44 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import HardwareImage from '@/Components/HardwareImage';
 import ResizableTh from '@/Components/ResizableTh';
 import { useResizableColumns } from '@/Hooks/useResizableColumns';
-import { Head, Link, useForm } from '@inertiajs/react';
-import { useMemo, useRef, useState } from 'react';
+import useOutsideClick from '@/hooks/useOutsideClick';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { useRef, useState } from 'react';
+import {
+    RiMoreFill,
+    RiExchangeLine,
+    RiCloseCircleLine,
+    RiEditLine,
+    RiArrowRightLine,
+    RiSearchLine,
+    RiUserAddLine,
+    RiTeamLine,
+    RiMacbookLine,
+    RiAlertLine,
+    RiUserStarLine,
+    RiFilePdfLine,
+    RiFilter3Line,
+    RiCheckboxCircleLine,
+} from 'react-icons/ri';
 
-export default function EmployeesIndex({ employees, role_profiles }) {
+export default function EmployeesIndex({ employees, role_profiles = [], departments = [], stats = {}, filters = {} }) {
     const [showModal, setShowModal] = useState(false);
     const [editingEmp, setEditingEmp] = useState(null);
     const [wrapText, setWrapText] = useState(false);
-    const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'asc' });
+    const [search, setSearch] = useState(filters?.search || '');
+    const [department, setDepartment] = useState(filters?.department || '');
+    const [roleProfileId, setRoleProfileId] = useState(filters?.role_profile_id || '');
+    const [hardwareStatus, setHardwareStatus] = useState(filters?.hardware_status || '');
+    const [openMenuId, setOpenMenuId] = useState(null);
     const [filePreview, setFilePreview] = useState(null);
     const fileInputRef = useRef(null);
+    const tableContainerRef = useRef(null);
+
+    useOutsideClick(tableContainerRef, () => {
+        if (openMenuId !== null) {
+            setOpenMenuId(null);
+        }
+    });
 
     const initialWidths = {
         employee: 210,
@@ -20,10 +48,10 @@ export default function EmployeesIndex({ employees, role_profiles }) {
         hardware: 220,
         specs: 190,
         date: 130,
-        actions: 230,
+        actions: 120,
     };
 
-    const { widths, startResize, autoExpandCol, resetWidths, isResizing, resizingCol } = useResizableColumns(initialWidths, 'employees_table_v3');
+    const { widths, startResize, autoExpandCol, resetWidths, isResizing, resizingCol } = useResizableColumns(initialWidths, 'employees_table_v5');
 
     const { data, setData, post, processing, reset, errors } = useForm({
         name: '',
@@ -36,52 +64,51 @@ export default function EmployeesIndex({ employees, role_profiles }) {
 
     const { post: postUnassign } = useForm();
 
-    const handleSort = (key) => {
-        setSortConfig((prev) => ({
-            key,
-            direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc',
-        }));
+    const handleSort = (sortKey) => {
+        const currentSort = filters?.sort || 'name';
+        const currentDirection = filters?.direction || 'asc';
+        const nextDirection = currentSort === sortKey && currentDirection === 'asc' ? 'desc' : 'asc';
+
+        router.get(
+            route('employees.index'),
+            {
+                search,
+                department,
+                role_profile_id: roleProfileId,
+                hardware_status: hardwareStatus,
+                sort: sortKey,
+                direction: nextDirection,
+            },
+            { preserveState: true, replace: true }
+        );
     };
 
-    const sortedEmployees = useMemo(() => {
-        const list = [...employees];
-        const { key, direction } = sortConfig;
-        const modifier = direction === 'asc' ? 1 : -1;
+    const handleFilter = (e) => {
+        e?.preventDefault();
+        router.get(
+            route('employees.index'),
+            {
+                search,
+                department,
+                role_profile_id: roleProfileId,
+                hardware_status: hardwareStatus,
+                sort: filters?.sort,
+                direction: filters?.direction,
+            },
+            { preserveState: true, replace: true }
+        );
+    };
 
-        return list.sort((a, b) => {
-            let valA, valB;
-            switch (key) {
-                case 'name':
-                case 'employee':
-                    valA = (a.name || '').toLowerCase();
-                    valB = (b.name || '').toLowerCase();
-                    return valA.localeCompare(valB) * modifier;
-                case 'department':
-                    valA = (a.department || '').toLowerCase();
-                    valB = (b.department || '').toLowerCase();
-                    return valA.localeCompare(valB) * modifier;
-                case 'role_profile':
-                    valA = (a.role_profile?.name || '').toLowerCase();
-                    valB = (b.role_profile?.name || '').toLowerCase();
-                    return valA.localeCompare(valB) * modifier;
-                case 'hardware':
-                    valA = (a.active_assignment?.device?.brand ? `${a.active_assignment.device.brand} ${a.active_assignment.device.model}` : '').toLowerCase();
-                    valB = (b.active_assignment?.device?.brand ? `${b.active_assignment.device.brand} ${b.active_assignment.device.model}` : '').toLowerCase();
-                    return valA.localeCompare(valB) * modifier;
-                case 'specs':
-                    valA = a.active_assignment?.device?.ram_gb || 0;
-                    valB = b.active_assignment?.device?.ram_gb || 0;
-                    return (valA - valB) * modifier;
-                case 'created_at':
-                case 'date':
-                    valA = new Date(a.created_at || 0).getTime();
-                    valB = new Date(b.created_at || 0).getTime();
-                    return (valA - valB) * modifier;
-                default:
-                    return 0;
-            }
-        });
-    }, [employees, sortConfig]);
+    const clearFilters = () => {
+        setSearch('');
+        setDepartment('');
+        setRoleProfileId('');
+        setHardwareStatus('');
+        router.get(route('employees.index'));
+    };
+
+    const activeFilterCount = [search, department, roleProfileId, hardwareStatus].filter(Boolean).length;
+    const employeeList = Array.isArray(employees) ? employees : employees?.data || [];
 
     const openCreate = () => {
         setEditingEmp(null);
@@ -159,24 +186,221 @@ export default function EmployeesIndex({ employees, role_profiles }) {
                     <div>
                         <h1 className="text-2xl font-sans font-extrabold tracking-tight text-slate-900 dark:text-zinc-100">Company Staff Directory</h1>
                         <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1 max-w-2xl">
-                            Staff profiles, role templates, and currently issued hardware.
+                            Workforce profiles, role spec thresholds, and currently issued hardware allocations.
                         </p>
                     </div>
-                    <button
-                        onClick={openCreate}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#026eff] text-sm font-semibold text-white hover:bg-[#0256cc] shadow-sm transition self-start sm:self-auto cursor-pointer"
-                    >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                        Add Employee
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <a
+                            href={route('employees.export.pdf')}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700/60 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-200 dark:hover:bg-zinc-700 transition"
+                        >
+                            <RiFilePdfLine className="w-4 h-4 text-rose-500" />
+                            <span>Export Audit PDF</span>
+                        </a>
+                        <button
+                            onClick={openCreate}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#026eff] text-xs font-semibold text-white hover:bg-[#0256cc] shadow-2xs transition cursor-pointer"
+                        >
+                            <RiUserAddLine className="w-4 h-4" />
+                            <span>Add Employee</span>
+                        </button>
+                    </div>
                 </div>
             }
         >
-            <Head title="Employees - SpecMatch" />
+            <Head title="Employees Directory - SpecMatch" />
 
-            <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 shadow-xs overflow-hidden">
+            {/* 1. KPI Summary Stat Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-5">
+                {/* 1. Total Staff */}
+                <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 shadow-2xs">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Total Workforce</span>
+                        <div className="w-8 h-8 rounded-xl bg-[#026eff]/10 dark:bg-[#026eff]/20 flex items-center justify-center text-[#026eff] dark:text-[#38bdf8]">
+                            <RiTeamLine className="w-4 h-4" />
+                        </div>
+                    </div>
+                    <div className="mt-2 flex items-baseline gap-2">
+                        <span className="text-2xl font-black text-slate-900 dark:text-zinc-50">{stats?.total || 0}</span>
+                        <span className="text-xs text-slate-500 dark:text-zinc-400">registered staff</span>
+                    </div>
+                    <div className="mt-2 flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-zinc-400">
+                        <span className="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
+                        <span>Active corporate directory</span>
+                    </div>
+                </div>
+
+                {/* 2. Equipped with Hardware */}
+                <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 shadow-2xs">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Hardware Equipped</span>
+                        <div className="w-8 h-8 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                            <RiMacbookLine className="w-4 h-4" />
+                        </div>
+                    </div>
+                    <div className="mt-2 flex items-baseline gap-2">
+                        <span className="text-2xl font-black text-slate-900 dark:text-zinc-50">{stats?.assigned || 0}</span>
+                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">
+                            {stats?.assigned_percentage || 0}%
+                        </span>
+                    </div>
+                    <div className="mt-2 w-full bg-slate-100 dark:bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+                        <div
+                            className="bg-emerald-500 h-1.5 rounded-full transition-all duration-500"
+                            style={{ width: `${Math.min(100, Math.max(0, stats?.assigned_percentage || 0))}%` }}
+                        ></div>
+                    </div>
+                </div>
+
+                {/* 3. Hardware Needed */}
+                <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 shadow-2xs">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Needs Hardware</span>
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                            stats?.unassigned > 0
+                                ? 'bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400'
+                                : 'bg-slate-100 text-slate-500 dark:bg-zinc-800 dark:text-zinc-400'
+                        }`}>
+                            <RiAlertLine className="w-4 h-4" />
+                        </div>
+                    </div>
+                    <div className="mt-2 flex items-baseline gap-2">
+                        <span className={`text-2xl font-black ${
+                            stats?.unassigned > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-zinc-50'
+                        }`}>
+                            {stats?.unassigned || 0}
+                        </span>
+                        <span className="text-xs text-slate-500 dark:text-zinc-400">unallocated staff</span>
+                    </div>
+                    <div className="mt-2 flex items-center gap-1.5 text-[11px]">
+                        {stats?.unassigned > 0 ? (
+                            <span className="text-amber-600 dark:text-amber-400 font-medium">
+                                ● Ready for AI Match & Issue
+                            </span>
+                        ) : (
+                            <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                                <RiCheckboxCircleLine className="w-3.5 h-3.5" /> 100% staff equipped
+                            </span>
+                        )}
+                    </div>
+                </div>
+
+                {/* 4. Role Profiles Configured */}
+                <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 shadow-2xs">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Role Profiles</span>
+                        <div className="w-8 h-8 rounded-xl bg-indigo-500/10 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                            <RiUserStarLine className="w-4 h-4" />
+                        </div>
+                    </div>
+                    <div className="mt-2 flex items-baseline gap-2">
+                        <span className="text-2xl font-black text-slate-900 dark:text-zinc-50">{stats?.with_profile || 0}</span>
+                        <span className="text-xs text-slate-500 dark:text-zinc-400">mapped workloads</span>
+                    </div>
+                    <div className="mt-2 flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-zinc-400">
+                        <span className="w-2 h-2 rounded-full bg-indigo-500 inline-block"></span>
+                        <span>Objective fit scoring active</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* 2. Advanced Filter & Search Bar */}
+            <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 p-4 shadow-2xs mb-5">
+                <form onSubmit={handleFilter} className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5 items-center">
+                        {/* Search Bar */}
+                        <div className="lg:col-span-4 relative">
+                            <RiSearchLine className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
+                            <input
+                                type="text"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder="Search staff, department, role, or hardware..."
+                                className="w-full text-xs font-medium pl-9 pr-3.5 py-2 rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
+                            />
+                        </div>
+
+                        {/* Hardware Status Filter */}
+                        <div className="lg:col-span-3">
+                            <select
+                                value={hardwareStatus}
+                                onChange={(e) => setHardwareStatus(e.target.value)}
+                                className="w-full text-xs font-medium py-2 px-3 rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
+                            >
+                                <option value="">All Allocation Statuses</option>
+                                <option value="assigned">Equipped (Assigned)</option>
+                                <option value="unassigned">Needs Device (Unassigned)</option>
+                            </select>
+                        </div>
+
+                        {/* Department Filter */}
+                        <div className="lg:col-span-3">
+                            <select
+                                value={department}
+                                onChange={(e) => setDepartment(e.target.value)}
+                                className="w-full text-xs font-medium py-2 px-3 rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
+                            >
+                                <option value="">All Departments</option>
+                                {departments.map((dept) => (
+                                    <option key={dept} value={dept}>
+                                        {dept}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Role Profile Filter */}
+                        <div className="lg:col-span-2">
+                            <select
+                                value={roleProfileId}
+                                onChange={(e) => setRoleProfileId(e.target.value)}
+                                className="w-full text-xs font-medium py-2 px-3 rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs"
+                            >
+                                <option value="">All Role Profiles</option>
+                                {role_profiles.map((p) => (
+                                    <option key={p.id} value={p.id}>
+                                        {p.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-zinc-800/80 text-xs">
+                        <div className="text-slate-500 dark:text-zinc-400 text-[11px]">
+                            {activeFilterCount > 0 ? (
+                                <span>
+                                    Filtering by <strong className="text-slate-800 dark:text-zinc-200">{activeFilterCount}</strong> active criteria
+                                </span>
+                            ) : (
+                                <span>Showing all staff records</span>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            {activeFilterCount > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={clearFilters}
+                                    className="py-1.5 px-3 text-xs font-semibold rounded-xl border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 transition cursor-pointer"
+                                >
+                                    Reset
+                                </button>
+                            )}
+                            <button
+                                type="submit"
+                                className="py-1.5 px-4 text-xs font-semibold rounded-xl bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-slate-800 dark:hover:bg-white transition cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                            >
+                                <RiFilter3Line className="w-3.5 h-3.5" />
+                                <span>Apply Filters</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div ref={tableContainerRef} className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 shadow-xs overflow-visible">
                 {/* Column Adjustment & Display Control Toolbar */}
                 <div className="px-4 py-2 bg-slate-50/70 dark:bg-zinc-800/40 border-b border-slate-200/70 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2 text-xs">
                     <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-400 text-[11px]">
@@ -188,7 +412,7 @@ export default function EmployeesIndex({ employees, role_profiles }) {
                             type="button"
                             onClick={() => handleSort('created_at')}
                             className={`px-2.5 py-1 rounded-lg border text-[11px] font-medium transition cursor-pointer flex items-center gap-1.5 ${
-                                sortConfig.key === 'created_at'
+                                filters?.sort === 'created_at'
                                     ? 'bg-[#026eff]/15 text-[#026eff] border-[#026eff]/30 dark:bg-[#026eff]/20 dark:text-sky-300'
                                     : 'bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700/60'
                             }`}
@@ -197,7 +421,7 @@ export default function EmployeesIndex({ employees, role_profiles }) {
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
-                            <span>Sort Chronologically {sortConfig.key === 'created_at' ? (sortConfig.direction === 'desc' ? '(Newest)' : '(Oldest)') : ''}</span>
+                            <span>Sort Chronologically {filters?.sort === 'created_at' ? (filters?.direction === 'desc' ? '(Newest)' : '(Oldest)') : ''}</span>
                         </button>
                         <button
                             type="button"
@@ -225,7 +449,7 @@ export default function EmployeesIndex({ employees, role_profiles }) {
                     </div>
                 </div>
 
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto min-h-[340px]">
                     <table
                         className="w-full text-left text-sm table-fixed"
                         style={{ minWidth: `${Math.max(900, Object.values(widths).reduce((a, b) => a + b, 0))}px` }}
@@ -235,8 +459,8 @@ export default function EmployeesIndex({ employees, role_profiles }) {
                                 <ResizableTh
                                     colKey="employee"
                                     sortKey="name"
-                                    currentSort={sortConfig.key}
-                                    sortDirection={sortConfig.direction}
+                                    currentSort={filters?.sort || 'name'}
+                                    sortDirection={filters?.direction || 'asc'}
                                     onSort={handleSort}
                                     width={widths.employee}
                                     onResizeStart={startResize}
@@ -248,8 +472,8 @@ export default function EmployeesIndex({ employees, role_profiles }) {
                                 <ResizableTh
                                     colKey="department"
                                     sortKey="department"
-                                    currentSort={sortConfig.key}
-                                    sortDirection={sortConfig.direction}
+                                    currentSort={filters?.sort || 'name'}
+                                    sortDirection={filters?.direction || 'asc'}
                                     onSort={handleSort}
                                     width={widths.department}
                                     onResizeStart={startResize}
@@ -261,8 +485,8 @@ export default function EmployeesIndex({ employees, role_profiles }) {
                                 <ResizableTh
                                     colKey="role_profile"
                                     sortKey="role_profile"
-                                    currentSort={sortConfig.key}
-                                    sortDirection={sortConfig.direction}
+                                    currentSort={filters?.sort || 'name'}
+                                    sortDirection={filters?.direction || 'asc'}
                                     onSort={handleSort}
                                     width={widths.role_profile}
                                     onResizeStart={startResize}
@@ -274,8 +498,8 @@ export default function EmployeesIndex({ employees, role_profiles }) {
                                 <ResizableTh
                                     colKey="hardware"
                                     sortKey="hardware"
-                                    currentSort={sortConfig.key}
-                                    sortDirection={sortConfig.direction}
+                                    currentSort={filters?.sort || 'name'}
+                                    sortDirection={filters?.direction || 'asc'}
                                     onSort={handleSort}
                                     width={widths.hardware}
                                     onResizeStart={startResize}
@@ -287,8 +511,8 @@ export default function EmployeesIndex({ employees, role_profiles }) {
                                 <ResizableTh
                                     colKey="specs"
                                     sortKey="specs"
-                                    currentSort={sortConfig.key}
-                                    sortDirection={sortConfig.direction}
+                                    currentSort={filters?.sort || 'name'}
+                                    sortDirection={filters?.direction || 'asc'}
                                     onSort={handleSort}
                                     width={widths.specs}
                                     onResizeStart={startResize}
@@ -300,8 +524,8 @@ export default function EmployeesIndex({ employees, role_profiles }) {
                                 <ResizableTh
                                     colKey="date"
                                     sortKey="created_at"
-                                    currentSort={sortConfig.key}
-                                    sortDirection={sortConfig.direction}
+                                    currentSort={filters?.sort || 'name'}
+                                    sortDirection={filters?.direction || 'asc'}
                                     onSort={handleSort}
                                     width={widths.date}
                                     onResizeStart={startResize}
@@ -324,141 +548,291 @@ export default function EmployeesIndex({ employees, role_profiles }) {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
-                            {sortedEmployees.map((emp) => {
-                                const device = emp.active_assignment?.device;
-                                const avatarSrc =
-                                    emp.profile_picture_url ||
-                                    (emp.profile_picture?.startsWith('public/')
-                                        ? `/${emp.profile_picture.slice(7)}`
-                                        : emp.profile_picture || '/user/default-profile-picture.png');
-
-                                return (
-                                    <tr key={emp.id} className="hover:bg-slate-50/60 dark:hover:bg-zinc-800/40 transition">
-                                        {/* Employee Profile & Avatar */}
-                                        <td className="py-3 px-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="relative w-9 h-9 rounded-full overflow-hidden bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shrink-0 shadow-2xs">
-                                                    <img
-                                                        src={avatarSrc}
-                                                        alt={emp.name}
-                                                        className="w-full h-full object-cover"
-                                                        onError={(e) => {
-                                                            e.currentTarget.src = '/user/default-profile-picture.png';
-                                                        }}
-                                                    />
-                                                </div>
-                                                <div className="min-w-0 flex-1">
-                                                    <div className={`font-semibold text-slate-900 dark:text-zinc-100 ${wrapText ? 'break-words whitespace-normal' : 'truncate'}`} title={emp.name}>
-                                                        {emp.name}
-                                                    </div>
-                                                    <div className="text-[10px] text-slate-400 dark:text-zinc-500 font-mono">
-                                                        ID #{emp.id.toString().padStart(4, '0')}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </td>
-
-                                        {/* Department */}
-                                        <td className="py-3 px-4 text-slate-500 dark:text-zinc-400">
-                                            <div className={wrapText ? 'break-words whitespace-normal' : 'truncate'} title={emp.department}>
-                                                {emp.department}
-                                            </div>
-                                        </td>
-
-                                        {/* Role Profile */}
-                                        <td className="py-3 px-4">
-                                            {emp.role_profile ? (
-                                                <span className={`text-xs px-2.5 py-1 rounded-full bg-[#026eff]/10 dark:bg-[#031a40]/60 border border-[#026eff]/15 dark:border-[#031a40]/50 text-[#026eff] dark:text-[#0b79ff] font-medium inline-block ${wrapText ? 'break-words whitespace-normal' : 'truncate max-w-full'}`} title={emp.role_profile.name}>
-                                                    {emp.role_profile.name}
-                                                </span>
-                                            ) : (
-                                                <span className="text-xs text-slate-400 dark:text-zinc-500 italic">No Profile Assigned</span>
+                            {employeeList.length === 0 ? (
+                                <tr>
+                                    <td colSpan={7} className="py-16 text-center text-slate-500 dark:text-zinc-400">
+                                        <div className="max-w-xs mx-auto text-center space-y-2">
+                                            <p className="font-semibold text-slate-700 dark:text-zinc-300 text-sm">No employees found</p>
+                                            <p className="text-xs text-slate-400 dark:text-zinc-500">
+                                                {search ? `No staff matching "${search}". Try another keyword or clear filters.` : 'Start by adding your first employee to the directory.'}
+                                            </p>
+                                            {search && (
+                                                <button
+                                                    type="button"
+                                                    onClick={clearSearch}
+                                                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#026eff] hover:underline pt-1 cursor-pointer"
+                                                >
+                                                    Clear Search
+                                                </button>
                                             )}
-                                        </td>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : (
+                                employeeList.map((emp, index) => {
+                                    const device = emp.active_assignment?.device;
+                                    const avatarSrc =
+                                        emp.profile_picture_url ||
+                                        (emp.profile_picture?.startsWith('public/')
+                                            ? `/${emp.profile_picture.slice(7)}`
+                                            : emp.profile_picture || '/user/default-profile-picture.png');
 
-                                        {/* Assigned Hardware */}
-                                        <td className="py-3 px-4">
-                                            {device ? (
+                                    const isMenuOpen = openMenuId === emp.id;
+                                    const isNearBottom = index >= employeeList.length - 2 && employeeList.length > 2;
+
+                                    const actions = [
+                                        {
+                                            label: device ? 'Reassign' : 'Match Device',
+                                            menuLabel: device ? 'Reassign Hardware' : 'Match Device',
+                                            href: route('match.index', { employee_id: emp.id }),
+                                            icon: device ? RiExchangeLine : RiArrowRightLine,
+                                            variant: 'primary',
+                                        },
+                                        ...(device
+                                            ? [
+                                                  {
+                                                      label: 'Unassign',
+                                                      menuLabel: 'Unassign Hardware',
+                                                      onClick: () => handleUnassign(emp),
+                                                      icon: RiCloseCircleLine,
+                                                      variant: 'danger',
+                                                  },
+                                              ]
+                                            : []),
+                                        {
+                                            label: 'Edit',
+                                            menuLabel: 'Edit Employee',
+                                            onClick: () => openEdit(emp),
+                                            icon: RiEditLine,
+                                            variant: 'default',
+                                        },
+                                    ];
+
+                                    return (
+                                        <tr key={emp.id} className="hover:bg-slate-50/60 dark:hover:bg-zinc-800/40 transition">
+                                            {/* Employee Profile & Avatar */}
+                                            <td className="py-3 px-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/60 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
-                                                        <HardwareImage
-                                                            src={device.image_clip_url || device.image_url}
-                                                            alt={device.name}
+                                                    <div className="relative w-9 h-9 rounded-full overflow-hidden bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shrink-0 shadow-2xs">
+                                                        <img
+                                                            src={avatarSrc}
+                                                            alt={emp.name}
                                                             className="w-full h-full object-cover"
+                                                            onError={(e) => {
+                                                                e.currentTarget.src = '/user/default-profile-picture.png';
+                                                            }}
                                                         />
                                                     </div>
                                                     <div className="min-w-0 flex-1">
-                                                        <span className="font-mono text-xs font-bold text-slate-700 dark:text-zinc-300 bg-slate-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-zinc-700 inline-block truncate" title={device.asset_tag}>
-                                                            {device.asset_tag}
-                                                        </span>
-                                                        <div className={`font-medium text-slate-900 dark:text-zinc-100 text-xs mt-1 ${wrapText ? 'break-words whitespace-normal' : 'truncate'}`} title={`${device.brand} ${device.model}`}>
-                                                            {device.brand} {device.model}
+                                                        <div className={`font-semibold text-slate-900 dark:text-zinc-100 ${wrapText ? 'break-words whitespace-normal' : 'truncate'}`} title={emp.name}>
+                                                            {emp.name}
+                                                        </div>
+                                                        <div className="text-[10px] text-slate-400 dark:text-zinc-500 font-mono">
+                                                            ID #{emp.id.toString().padStart(4, '0')}
                                                         </div>
                                                     </div>
                                                 </div>
-                                            ) : (
-                                                <span className="text-xs text-amber-600 dark:text-amber-400 font-semibold bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded inline-block">
-                                                    No Device Assigned
-                                                </span>
-                                            )}
-                                        </td>
+                                            </td>
 
-                                        {/* Device Specs */}
-                                        <td className="py-3 px-4 text-xs text-slate-500 dark:text-zinc-400">
-                                            {device ? (
-                                                <div className={wrapText ? 'break-words whitespace-normal leading-relaxed' : 'truncate'} title={`${device.ram_gb}GB • ${device.storage_gb}GB ${device.storage_type} • ${device.device_type}`}>
-                                                    {device.ram_gb}GB • {device.storage_gb}GB {device.storage_type} • <span className="capitalize">{device.device_type}</span>
+                                            {/* Department */}
+                                            <td className="py-3 px-4 text-slate-500 dark:text-zinc-400">
+                                                <div className={wrapText ? 'break-words whitespace-normal' : 'truncate'} title={emp.department}>
+                                                    {emp.department}
                                                 </div>
-                                            ) : (
-                                                <span className="text-slate-400 dark:text-zinc-600">—</span>
-                                            )}
-                                        </td>
+                                            </td>
 
-                                        {/* Chronological Registration Date */}
-                                        <td className="py-3 px-4 text-xs text-slate-500 dark:text-zinc-400 whitespace-nowrap">
-                                            <div className="font-medium text-slate-700 dark:text-zinc-300">
-                                                {emp.created_at ? new Date(emp.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
-                                            </div>
-                                            <div className="text-[10px] text-slate-400 dark:text-zinc-500 font-mono">
-                                                {emp.created_at ? new Date(emp.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : ''}
-                                            </div>
-                                        </td>
-
-                                        {/* Actions */}
-                                        <td className="py-3 px-4 text-right whitespace-nowrap">
-                                            <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
-                                                <Link
-                                                    href={route('match.index', { employee_id: emp.id })}
-                                                    className="inline-flex items-center gap-1 text-xs font-bold text-[#026eff] dark:text-[#0b79ff] hover:text-[#0256cc] dark:hover:text-[#3894ff] px-2 py-1 rounded-lg hover:bg-[#026eff]/10 dark:hover:bg-[#026eff]/20 transition shrink-0 whitespace-nowrap"
-                                                >
-                                                    <span>{device ? 'Reassign' : 'Match Device'}</span>
-                                                    <span aria-hidden="true">&rarr;</span>
-                                                </Link>
-                                                {device && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleUnassign(emp)}
-                                                        className="text-xs text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 font-medium px-2 py-1 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer shrink-0 whitespace-nowrap"
-                                                    >
-                                                        Unassign
-                                                    </button>
+                                            {/* Role Profile */}
+                                            <td className="py-3 px-4">
+                                                {emp.role_profile ? (
+                                                    <span className={`text-xs px-2.5 py-1 rounded-full bg-[#026eff]/10 dark:bg-[#031a40]/60 border border-[#026eff]/15 dark:border-[#031a40]/50 text-[#026eff] dark:text-[#0b79ff] font-medium inline-block ${wrapText ? 'break-words whitespace-normal' : 'truncate max-w-full'}`} title={emp.role_profile.name}>
+                                                        {emp.role_profile.name}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-xs text-slate-400 dark:text-zinc-500 italic">No Profile Assigned</span>
                                                 )}
-                                                <button
-                                                    type="button"
-                                                    onClick={() => openEdit(emp)}
-                                                    className="text-xs text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 font-medium px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition cursor-pointer shrink-0 whitespace-nowrap"
-                                                >
-                                                    Edit
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
+                                            </td>
+
+                                            {/* Assigned Hardware */}
+                                            <td className="py-3 px-4">
+                                                {device ? (
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/60 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
+                                                            <HardwareImage
+                                                                src={device.image_clip_url || device.image_url}
+                                                                alt={device.name}
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        </div>
+                                                        <div className="min-w-0 flex-1">
+                                                            <span className="font-mono text-xs font-bold text-slate-700 dark:text-zinc-300 bg-slate-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-zinc-700 inline-block truncate" title={device.asset_tag}>
+                                                                {device.asset_tag}
+                                                            </span>
+                                                            <div className={`font-medium text-slate-900 dark:text-zinc-100 text-xs mt-1 ${wrapText ? 'break-words whitespace-normal' : 'truncate'}`} title={`${device.brand} ${device.model}`}>
+                                                                {device.brand} {device.model}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-xs text-amber-600 dark:text-amber-400 font-semibold bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded inline-block">
+                                                        No Device Assigned
+                                                    </span>
+                                                )}
+                                            </td>
+
+                                            {/* Device Specs */}
+                                            <td className="py-3 px-4 text-xs text-slate-500 dark:text-zinc-400">
+                                                {device ? (
+                                                    <div className={wrapText ? 'break-words whitespace-normal leading-relaxed' : 'truncate'} title={`${device.ram_gb}GB • ${device.storage_gb}GB ${device.storage_type} • ${device.device_type}`}>
+                                                        {device.ram_gb}GB • {device.storage_gb}GB {device.storage_type} • <span className="capitalize">{device.device_type}</span>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-slate-400 dark:text-zinc-600">—</span>
+                                                )}
+                                            </td>
+
+                                            {/* Chronological Registration Date */}
+                                            <td className="py-3 px-4 text-xs text-slate-500 dark:text-zinc-400 whitespace-nowrap">
+                                                <div className="font-medium text-slate-700 dark:text-zinc-300">
+                                                    {emp.created_at ? new Date(emp.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                                                </div>
+                                                <div className="text-[10px] text-slate-400 dark:text-zinc-500 font-mono">
+                                                    {emp.created_at ? new Date(emp.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : ''}
+                                                </div>
+                                            </td>
+
+                                            {/* Actions */}
+                                            <td className="py-3 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                                                {actions.length >= 2 ? (
+                                                    <div className="relative inline-flex items-center justify-end">
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setOpenMenuId(isMenuOpen ? null : emp.id);
+                                                            }}
+                                                            className={`inline-flex items-center justify-center w-8 h-8 rounded-xl border transition cursor-pointer ${
+                                                                isMenuOpen
+                                                                    ? 'bg-[#026eff]/10 border-[#026eff]/30 text-[#026eff] dark:bg-[#026eff]/20 dark:text-[#0b79ff]'
+                                                                    : 'bg-white dark:bg-zinc-800/90 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100 hover:bg-slate-50 dark:hover:bg-zinc-700/60 shadow-2xs'
+                                                            }`}
+                                                            title="More Actions"
+                                                            aria-label="More Actions"
+                                                            aria-expanded={isMenuOpen}
+                                                        >
+                                                            <RiMoreFill className="w-4 h-4" />
+                                                        </button>
+
+                                                        {isMenuOpen && (
+                                                            <div
+                                                                className={`absolute right-0 z-50 w-48 py-1.5 bg-white dark:bg-zinc-900 rounded-xl border border-slate-200/90 dark:border-zinc-800 shadow-xl ring-1 ring-black/5 dark:ring-white/5 ${
+                                                                    isNearBottom ? 'bottom-full mb-1.5 origin-bottom-right' : 'top-full mt-1.5 origin-top-right'
+                                                                }`}
+                                                            >
+                                                                <div className="px-3 py-1 border-b border-slate-100 dark:border-zinc-800/80 mb-1 flex items-center justify-between">
+                                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                                                                        Available Actions
+                                                                    </span>
+                                                                    <span className="text-[9px] font-mono text-slate-400 dark:text-zinc-500">
+                                                                        #{emp.id.toString().padStart(4, '0')}
+                                                                    </span>
+                                                                </div>
+
+                                                                <div className="p-1 space-y-0.5">
+                                                                    {actions.map((act, actIdx) =>
+                                                                        act.href ? (
+                                                                            <Link
+                                                                                key={actIdx}
+                                                                                href={act.href}
+                                                                                onClick={() => setOpenMenuId(null)}
+                                                                                className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs font-semibold rounded-lg text-[#026eff] dark:text-[#0b79ff] hover:bg-[#026eff]/10 dark:hover:bg-[#026eff]/20 transition text-left"
+                                                                            >
+                                                                                <act.icon className="w-3.5 h-3.5 shrink-0" />
+                                                                                <span>{act.menuLabel || act.label}</span>
+                                                                            </Link>
+                                                                        ) : (
+                                                                            <button
+                                                                                key={actIdx}
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    setOpenMenuId(null);
+                                                                                    act.onClick();
+                                                                                }}
+                                                                                className={`flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs font-semibold rounded-lg transition text-left cursor-pointer ${
+                                                                                    act.variant === 'danger'
+                                                                                        ? 'text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40'
+                                                                                        : 'text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800'
+                                                                                }`}
+                                                                            >
+                                                                                <act.icon className={`w-3.5 h-3.5 shrink-0 ${act.variant === 'danger' ? 'text-rose-500' : 'text-slate-400 dark:text-zinc-400'}`} />
+                                                                                <span>{act.menuLabel || act.label}</span>
+                                                                            </button>
+                                                                        )
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
+                                                        {actions.map((act, actIdx) =>
+                                                            act.href ? (
+                                                                <Link
+                                                                    key={actIdx}
+                                                                    href={act.href}
+                                                                    className="inline-flex items-center gap-1 text-xs font-bold text-[#026eff] dark:text-[#0b79ff] hover:text-[#0256cc] dark:hover:text-[#3894ff] px-2.5 py-1 rounded-lg hover:bg-[#026eff]/10 dark:hover:bg-[#026eff]/20 transition shrink-0 whitespace-nowrap"
+                                                                >
+                                                                    <span>{act.label}</span>
+                                                                    <span aria-hidden="true">&rarr;</span>
+                                                                </Link>
+                                                            ) : (
+                                                                <button
+                                                                    key={actIdx}
+                                                                    type="button"
+                                                                    onClick={act.onClick}
+                                                                    className={`text-xs font-medium px-2.5 py-1 rounded-lg transition cursor-pointer shrink-0 whitespace-nowrap ${
+                                                                        act.variant === 'danger'
+                                                                            ? 'text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40'
+                                                                            : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800'
+                                                                    }`}
+                                                                >
+                                                                    {act.label}
+                                                                </button>
+                                                            )
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            )}
                         </tbody>
                     </table>
                 </div>
             </div>
+
+            {/* Pagination Bar */}
+            {employees.links && employees.links.length > 3 && (
+                <div className="mt-5 bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs shadow-2xs">
+                    <div className="text-slate-500 dark:text-zinc-400">
+                        Showing <span className="font-semibold text-slate-900 dark:text-zinc-100">{employees.from}</span> to <span className="font-semibold text-slate-900 dark:text-zinc-100">{employees.to}</span> of <span className="font-semibold text-slate-900 dark:text-zinc-100">{employees.total}</span> staff members
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                        {employees.links.map((link, idx) => (
+                            <Link
+                                key={idx}
+                                href={link.url || '#'}
+                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                className={`px-3 py-1.5 text-xs rounded-xl font-medium transition ${
+                                    link.active
+                                        ? 'bg-[#026eff] text-white shadow-2xs'
+                                        : 'border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800'
+                                } ${!link.url ? 'opacity-40 pointer-events-none' : ''}`}
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Modal */}
             {showModal && (
