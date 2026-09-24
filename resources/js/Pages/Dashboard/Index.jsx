@@ -2,6 +2,17 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import HardwareImage from '@/Components/HardwareImage';
 import SpecMatchMascot from '@/Components/SpecMatchMascot';
 import { Head, Link, usePage } from '@inertiajs/react';
+import { useState } from 'react';
+import {
+    RiArrowRightLine,
+    RiCheckLine,
+    RiCpuLine,
+    RiExchangeLine,
+    RiFlashlightLine,
+    RiShieldCheckLine,
+    RiSparklingLine,
+    RiTimeLine,
+} from 'react-icons/ri';
 
 export default function Dashboard({
     metrics = {},
@@ -13,6 +24,7 @@ export default function Dashboard({
     const { auth } = usePage().props;
     const user = auth?.user;
     const isAdminOrManager = ['admin', 'manager'].includes(user?.role);
+    const [activeAiTab, setActiveAiTab] = useState('specs');
 
     const stageBreakdown = metrics?.stage_breakdown || {
         acquisition: 0,
@@ -552,51 +564,229 @@ export default function Dashboard({
                     </div>
                 </div>
 
-                {/* Workflow Shortcuts */}
-                <div className="bg-gradient-to-br from-[#05193F] via-[#021230] to-[#031a40] dark:from-zinc-950 dark:via-zinc-900 dark:to-[#031a40] text-white rounded-2xl p-6 shadow-md border border-[#05193F]/40 dark:border-zinc-800 flex flex-col justify-between relative overflow-hidden">
-                    {/* Ambient Glow & Mascot Avatar */}
-                    <div className="absolute top-4 right-4 opacity-90 hover:opacity-100 transition-opacity">
-                        <SpecMatchMascot
-                            pose="active"
-                            variant="avatar"
-                            size={44}
-                            showGlow={true}
-                            isOnline={true}
-                        />
-                    </div>
+                {/* Gemini AI & Smart Match Operations Card */}
+                <div className="bg-gradient-to-br from-[#05193F] via-[#021230] to-[#010b1a] dark:from-zinc-950 dark:via-zinc-900 dark:to-[#021230] text-white rounded-2xl p-6 shadow-lg border border-[#026eff]/30 dark:border-zinc-800 flex flex-col justify-between relative overflow-hidden">
+                    {/* Background ambient radial glows */}
+                    <div className="absolute -top-20 -right-20 w-60 h-60 bg-[#026eff]/15 rounded-full blur-3xl pointer-events-none" />
+                    <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
                     <div>
-                        <div className="inline-flex p-2.5 rounded-xl bg-white/10 mb-4 backdrop-blur-xs">
-                            <svg className="w-6 h-6 text-[#026EFC]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-                            </svg>
+                        {/* Header: Status & Mascot */}
+                        <div className="flex items-start justify-between gap-3 mb-4 relative z-10">
+                            <div className="space-y-1.5">
+                                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-[11px] font-mono font-medium text-emerald-300">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                                    <span>Gemini 3.1 Flash-Lite Active</span>
+                                </div>
+                                <h3 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                                    <RiSparklingLine className="w-5 h-5 text-[#0b79ff]" />
+                                    SpecMatch AI & Match Deck
+                                </h3>
+                            </div>
+                            <div className="relative group shrink-0">
+                                <SpecMatchMascot
+                                    pose="active"
+                                    variant="avatar"
+                                    size={46}
+                                    showGlow={true}
+                                    isOnline={true}
+                                />
+                            </div>
                         </div>
-                        <h3 className="text-xl font-bold tracking-tight">TechSpecs & AI Match</h3>
-                        <p className="text-sm text-sky-200/70 mt-2 leading-relaxed max-w-sm">
-                            Continuous IT asset management with 1-click TechSpecs hardware lookup, straight-line depreciation, lifecycle transitions, and intelligent assignment.
+
+                        <p className="text-xs text-sky-100/75 leading-relaxed relative z-10">
+                            Continuous IT asset management with Gemini 3.1 Flash-Lite neural hardware extraction, straight-line depreciation engine, and workload matching.
                         </p>
 
-                        <div className="mt-6 space-y-2.5">
-                            <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-xs text-[#0b79ff] flex items-center justify-between">
-                                <span>Hardware Identification</span>
-                                <span className="font-semibold text-emerald-400">TechSpecs API</span>
-                            </div>
-                            <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-xs text-[#0b79ff] flex items-center justify-between">
-                                <span>AI Extraction Engine</span>
-                                <span className="font-semibold text-[#0b79ff]">Gemini AI</span>
-                            </div>
-                            <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-xs text-[#0b79ff] flex items-center justify-between">
-                                <span>Lifecycle Stages</span>
-                                <span className="font-semibold text-amber-300">5 Tracked Phases</span>
-                            </div>
+                        {/* Interactive Feature Tabs */}
+                        <div className="mt-5 grid grid-cols-3 gap-1 p-1 bg-white/5 dark:bg-black/30 rounded-xl border border-white/10 relative z-10">
+                            <button
+                                type="button"
+                                onClick={() => setActiveAiTab('specs')}
+                                className={`flex items-center justify-center gap-1.5 py-2 px-1 text-xs font-semibold rounded-lg transition-all ${
+                                    activeAiTab === 'specs'
+                                        ? 'bg-[#026eff] text-white shadow-sm shadow-[#026eff]/50'
+                                        : 'text-slate-300 hover:text-white hover:bg-white/5'
+                                }`}
+                            >
+                                <RiCpuLine className="w-3.5 h-3.5" />
+                                <span>AI Specs</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setActiveAiTab('lifecycle')}
+                                className={`flex items-center justify-center gap-1.5 py-2 px-1 text-xs font-semibold rounded-lg transition-all ${
+                                    activeAiTab === 'lifecycle'
+                                        ? 'bg-[#026eff] text-white shadow-sm shadow-[#026eff]/50'
+                                        : 'text-slate-300 hover:text-white hover:bg-white/5'
+                                }`}
+                            >
+                                <RiTimeLine className="w-3.5 h-3.5" />
+                                <span>Lifecycle</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setActiveAiTab('match')}
+                                className={`flex items-center justify-center gap-1.5 py-2 px-1 text-xs font-semibold rounded-lg transition-all ${
+                                    activeAiTab === 'match'
+                                        ? 'bg-[#026eff] text-white shadow-sm shadow-[#026eff]/50'
+                                        : 'text-slate-300 hover:text-white hover:bg-white/5'
+                                }`}
+                            >
+                                <RiExchangeLine className="w-3.5 h-3.5" />
+                                <span>Smart Match</span>
+                            </button>
+                        </div>
+
+                        {/* Tab Content Panels */}
+                        <div className="mt-4 relative z-10">
+                            {activeAiTab === 'specs' && (
+                                <div className="space-y-2.5">
+                                    <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10 text-xs text-sky-200">
+                                        <div className="flex items-center justify-between font-semibold text-white mb-1">
+                                            <span className="flex items-center gap-1.5">
+                                                <RiCpuLine className="text-[#0b79ff]" />
+                                                Multi-Architecture Grounding
+                                            </span>
+                                            <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                                                ARM64 & x86_64
+                                            </span>
+                                        </div>
+                                        <p className="text-[11px] text-slate-300 leading-relaxed">
+                                            Identifies Snapdragon X Copilot+ laptops, Chromebooks, Core Ultra Series 2, Ryzen AI, Mini PCs, and Apple Silicon.
+                                        </p>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-2 text-[11px]">
+                                        <div className="p-2.5 rounded-lg bg-white/[0.03] border border-white/10">
+                                            <span className="text-slate-400 block text-[10px] uppercase font-mono">Vision & Search</span>
+                                            <span className="text-slate-200 font-medium">Local + Google Images</span>
+                                        </div>
+                                        <div className="p-2.5 rounded-lg bg-white/[0.03] border border-white/10">
+                                            <span className="text-slate-400 block text-[10px] uppercase font-mono">Parsing Mode</span>
+                                            <span className="text-emerald-400 font-medium font-mono">JSON Grounded</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-2.5 rounded-lg bg-[#026eff]/10 border border-[#026eff]/20 text-[11px] text-sky-200 flex items-center justify-between">
+                                        <span className="flex items-center gap-1.5">
+                                            <RiCheckLine className="text-emerald-400" />
+                                            Zero-Prompt Autofill in Fleet Entry
+                                        </span>
+                                        <span className="text-[10px] font-mono text-[#0b79ff]">1-Click</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeAiTab === 'lifecycle' && (
+                                <div className="space-y-2.5">
+                                    <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10 text-xs">
+                                        <div className="flex items-center justify-between font-semibold text-white mb-1">
+                                            <span className="flex items-center gap-1.5">
+                                                <RiTimeLine className="text-amber-400" />
+                                                Straight-Line Depreciation
+                                            </span>
+                                            <span className="text-[10px] font-mono text-amber-300 bg-amber-950/60 border border-amber-500/30 px-2 py-0.5 rounded-full">
+                                                5 Stages
+                                            </span>
+                                        </div>
+                                        <p className="text-[11px] text-slate-300 leading-relaxed">
+                                            Continuous valuation based on useful life (3–5 yrs) and salvage floors across the enterprise fleet.
+                                        </p>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-2 text-[11px]">
+                                        <div className="p-2.5 rounded-lg bg-white/[0.03] border border-white/10">
+                                            <span className="text-slate-400 block text-[10px] uppercase font-mono">Fleet Book Value</span>
+                                            <span className="text-emerald-400 font-bold font-mono text-xs">
+                                                ₱{Number(metrics?.current_book_value || 0).toLocaleString()}
+                                            </span>
+                                        </div>
+                                        <div className="p-2.5 rounded-lg bg-white/[0.03] border border-white/10">
+                                            <span className="text-slate-400 block text-[10px] uppercase font-mono">Depreciation</span>
+                                            <span className="text-amber-300 font-bold font-mono text-xs">
+                                                ₱{Number(metrics?.total_depreciation || 0).toLocaleString()}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between text-[11px] p-2.5 rounded-lg bg-white/[0.03] border border-white/10 text-slate-300">
+                                        <span>Active In-Repair Units</span>
+                                        <span className="font-semibold text-white">{metrics?.in_repair_devices ?? 0} units</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeAiTab === 'match' && (
+                                <div className="space-y-2.5">
+                                    <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10 text-xs">
+                                        <div className="flex items-center justify-between font-semibold text-white mb-1">
+                                            <span className="flex items-center gap-1.5">
+                                                <RiExchangeLine className="text-[#0b79ff]" />
+                                                Role Fit Intelligence
+                                            </span>
+                                            <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                                                {metrics?.utilization_rate ?? 0}% Utilized
+                                            </span>
+                                        </div>
+                                        <p className="text-[11px] text-slate-300 leading-relaxed">
+                                            Multi-variable matrix matching CPU tiers, RAM capacity, and GPU acceleration against job archetypes.
+                                        </p>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-2 text-[11px]">
+                                        <div className="p-2.5 rounded-lg bg-white/[0.03] border border-white/10">
+                                            <span className="text-slate-400 block text-[10px] uppercase font-mono">Procurement Saved</span>
+                                            <span className="text-emerald-400 font-bold font-mono text-xs">
+                                                ₱{Number(metrics?.procurement_savings ?? 0).toLocaleString()}
+                                            </span>
+                                        </div>
+                                        <div className="p-2.5 rounded-lg bg-white/[0.03] border border-white/10">
+                                            <span className="text-slate-400 block text-[10px] uppercase font-mono">Flagged Mismatches</span>
+                                            <span className={`font-bold font-mono text-xs ${metrics?.mismatch_count > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                                                {metrics?.mismatch_count ?? 0} alerts
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between text-[11px] p-2.5 rounded-lg bg-white/[0.03] border border-white/10 text-slate-300">
+                                        <span>Idle High-Spec Hardware</span>
+                                        <span className="font-semibold text-white">{metrics?.idle_high_spec_count ?? 0} ready to reassign</span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
-                    <Link
-                        href={isAdminOrManager ? route('match.index') : route('devices.index')}
-                        className="mt-6 w-full py-3 rounded-xl bg-white text-[#031a40] font-bold text-center text-sm hover:bg-[#026eff]/10 transition shadow-sm"
-                    >
-                        {isAdminOrManager ? 'Launch Match Engine' : 'Explore Fleet Inventory'}
-                    </Link>
+                    {/* Bottom Action Deck */}
+                    <div className="mt-6 pt-4 border-t border-white/10 relative z-10 flex flex-col sm:flex-row gap-2.5">
+                        {isAdminOrManager ? (
+                            <>
+                                <Link
+                                    href={route('devices.create')}
+                                    className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#026eff] to-[#0156c7] hover:from-[#0b79ff] hover:to-[#026eff] text-white font-bold text-center text-xs shadow-md shadow-[#026eff]/25 flex items-center justify-center gap-1.5 transition"
+                                >
+                                    <RiFlashlightLine className="w-4 h-4" />
+                                    <span>AI Asset Intake</span>
+                                </Link>
+                                <Link
+                                    href={route('match.index')}
+                                    className="flex-1 py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white font-semibold text-center text-xs flex items-center justify-center gap-1.5 transition"
+                                >
+                                    <RiExchangeLine className="w-4 h-4" />
+                                    <span>Match Engine</span>
+                                </Link>
+                            </>
+                        ) : (
+                            <Link
+                                href={route('devices.index')}
+                                className="w-full py-2.5 px-4 rounded-xl bg-white text-[#031a40] font-bold text-center text-xs hover:bg-slate-100 transition shadow-sm flex items-center justify-center gap-2"
+                            >
+                                <span>Explore Fleet Inventory</span>
+                                <RiArrowRightLine className="w-4 h-4" />
+                            </Link>
+                        )}
+                    </div>
                 </div>
             </div>
 

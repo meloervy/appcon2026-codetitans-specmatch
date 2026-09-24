@@ -172,4 +172,112 @@ class DeviceManagementTest extends TestCase
         $second->assertOk();
         $this->assertEquals('cache', $second->json('source'));
     }
+
+    public function test_identify_specs_correctly_autofills_macbook_m5_hardware_specifications(): void
+    {
+        $response = $this->actingAs($this->user)->postJson('/devices/identify-specs', [
+            'query' => 'MacBook m5',
+        ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'success' => true,
+                'specs' => [
+                    'brand' => 'Apple',
+                    'model' => 'MacBook m5',
+                    'device_type' => 'laptop',
+                    'cpu' => 'Apple M5',
+                    'cpu_tier' => 'high',
+                    'ram_gb' => 16,
+                    'storage_type' => 'SSD',
+                    'storage_gb' => 512,
+                    'gpu' => 'Apple 10-core GPU',
+                    'gpu_tier' => 'integrated',
+                    'image_url' => '/images/devices/apple-macbook-pro.jpg',
+                ],
+            ]);
+
+        $this->assertEquals('Apple M5', $response->json('specs.cpu'));
+        $this->assertEquals('/images/devices/apple-macbook-pro.jpg', $response->json('specs.image_url'));
+    }
+
+    public function test_identify_specs_correctly_identifies_intel_and_curated_public_asset(): void
+    {
+        $response = $this->actingAs($this->user)->postJson('/devices/identify-specs', [
+            'query' => 'ThinkPad T14 Gen 4 Intel Core i7 32GB',
+        ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'success' => true,
+                'specs' => [
+                    'brand' => 'Lenovo',
+                    'cpu' => 'Intel Core i7-13700H',
+                    'cpu_tier' => 'high',
+                    'ram_gb' => 32,
+                    'image_url' => '/images/devices/lenovo-thinkpad.jpg',
+                ],
+            ]);
+    }
+
+    public function test_identify_specs_correctly_identifies_snapdragon_x_elite_copilot_laptop(): void
+    {
+        $response = $this->actingAs($this->user)->postJson('/devices/identify-specs', [
+            'query' => 'Surface Laptop 7 Snapdragon X Elite 32GB',
+        ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'success' => true,
+                'specs' => [
+                    'brand' => 'Microsoft',
+                    'device_type' => 'laptop',
+                    'cpu' => 'Qualcomm Snapdragon X Elite X1E-80-100',
+                    'cpu_tier' => 'high',
+                    'ram_gb' => 32,
+                    'gpu' => 'Qualcomm Adreno X1-85 GPU',
+                    'gpu_tier' => 'integrated',
+                ],
+            ]);
+    }
+
+    public function test_identify_specs_correctly_identifies_chromebook_specifications(): void
+    {
+        $response = $this->actingAs($this->user)->postJson('/devices/identify-specs', [
+            'query' => 'Acer Chromebook Spin 714 Intel N100 8GB',
+        ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'success' => true,
+                'specs' => [
+                    'brand' => 'Acer',
+                    'device_type' => 'laptop',
+                    'cpu' => 'Intel Processor N100',
+                    'cpu_tier' => 'entry',
+                    'ram_gb' => 8,
+                    'image_url' => '/images/devices/acer-aspire.jpg',
+                ],
+            ]);
+    }
+
+    public function test_identify_specs_correctly_identifies_mini_pc_and_desktop_form_factor(): void
+    {
+        $response = $this->actingAs($this->user)->postJson('/devices/identify-specs', [
+            'query' => 'Apple Mac mini M4 16GB',
+        ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'success' => true,
+                'specs' => [
+                    'brand' => 'Apple',
+                    'device_type' => 'desktop',
+                    'cpu' => 'Apple M4',
+                    'cpu_tier' => 'high',
+                    'ram_gb' => 16,
+                    'image_url' => '/images/devices/default-desktop.jpg',
+                ],
+            ]);
+    }
 }

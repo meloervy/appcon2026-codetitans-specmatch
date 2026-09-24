@@ -62,10 +62,9 @@ DB_PASSWORD=
 
 # Optional: Add your Gemini API key (the system has an automatic heuristic fallback if left empty)
 GEMINI_API_KEY=your_gemini_api_key_here
-
-# TechSpecs API v5 Hardware Identification
-TECHSPECS_API_ID=6ab3a324d8b5670e642fe0f6
-TECHSPECS_API_KEY=d09e1ee9-bc37-4086-9112-a623323ff78f
+# Optional: Google Custom Search API for hardware image search (public local assets used as fallback)
+GOOGLE_SEARCH_API_KEY=
+GOOGLE_SEARCH_ENGINE_ID=
 ```
 
 ### 3. Install PHP Dependencies
@@ -145,9 +144,10 @@ The database seeder creates an IT Administrator account:
 - **Register New Unit** (`/devices/create`): Add new laptops or desktops to the fleet with full specifications.
 - **Device Details & History** (`/devices/{id}`): View hardware profile, current assignment, past assignment history, edit specifications, or retire a unit.
 
-### 2. IT Asset Identification & TechSpecs API Integration (`/devices/create`)
-- **Automated Catalog Lookup**: Connects directly to the TechSpecs v5 REST API with over 180,000+ consumer and enterprise laptops and desktops.
-- **1-Click Auto-Fill**: Automatically parses and fills brand, model, CPU, CPU tier, RAM, storage size/type, GPU, GPU tier, and release year.
+### 2. IT Asset Identification & Gemini AI Auto-Fill (`/devices/create`)
+- **Automated Specification Lookup**: Uses Google Gemini 3.1 Flash-Lite to parse device names and infer authoritative hardware specs (CPU, GPU, RAM, Storage, Form Factor).
+- **1-Click Auto-Fill**: Automatically parses and fills brand, model, CPU, CPU tier, RAM, storage size/type, GPU, GPU tier, and release year with smart fallback heuristics.
+- **Hardware Image Resolution**: Automatically resolves authentic device photos from the local curated hardware asset library (`public/images/devices/`) or Google Image Search.
 - **Redundancy Optimization**: Highlights unassigned high-spec devices in pool inventory to optimize utilization and avoid duplicate procurement.
 
 ### 3. Continuous ITAM Tracking (Financial, Contractual, Inventory)
@@ -208,7 +208,7 @@ Current test suite status:
   - ITAM tracking (financial depreciation calculations, residual book values, and warranty alerts)
   - Lifecycle stage progression and audit event logging
   - Maintenance servicing logs and post-repair performance assessment recording
-  - TechSpecs catalog search, detail retrieval, and attribute mapping
+  - AI device specification extraction and hardware image resolution
   - MatchingService scoring formula and subscores
   - Eligibility filters (GPU and availability checks)
   - Procurement threshold logic
@@ -226,27 +226,27 @@ Current test suite status:
 app/
 ├── Http/
 │   └── Controllers/
-│       ├── DashboardController.php   # Fleet stats & ITAM financial valuations
-│       ├── DeviceController.php      # Hardware inventory CRUD & lifecycle transitions
-│       ├── EmployeeController.php    # Staff directory & unassign actions
-│       ├── MaintenanceController.php # Central servicing logs & performance assessments
-│       ├── MatchingController.php    # Layer 1 extraction & Layer 2 ranking
-│       ├── MismatchController.php    # Fleet audit & mismatch radar
-│       ├── RoleProfileController.php # Workload specification templates
-│       └── TechSpecsController.php   # TechSpecs REST API search & spec auto-fill
+│       ├── DashboardController.php      # Fleet stats & ITAM financial valuations
+│       ├── DeviceController.php         # Hardware inventory CRUD & lifecycle transitions
+│       ├── EmployeeController.php       # Staff directory & unassign actions
+│       ├── HardwareImageController.php  # Authentic photo lookup (public assets / Google Image)
+│       ├── MaintenanceController.php    # Central servicing logs & performance assessments
+│       ├── MatchingController.php       # Layer 1 extraction & Layer 2 ranking
+│       ├── MismatchController.php       # Fleet audit & mismatch radar
+│       └── RoleProfileController.php    # Workload specification templates
 ├── Models/
-│   ├── Assignment.php                # Hardware-to-employee relationship
-│   ├── Device.php                    # Hardware specifications & ITAM state
-│   ├── Employee.php                  # Staff member records
-│   ├── LifecycleEvent.php            # Audit trail of lifecycle transitions
-│   ├── MaintenanceLog.php            # Servicing, repairs, & performance assessments
-│   ├── MatchRequest.php              # Log of matching pipeline runs
-│   └── RoleProfile.php               # Workload template specifications
+│   ├── Assignment.php                   # Hardware-to-employee relationship
+│   ├── Device.php                       # Hardware specifications & ITAM state
+│   ├── Employee.php                     # Staff member records
+│   ├── LifecycleEvent.php               # Audit trail of lifecycle transitions
+│   ├── MaintenanceLog.php               # Servicing, repairs, & performance assessments
+│   ├── MatchRequest.php                 # Log of matching pipeline runs
+│   └── RoleProfile.php                  # Workload template specifications
 └── Services/
-    ├── GeminiService.php             # Layer 1: AI text-to-spec extractor
-    ├── ItamTrackingService.php       # Straight-line depreciation, residual values, & warranty alerts
-    ├── MatchingService.php           # Layer 2: Deterministic scoring & mismatch detector
-    └── TechSpecsService.php          # TechSpecs v5 catalog client & attribute mapper
+    ├── GeminiService.php                # Layer 1: AI text-to-spec extractor & hardware auto-fill
+    ├── HardwareImageService.php         # Image resolution from local public assets & Google Search
+    ├── ItamTrackingService.php          # Straight-line depreciation, residual values, & warranty alerts
+    └── MatchingService.php              # Layer 2: Deterministic scoring & mismatch detector
 
 resources/js/
 ├── Layouts/

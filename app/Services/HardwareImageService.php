@@ -47,9 +47,193 @@ class HardwareImageService
         'hp-elitedesk' => 'https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1a/Dell_OptiPlex_9020_SFF_front.jpg/960px-Dell_OptiPlex_9020_SFF_front.jpg',
         'hp-250' => 'https://thumb.wikimedia.org/wikipedia/commons/thumb/2/20/HP_EliteBook_840_G3_laptop.jpg/960px-HP_EliteBook_840_G3_laptop.jpg',
 
-        // Acer
+        // Microsoft Surface & Snapdragon Copilot+
+        'microsoft-surface-laptop' => 'https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cd/Surface_Laptop_Studio.jpg/960px-Surface_Laptop_Studio.jpg',
+        'microsoft-surface-pro' => 'https://thumb.wikimedia.org/wikipedia/commons/thumb/2/22/Microsoft_Surface_Pro_4_with_Type_Cover.jpg/960px-Microsoft_Surface_Pro_4_with_Type_Cover.jpg',
+        'microsoft-surface' => 'https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cd/Surface_Laptop_Studio.jpg/960px-Surface_Laptop_Studio.jpg',
+
+        // ASUS & Acer
+        'asus-zenbook' => 'https://thumb.wikimedia.org/wikipedia/commons/thumb/5/52/Asus_ZenBook_UX305.jpg/960px-Asus_ZenBook_UX305.jpg',
+        'asus-vivobook' => 'https://thumb.wikimedia.org/wikipedia/commons/thumb/5/52/Asus_ZenBook_UX305.jpg/960px-Asus_ZenBook_UX305.jpg',
         'acer-aspire' => 'https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4b/Acer_Aspire_One_722_netbook.jpg/960px-Acer_Aspire_One_722_netbook.jpg',
+        'acer-chromebook' => 'https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4b/Acer_Aspire_One_722_netbook.jpg/960px-Acer_Aspire_One_722_netbook.jpg',
     ];
+
+    /**
+     * Curated local public static image assets stored in public/images/devices/.
+     * Guarantees 100% reliable 0ms rendering and eliminates external hotlink (403) failures.
+     */
+    protected static array $publicAssets = [
+        'apple-macbook-pro' => '/images/devices/apple-macbook-pro.jpg',
+        'apple-macbook-air' => '/images/devices/apple-macbook-air.jpg',
+        'dell-xps' => '/images/devices/dell-xps.jpg',
+        'dell-latitude' => '/images/devices/dell-latitude.jpg',
+        'dell-precision' => '/images/devices/dell-precision.jpg',
+        'dell-optiplex' => '/images/devices/dell-optiplex.jpg',
+        'lenovo-thinkpad' => '/images/devices/lenovo-thinkpad.jpg',
+        'lenovo-thinkpad-x1' => '/images/devices/lenovo-thinkpad-x1.jpg',
+        'lenovo-ideapad' => '/images/devices/lenovo-ideapad.jpg',
+        'lenovo-thinkcentre' => '/images/devices/lenovo-thinkcentre.jpg',
+        'hp-elitebook' => '/images/devices/hp-elitebook.jpg',
+        'hp-probook' => '/images/devices/hp-probook.jpg',
+        'hp-prodesk' => '/images/devices/hp-prodesk.jpg',
+        'hp-workstation' => '/images/devices/hp-workstation.jpg',
+        'acer-aspire' => '/images/devices/acer-aspire.jpg',
+        'custom-ai-rig' => '/images/devices/custom-ai-rig.jpg',
+        'default-laptop' => '/images/devices/default-laptop.jpg',
+        'default-desktop' => '/images/devices/default-desktop.jpg',
+    ];
+
+    /**
+     * Resolve authentic local static image from public/images/devices folder.
+     */
+    public static function resolvePublicAssetImage(?string $brand, ?string $model, ?string $deviceType = 'laptop'): ?string
+    {
+        $deviceType = $deviceType ?: 'laptop';
+        $brandLower = strtolower(trim($brand ?? ''));
+        $modelLower = strtolower(trim($model ?? ''));
+        $combined = "{$brandLower} {$modelLower}";
+
+        // Apple MacBooks & Desktops
+        if (str_contains($brandLower, 'apple') || str_contains($combined, 'macbook') || str_contains($combined, 'imac') || str_contains($combined, 'mac studio') || str_contains($combined, 'mac mini') || str_contains($combined, 'mac pro')) {
+            if ($deviceType === 'desktop' || str_contains($combined, 'mac mini') || str_contains($combined, 'mac studio') || str_contains($combined, 'mac pro') || str_contains($combined, 'imac')) {
+                return self::$publicAssets['default-desktop'];
+            }
+            if (str_contains($combined, 'air')) {
+                return self::$publicAssets['apple-macbook-air'];
+            }
+
+            return self::$publicAssets['apple-macbook-pro'];
+        }
+
+        // Chromebooks
+        if (str_contains($combined, 'chromebook') || str_contains($combined, 'chromeos') || str_contains($combined, 'chrome os')) {
+            if (str_contains($combined, 'acer')) {
+                return self::$publicAssets['acer-aspire'];
+            }
+            if (str_contains($combined, 'hp')) {
+                return self::$publicAssets['hp-probook'];
+            }
+            if (str_contains($combined, 'lenovo')) {
+                return self::$publicAssets['lenovo-ideapad'];
+            }
+
+            return self::$publicAssets['default-laptop'];
+        }
+
+        // Lenovo
+        if (str_contains($combined, 'thinkpad')) {
+            if (str_contains($combined, 'x1') || str_contains($combined, 'carbon') || str_contains($combined, 'yoga')) {
+                return self::$publicAssets['lenovo-thinkpad-x1'];
+            }
+
+            return self::$publicAssets['lenovo-thinkpad'];
+        }
+        if (str_contains($combined, 'ideapad') || str_contains($combined, 'legion')) {
+            return self::$publicAssets['lenovo-ideapad'];
+        }
+        if (str_contains($combined, 'thinkcentre') || str_contains($combined, 'tiny')) {
+            return self::$publicAssets['lenovo-thinkcentre'];
+        }
+
+        // Dell
+        if (str_contains($combined, 'xps')) {
+            return self::$publicAssets['dell-xps'];
+        }
+        if (str_contains($combined, 'latitude')) {
+            return self::$publicAssets['dell-latitude'];
+        }
+        if (str_contains($combined, 'precision')) {
+            return self::$publicAssets['dell-precision'];
+        }
+        if (str_contains($combined, 'optiplex') || str_contains($combined, 'micro')) {
+            return self::$publicAssets['dell-optiplex'];
+        }
+
+        // HP
+        if (str_contains($combined, 'elitebook')) {
+            return self::$publicAssets['hp-elitebook'];
+        }
+        if (str_contains($combined, 'probook') || str_contains($combined, 'hp 250') || str_contains($combined, 'pavilion')) {
+            return self::$publicAssets['hp-probook'];
+        }
+        if (str_contains($combined, 'prodesk') || str_contains($combined, 'elitedesk') || str_contains($combined, 'pro mini')) {
+            return self::$publicAssets['hp-prodesk'];
+        }
+        if (str_contains($combined, 'zbook') || str_contains($combined, 'workstation') || str_contains($combined, 'z8') || str_contains($combined, 'z4')) {
+            return self::$publicAssets['hp-workstation'];
+        }
+
+        // Microsoft Surface & Snapdragon Laptops
+        if (str_contains($combined, 'surface') || str_contains($combined, 'snapdragon') || str_contains($combined, 'copilot+')) {
+            return self::$publicAssets['default-laptop'];
+        }
+
+        // Mini PCs & Compact Workstations
+        if (str_contains($combined, 'minisforum') || str_contains($combined, 'beelink') || str_contains($combined, 'nuc')) {
+            return self::$publicAssets['default-desktop'];
+        }
+
+        // Acer
+        if (str_contains($combined, 'acer') || str_contains($combined, 'aspire') || str_contains($combined, 'swift') || str_contains($combined, 'predator')) {
+            return self::$publicAssets['acer-aspire'];
+        }
+
+        // Custom AI / PC Rig
+        if (str_contains($combined, 'custom') || str_contains($combined, 'ai rig') || str_contains($combined, 'rig') || str_contains($combined, 'gaming')) {
+            return self::$publicAssets['custom-ai-rig'];
+        }
+
+        // General brand fallbacks
+        if (str_contains($brandLower, 'hp')) {
+            return $deviceType === 'desktop' ? self::$publicAssets['hp-prodesk'] : self::$publicAssets['hp-elitebook'];
+        }
+        if (str_contains($brandLower, 'dell')) {
+            return $deviceType === 'desktop' ? self::$publicAssets['dell-optiplex'] : self::$publicAssets['dell-latitude'];
+        }
+        if (str_contains($brandLower, 'lenovo')) {
+            return $deviceType === 'desktop' ? self::$publicAssets['lenovo-thinkcentre'] : self::$publicAssets['lenovo-thinkpad'];
+        }
+
+        // Default by form factor
+        return $deviceType === 'desktop'
+            ? self::$publicAssets['default-desktop']
+            : self::$publicAssets['default-laptop'];
+    }
+
+    /**
+     * Search Google Images using Google Custom Search JSON API if configured.
+     */
+    public static function searchGoogleImages(string $query, ?string $brand = null, ?string $model = null): ?string
+    {
+        $searchKey = config('services.google.search_key') ?: env('GOOGLE_SEARCH_API_KEY', env('GOOGLE_CUSTOM_SEARCH_KEY'));
+        $searchCx = config('services.google.search_cx') ?: env('GOOGLE_SEARCH_ENGINE_ID', env('GOOGLE_CSE_CX'));
+
+        if (! empty($searchKey) && ! empty($searchCx)) {
+            try {
+                $searchQuery = trim(($brand ? $brand.' ' : '').($model ?: $query).' hardware official photo');
+                $response = Http::timeout(5)->get('https://www.googleapis.com/customsearch/v1', [
+                    'key' => $searchKey,
+                    'cx' => $searchCx,
+                    'q' => $searchQuery,
+                    'searchType' => 'image',
+                    'num' => 3,
+                    'safe' => 'active',
+                ]);
+
+                if ($response->successful()) {
+                    $items = $response->json('items') ?? [];
+                    if (! empty($items[0]['link'])) {
+                        return $items[0]['link'];
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::debug('Google Custom Search Image failed: '.$e->getMessage());
+            }
+        }
+
+        return null;
+    }
 
     /**
      * Resolve the authentic image URL for a given Device model instance.
@@ -61,18 +245,18 @@ class HardwareImageService
             return $device->image_url;
         }
 
-        // 2. Resolve via authentic model matcher
-        $resolved = self::resolveModelImage($device->brand, $device->model, $device->device_type);
-        if ($resolved) {
-            return $resolved;
+        // 2. Resolve via authentic public asset matcher (instant 0ms, no 403 hotlink errors)
+        $publicAsset = self::resolvePublicAssetImage($device->brand, $device->model, $device->device_type);
+        if ($publicAsset) {
+            return $publicAsset;
         }
 
         // 3. Fallback based on device type
         if ($device->device_type === 'desktop') {
-            return 'https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8c/Dell_Precision_Tower_7810_workstation.jpg/960px-Dell_Precision_Tower_7810_workstation.jpg';
+            return self::$publicAssets['default-desktop'];
         }
 
-        return 'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ac/ThinkPad_T14.jpg/960px-ThinkPad_T14.jpg';
+        return self::$publicAssets['default-laptop'];
     }
 
     /**
@@ -216,9 +400,29 @@ class HardwareImageService
     {
         $results = [];
 
-        // 1. Check Canonical match first
+        // 1. Curated Local Public Asset Folder (0ms, 100% reliable)
+        $publicAsset = self::resolvePublicAssetImage($brand, $model ?? $query);
+        if ($publicAsset) {
+            $results[] = [
+                'title' => trim(($brand ? $brand.' ' : '').($model ?? $query)).' (Local Public Asset)',
+                'image_url' => $publicAsset,
+                'source' => 'Public Asset Folder',
+            ];
+        }
+
+        // 2. Google Search Image (if configured)
+        $googleImage = self::searchGoogleImages($query, $brand, $model);
+        if ($googleImage && ! in_array($googleImage, array_column($results, 'image_url'))) {
+            $results[] = [
+                'title' => trim(($brand ? $brand.' ' : '').($model ?? $query)).' (Google Image)',
+                'image_url' => $googleImage,
+                'source' => 'Google Image Search',
+            ];
+        }
+
+        // 3. Verified Hardware Registry (Canonical Wikimedia)
         $canonical = self::resolveModelImage($brand, $model ?? $query);
-        if ($canonical) {
+        if ($canonical && ! in_array($canonical, array_column($results, 'image_url'))) {
             $results[] = [
                 'title' => trim(($brand ? $brand.' ' : '').($model ?? $query)),
                 'image_url' => $canonical,
@@ -226,7 +430,7 @@ class HardwareImageService
             ];
         }
 
-        // 2. Fetch from Wikimedia REST API
+        // 4. Fetch from Wikimedia REST API
         $wikimedia = self::fetchFromWikimedia($query);
         if ($wikimedia && ! in_array($wikimedia, array_column($results, 'image_url'))) {
             $results[] = [
@@ -236,7 +440,7 @@ class HardwareImageService
             ];
         }
 
-        // 3. Brand fallbacks if query yielded results
+        // 5. Brand fallbacks if query yielded results
         if (! empty($brand)) {
             $brandMatch = self::resolveModelImage($brand, '');
             if ($brandMatch && ! in_array($brandMatch, array_column($results, 'image_url'))) {

@@ -10,7 +10,6 @@ use App\Http\Controllers\MatchingController;
 use App\Http\Controllers\MismatchController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleProfileController;
-use App\Http\Controllers\TechSpecsController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -70,10 +69,6 @@ Route::middleware('auth')->group(function () {
 
         // Hardware Imagery Lookup (Wikimedia & Canonical Registry)
         Route::post('/hardware/image-lookup', [HardwareImageController::class, 'lookup'])->name('hardware.image-lookup');
-
-        // TechSpecs API Hardware Lookup
-        Route::post('/techspecs/search', [TechSpecsController::class, 'search'])->name('techspecs.search');
-        Route::post('/techspecs/details', [TechSpecsController::class, 'details'])->name('techspecs.details');
 
         // AI-Powered Device Spec Identification (Gemini)
         Route::post('/devices/identify-specs', [DeviceController::class, 'identifySpecs'])->name('devices.identify-specs');

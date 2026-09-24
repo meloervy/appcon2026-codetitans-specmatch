@@ -134,9 +134,10 @@ export default function DevicesShow({ device }) {
             });
             if (res.data.image_url) {
                 setEditData('image_url', res.data.image_url);
+                const sourceLabel = res.data.source === 'google_search' ? 'Google Image Search' : res.data.source === 'public_asset' ? 'Hardware Asset Library' : 'Wikimedia Commons';
                 setPhotoNotice({
                     type: 'success',
-                    message: `Found authentic photo from ${res.data.source === 'wikimedia' ? 'Wikimedia Commons' : 'Hardware Registry'}.`,
+                    message: `Found authentic photo from ${sourceLabel}.`,
                 });
             } else {
                 setPhotoNotice({
@@ -371,9 +372,9 @@ export default function DevicesShow({ device }) {
                                 <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-zinc-50">
                                     {isEditing ? `Editing: ${editData.brand || device.brand} ${editData.model || device.model}` : `${device.brand} ${device.model}`}
                                 </h1>
-                                {!isEditing && device.techspecs_id && (
+                                {!isEditing && (
                                     <span className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-md bg-[#026eff]/10 dark:bg-[#031a40]/60 text-[#026eff] dark:text-[#38bdf8] border border-[#026eff]/20 dark:border-[#031a40]/60">
-                                        TechSpecs Verified
+                                        Verified Asset
                                     </span>
                                 )}
                             </div>
@@ -580,11 +581,6 @@ export default function DevicesShow({ device }) {
                                         alt={`${device.brand} ${device.model}`}
                                         className="w-full h-full object-cover object-center transition duration-300 group-hover:scale-105"
                                     />
-                                    {device.techspecs_id && (
-                                        <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-black/75 backdrop-blur-xs text-[9px] text-white font-mono font-semibold">
-                                            TechSpecs
-                                        </div>
-                                    )}
                                 </div>
 
                                 {/* Hero Metadata & Copyable Identifiers */}
@@ -990,7 +986,7 @@ export default function DevicesShow({ device }) {
                                             >
                                                 <RiSparklingLine className="w-3.5 h-3.5" />
                                                 {fetchingPhoto ? (
-                                                    <span>Searching Wikimedia...</span>
+                                                    <span>Searching Image Library...</span>
                                                 ) : (
                                                     <span>Auto-Fetch Accurate Photo</span>
                                                 )}
@@ -1000,7 +996,7 @@ export default function DevicesShow({ device }) {
                                             type="url"
                                             value={editData.image_url}
                                             onChange={(e) => setEditData('image_url', e.target.value)}
-                                            placeholder="https://... (Auto-fetch via Wikimedia / TechSpecs or enter custom URL)"
+                                            placeholder="https://... (Auto-fetch photo or enter custom URL)"
                                             className="w-full text-sm rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 py-2.5 px-3.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
                                         />
                                         {photoNotice && (

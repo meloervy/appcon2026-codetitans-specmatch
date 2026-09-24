@@ -57,6 +57,62 @@ class HardwareImageLookupTest extends TestCase
         $this->assertStringContainsStringIgnoringCase('Dell_XPS', $dell);
     }
 
+    public function test_authenticated_user_can_lookup_hardware_image_with_public_asset_preference(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->postJson('/hardware/image-lookup', [
+            'brand' => 'Apple',
+            'model' => 'MacBook m5',
+            'device_type' => 'laptop',
+            'prefer' => 'public_asset',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonStructure(['success', 'image_url', 'source', 'public_asset_url'])
+            ->assertJson([
+                'success' => true,
+                'source' => 'public_asset',
+                'image_url' => '/images/devices/apple-macbook-pro.jpg',
+            ]);
+    }
+
+    public function test_authenticated_user_can_lookup_hardware_image_with_google_search_preference(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->postJson('/hardware/image-lookup', [
+            'brand' => 'Dell',
+            'model' => 'XPS 15',
+            'device_type' => 'laptop',
+            'prefer' => 'google_search',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonStructure(['success', 'image_url', 'source'])
+            ->assertJson(['success' => true]);
+
+        $this->assertNotEmpty($response->json('image_url'));
+    }
+
+    public function test_hardware_image_service_resolves_curated_public_asset_images(): void
+    {
+        $macbook = HardwareImageService::resolvePublicAssetImage('Apple', 'MacBook m5');
+        $this->assertEquals('/images/devices/apple-macbook-pro.jpg', $macbook);
+
+        $macbookAir = HardwareImageService::resolvePublicAssetImage('Apple', 'MacBook Air M3');
+        $this->assertEquals('/images/devices/apple-macbook-air.jpg', $macbookAir);
+
+        $thinkpad = HardwareImageService::resolvePublicAssetImage('Lenovo', 'ThinkPad T14 Gen 4');
+        $this->assertEquals('/images/devices/lenovo-thinkpad.jpg', $thinkpad);
+
+        $thinkpadX1 = HardwareImageService::resolvePublicAssetImage('Lenovo', 'ThinkPad X1 Carbon');
+        $this->assertEquals('/images/devices/lenovo-thinkpad-x1.jpg', $thinkpadX1);
+
+        $xps = HardwareImageService::resolvePublicAssetImage('Dell', 'XPS 15');
+        $this->assertEquals('/images/devices/dell-xps.jpg', $xps);
+    }
+
     public function test_seeded_database_includes_real_team_members(): void
     {
         $this->seed(DatabaseSeeder::class);

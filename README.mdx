@@ -163,7 +163,7 @@ A contextual chat assistant with live fleet awareness:
 | Database (container) | SQLite | 3.x |
 | AI model | Google Gemini | 3.1 Flash-Lite |
 | AI SDK | Laravel AI | 0.11.x |
-| Hardware DB | TechSpecs API | v5 |
+| Hardware Image Library | Public Assets / Google Search | Curated & API-backed |
 | PDF generation | DomPDF (barryvdh) | 3.x |
 | Animation | Framer Motion | 13.x |
 | Icons | React Icons | 5.x |
@@ -189,7 +189,7 @@ specmatch/
 │   │   ├── MismatchController.php          # Mismatch radar view
 │   │   ├── MaintenanceController.php       # Maintenance log CRUD
 │   │   ├── RoleProfileController.php       # Role profile CRUD
-│   │   └── TechSpecsController.php         # TechSpecs search/detail proxy
+│   │   └── HardwareImageController.php     # Hardware image lookup proxy
 │   ├── Models/
 │   │   ├── Device.php
 │   │   ├── Employee.php
@@ -199,11 +199,10 @@ specmatch/
 │   │   ├── LifecycleEvent.php
 │   │   └── RoleProfile.php
 │   └── Services/
-│       ├── GeminiService.php               # Gemini API + heuristic fallback
+│       ├── GeminiService.php               # Gemini API + heuristic fallback + auto-specs
 │       ├── FleetAiAssistantService.php     # Fleet-aware AI chat + deterministic engine
 │       ├── MatchingService.php             # Weighted scoring engine
-│       ├── TechSpecsService.php            # TechSpecs hardware DB client
-│       ├── HardwareImageService.php        # Device image resolution
+│       ├── HardwareImageService.php        # Device image resolution (public assets/Google)
 │       └── ItamTrackingService.php         # ITAM event tracking
 ├── resources/js/
 │   ├── Pages/
@@ -311,12 +310,11 @@ extractRequirements(text)
 | `POST` | `/fleet-assistant/query` | Send a message to the Fleet AI Assistant |
 | `GET`  | `/fleet-assistant/context` | Retrieve current fleet context snapshot |
 
-### TechSpecs Endpoints
+### Hardware Image Endpoints
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/techspecs/search` | Search the TechSpecs hardware database |
-| `POST` | `/techspecs/details` | Fetch full specs for a TechSpecs product ID |
+| `POST` | `/hardware/image-lookup` | Auto-resolve authentic device image from public assets or Google Image Search |
 
 ### Device Endpoints
 
@@ -394,8 +392,8 @@ php artisan key:generate
 
 # 6. Set your API keys in .env
 #    GEMINI_API_KEY=your_google_gemini_api_key
-#    TECHSPECS_API_ID=your_techspecs_id
-#    TECHSPECS_API_KEY=your_techspecs_key
+#    GOOGLE_SEARCH_API_KEY=your_google_search_key (optional)
+#    GOOGLE_SEARCH_ENGINE_ID=your_cx_id (optional)
 
 # 7. Run migrations and seed demo data
 php artisan migrate --seed
@@ -433,9 +431,9 @@ GEMINI_API_KEY=        # Google Gemini API key (required for AI features)
 GEMINI_MODEL=gemini-3.1-flash-lite
 AI_DEFAULT_PROVIDER=gemini
 
-# Hardware Database
-TECHSPECS_API_ID=      # TechSpecs account ID
-TECHSPECS_API_KEY=     # TechSpecs API key
+# Hardware Image Search (Optional)
+GOOGLE_SEARCH_API_KEY=     # Google Custom Search API Key
+GOOGLE_SEARCH_ENGINE_ID=   # Google Custom Search Engine CX ID
 
 # Offline / Demo Mode
 GEMINI_DEMO_OFFLINE=false   # Set true to use heuristic fallback only (no API calls)
@@ -479,8 +477,6 @@ docker build -t specmatch:latest .
 docker run -p 8080:8080 \
   -e APP_KEY=base64:... \
   -e GEMINI_API_KEY=your_key \
-  -e TECHSPECS_API_ID=your_id \
-  -e TECHSPECS_API_KEY=your_key \
   specmatch:latest
 ```
 
@@ -534,7 +530,6 @@ Set your web server document root to `/public`. Ensure `storage/` and `bootstrap
 | `APP_DEBUG=false` | Required |
 | `APP_KEY` set | Required |
 | `GEMINI_API_KEY` set | Required for AI features |
-| `TECHSPECS_API_KEY` set | Required for hardware search |
 | `php artisan config:cache` run | Recommended |
 | `php artisan route:cache` run | Recommended |
 | `php artisan view:cache` run | Recommended |
@@ -571,13 +566,11 @@ Each sub-score is a value from 0–100 based on how well the device meets or exc
 
 ---
 
-## TechSpecs API Notes
+## Hardware Image Resolution Notes
 
-- **Base URL**: `https://api.techspecs.io/v5`
-- **Auth**: `x-api-id` and `x-api-key` headers.
-- **`/products/search`**: Minimum `size=10` required by the API.
-- **`/products/{id}`**: Returns full nested spec JSON; `TechSpecsService::mapToDeviceAttributes()` normalizes it to the SpecMatch device schema.
-- The TechSpecs integration is entirely optional — devices can be registered manually without it.
+- **Multi-Source Resolution**: Devices automatically resolve photos using high-reliability local public assets (`public/images/devices/`), Google Custom Search API (when configured), and Wikimedia Commons.
+- **Local Public Assets**: Zero-latency local assets ensure instant and reliable loading for popular fleet models (MacBook Pro/Air, Dell XPS, Lenovo ThinkPad, HP EliteBook, etc.).
+- **Zero External Dependency**: If external search engines or API keys are unavailable, local assets and clean hardware iconography fall back gracefully with 100% uptime.
 
 ---
 

@@ -122,7 +122,7 @@ export default function DevicesIndex({ devices, filters }) {
                             Hardware Fleet Inventory
                         </h1>
                         <p className="text-sm text-slate-500 dark:text-zinc-400 mt-0.5 max-w-2xl">
-                            Authoritative catalog with TechSpecs device clips, lifecycle tracking, and allocation status.
+                            Authoritative catalog with hardware media clips, lifecycle tracking, and allocation status.
                         </p>
                     </div>
                     <div className="flex items-center gap-2">

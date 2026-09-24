@@ -682,4 +682,88 @@ class FleetAiAssistantTest extends TestCase
         $this->assertStringContainsString('LAP-008', $data['answer']);
         $this->assertEmpty($data['data_cards'], 'Employee SSD query must be straightforward without unnecessary data cards');
     }
+
+    public function test_brand_fleet_query_returns_all_brand_devices_and_statuses_across_fleet(): void
+    {
+        $employee = Employee::create([
+            'name' => 'Melo Ervy Garcia',
+            'department' => 'Engineering',
+        ]);
+
+        $assignedMac = $this->createDevice([
+            'asset_tag' => 'LAP-001',
+            'brand' => 'Apple',
+            'model' => 'MacBook Pro 16 M3 Max',
+            'status' => 'assigned',
+            'ram_gb' => 36,
+            'storage_gb' => 1024,
+        ]);
+
+        Assignment::create([
+            'device_id' => $assignedMac->id,
+            'employee_id' => $employee->id,
+            'assigned_at' => Carbon::now()->subMonths(1),
+            'match_score' => 0.95,
+            'assignment_source' => 'manual_override',
+        ]);
+
+        $this->createDevice([
+            'asset_tag' => 'LAP-011',
+            'brand' => 'Apple',
+            'model' => 'MacBook Air M1',
+            'status' => 'in_repair',
+            'ram_gb' => 8,
+            'storage_gb' => 256,
+        ]);
+
+        $response = $this->actingAs($this->user)->postJson(route('fleet-assistant.query'), [
+            'prompt' => 'Do we have any Macbook in our inventory?',
+        ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'success' => true,
+            ]);
+
+        $data = $response->json();
+        $this->assertStringContainsString('2 Macbook devices', $data['answer']);
+        $this->assertStringContainsString('LAP-001', $data['answer']);
+        $this->assertStringContainsString('Melo Ervy Garcia', $data['answer']);
+        $this->assertStringContainsString('LAP-011', $data['answer']);
+        $this->assertNotEmpty($data['data_cards']);
+        $this->assertEquals('LAP-001', $data['data_cards'][0]['asset_tag']);
+    }
+
+    public function test_latest_device_registered_query_identifies_newest_device(): void
+    {
+        $this->createDevice([
+            'asset_tag' => 'LAP-001',
+            'brand' => 'Dell',
+            'model' => 'Latitude 5440',
+        ]);
+
+        $newest = $this->createDevice([
+            'asset_tag' => 'LAP-012',
+            'brand' => 'Lenovo',
+            'model' => 'ThinkPad P16 Gen 2',
+            'ram_gb' => 32,
+            'storage_gb' => 1024,
+            'cpu' => 'Intel Core i9-13980HX',
+        ]);
+
+        $response = $this->actingAs($this->user)->postJson(route('fleet-assistant.query'), [
+            'prompt' => 'What is the latest device registered in our system?',
+        ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'success' => true,
+            ]);
+
+        $data = $response->json();
+        $this->assertStringContainsString('LAP-012', $data['answer']);
+        $this->assertStringContainsString('ThinkPad P16 Gen 2', $data['answer']);
+        $this->assertNotEmpty($data['data_cards']);
+        $this->assertEquals('LAP-012', $data['data_cards'][0]['asset_tag']);
+    }
 }

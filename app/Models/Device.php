@@ -198,7 +198,7 @@ class Device extends Model
     }
 
     /**
-     * Resolved image clip URL from TechSpecs, Wikimedia Commons, or authentic hardware registry.
+     * Resolved image clip URL from public asset library, Google Image Search, or authentic hardware registry.
      */
     public function getImageClipUrlAttribute(): string
     {
