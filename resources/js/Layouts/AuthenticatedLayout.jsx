@@ -159,7 +159,6 @@ export default function AuthenticatedLayout({ header, children, maxWidth = 'max-
                                             </div>
                                             {(user.department || user.job_title) && (
                                                 <div className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium flex items-center gap-1.5 truncate">
-                                                    <span>🏢</span>
                                                     <span className="truncate">{user.department || user.job_title}</span>
                                                 </div>
                                             )}

@@ -3,6 +3,7 @@ import { Link } from '@inertiajs/react';
 import axios from 'axios';
 import HardwareImage from '@/Components/HardwareImage';
 import SpecMatchLogo from '@/Components/SpecMatchLogo';
+import SpecMatchMascot from '@/Components/SpecMatchMascot';
 import {
     RiSendPlaneFill,
     RiCloseLine,
@@ -228,8 +229,8 @@ const defaultWelcomeMessage = {
     category: 'general_itam',
     source: 'gemini-3.1-flash-lite',
     answer:
-        "### SpecMatch ITAM Fleet Assistant\n\n" +
-        "Kumusta! I am your conversational ITAM Fleet Assistant. Ask me any question regarding stockroom inventory, idle devices, employee spec tiers, or warranties in **English or Tagalog**.",
+        "### Fukurou - SpecMatch AI Fleet Assistant\n\n" +
+        "Kumusta! I am **Fukurou**, your official conversational ITAM Fleet Assistant. Ask me any question regarding stockroom inventory, idle devices, employee spec tiers, or warranties in **English or Tagalog**.",
     data_cards: [],
     suggested_followups: [
         'Which employees are using low end specs?',
@@ -457,7 +458,7 @@ export default function GeminiFleetAssistant({ isOpen = false, onClose, onOpen }
                 category: 'error',
                 source: 'system',
                 answer:
-                    '⚠️ Unable to process query. The server or network encountered an issue: ' +
+                    'Unable to process query. The server or network encountered an issue: ' +
                     (error.response?.data?.message || error.message),
                 data_cards: [],
                 suggested_followups: ['Which employees are using low end specs?', 'How many idle devices do we currently have in inventory?'],
@@ -525,11 +526,11 @@ export default function GeminiFleetAssistant({ isOpen = false, onClose, onOpen }
                     <button
                         type="button"
                         onClick={handleOpen}
-                        className="group relative flex items-center gap-2 px-4 py-2.5 rounded-full bg-white dark:bg-zinc-900 hover:bg-blue-50/50 dark:hover:bg-zinc-800 text-[#026eff] dark:text-[#38bdf8] shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer border-2 border-[#026eff] dark:border-[#026eff]"
+                        className="group relative flex items-center gap-2.5 px-3.5 py-2 rounded-full bg-white dark:bg-zinc-900 hover:bg-sky-50 dark:hover:bg-zinc-800 text-[#026EFC] dark:text-[#38bdf8] shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer border-2 border-[#026EFC] dark:border-[#026EFC]"
                         title="Open ITAM Fleet Assistant"
                     >
-                        <SpecMatchLogo variant="mark" size={20} className="shrink-0" />
-                        <span className="text-xs font-bold tracking-tight text-[#026eff] dark:text-[#38bdf8]">
+                        <SpecMatchMascot variant="avatar" size={24} pose="greeting" showGlow={false} isOnline={true} />
+                        <span className="text-xs font-extrabold tracking-tight text-[#026EFC] dark:text-[#38bdf8] pr-0.5">
                             Talk to Fleet
                         </span>
                     </button>
@@ -585,13 +586,17 @@ export default function GeminiFleetAssistant({ isOpen = false, onClose, onOpen }
                     <div className="px-4 py-3 border-b border-slate-200/80 dark:border-zinc-800 bg-slate-50/80 dark:bg-zinc-900/90 backdrop-blur-md shrink-0">
                         <div className={`flex items-center justify-between gap-3 ${isMaximized ? 'max-w-4xl mx-auto w-full' : ''}`}>
                             <div className="flex items-center gap-2.5 min-w-0">
-                                <div className="w-8 h-8 rounded-xl bg-white dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700/80 flex items-center justify-center shadow-2xs shrink-0">
-                                    <SpecMatchLogo variant="mark" size={20} className="shrink-0" />
-                                </div>
+                                <SpecMatchMascot
+                                    variant="avatar"
+                                    size={32}
+                                    pose={isLoading ? 'thinking' : 'greeting'}
+                                    showGlow={true}
+                                    isOnline={aiStatus?.state === 'online'}
+                                />
                                 <div className="min-w-0">
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <h3 className="font-extrabold text-slate-900 dark:text-zinc-100 text-sm tracking-tight truncate">
-                                            ITAM Fleet Assistant
+                                            Fukurou &bull; Fleet Assistant
                                         </h3>
                                         {/* Live AI Status Pill */}
                                         {aiStatus && (
@@ -723,9 +728,14 @@ export default function GeminiFleetAssistant({ isOpen = false, onClose, onOpen }
                                     ) : (
                                         /* Assistant Bubble */
                                         <div className="flex items-start gap-2.5">
-                                            <div className="w-7 h-7 rounded-lg bg-white dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700/80 flex items-center justify-center shadow-2xs shrink-0 mt-0.5">
-                                                <SpecMatchLogo variant="mark" size={18} className="shrink-0" />
-                                            </div>
+                                            <SpecMatchMascot
+                                                variant="avatar"
+                                                size={28}
+                                                pose={msg.category === 'maintenance' ? 'active' : msg.category === 'mismatch' ? 'thinking' : msg.id === 'welcome' ? 'greeting' : 'happy'}
+                                                showGlow={false}
+                                                isOnline={false}
+                                                className="mt-0.5"
+                                            />
 
                                             <div className="flex-1 min-w-0 max-w-[94%] space-y-2.5">
                                                 <div className="rounded-2xl rounded-tl-xs bg-slate-50 dark:bg-zinc-800/70 border border-slate-200/80 dark:border-zinc-700/80 p-3.5 shadow-2xs transition-all">
@@ -825,7 +835,7 @@ export default function GeminiFleetAssistant({ isOpen = false, onClose, onOpen }
                                                                                         </p>
 
                                                                                         <div className="flex items-center gap-2 mt-0.5 text-[9px] text-slate-500 dark:text-zinc-400">
-                                                                                            {card.location && <span>📍 {card.location}</span>}
+                                                                                            {card.location && <span>{card.location}</span>}
                                                                                             {card.meta && (
                                                                                                 <span className="font-medium text-[#026eff] dark:text-[#38bdf8]">
                                                                                                     {card.meta}
@@ -880,9 +890,9 @@ export default function GeminiFleetAssistant({ isOpen = false, onClose, onOpen }
                                                                 key={chipIdx}
                                                                 type="button"
                                                                 onClick={() => handleSend(chip)}
-                                                                className="text-left px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200/80 dark:border-zinc-700 hover:border-[#026eff] dark:hover:border-[#38bdf8] hover:text-[#026eff] dark:hover:text-[#38bdf8] transition shadow-2xs flex items-center gap-1 cursor-pointer"
+                                                                className="text-left px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200/80 dark:border-zinc-700 hover:border-[#026eff] dark:hover:border-[#38bdf8] hover:text-[#026eff] dark:hover:text-[#38bdf8] transition shadow-2xs flex items-center gap-1.5 cursor-pointer"
                                                             >
-                                                                <span>💬</span>
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-[#026EFC]" />
                                                                 <span>{chip}</span>
                                                             </button>
                                                         ))}
@@ -897,12 +907,17 @@ export default function GeminiFleetAssistant({ isOpen = false, onClose, onOpen }
                             {/* Loading State */}
                             {isLoading && (
                                 <div className="flex items-start gap-2.5">
-                                    <div className="w-7 h-7 rounded-lg bg-white dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700/80 flex items-center justify-center shadow-2xs shrink-0 mt-0.5 animate-pulse">
-                                        <SpecMatchLogo variant="mark" size={18} className="shrink-0" />
-                                    </div>
+                                    <SpecMatchMascot
+                                        variant="avatar"
+                                        size={28}
+                                        pose="thinking"
+                                        showGlow={true}
+                                        isOnline={true}
+                                        className="mt-0.5 animate-pulse"
+                                    />
                                     <div className="rounded-2xl rounded-tl-xs bg-slate-50 dark:bg-zinc-800/70 border border-slate-200/80 dark:border-zinc-700/80 p-3 shadow-2xs">
                                         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-zinc-400">
-                                            <span className="w-2 h-2 rounded-full bg-[#026eff] animate-ping" />
+                                            <span className="w-2 h-2 rounded-full bg-[#026EFC] animate-ping" />
                                             <span>Reading fleet database & reasoning...</span>
                                         </div>
                                     </div>

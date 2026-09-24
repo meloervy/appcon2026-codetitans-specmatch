@@ -709,10 +709,10 @@ INSTRUCTION;
 
         foreach ($devices as $d) {
             $statusLabel = match ($d['status']) {
-                'available' => '🔵 Available',
-                'assigned' => '🟢 Assigned',
-                'in_repair' => '🟡 In Repair',
-                'retired' => '⚫ Retired',
+                'available' => 'Available',
+                'assigned' => 'Assigned',
+                'in_repair' => 'In Repair',
+                'retired' => 'Retired',
                 default => ucfirst($d['status']),
             };
 
@@ -769,10 +769,10 @@ INSTRUCTION;
 
         foreach ($matching as $d) {
             $statusLabel = match ($d['status']) {
-                'available' => '🔵 Available (Stockroom)',
-                'assigned' => '🟢 Assigned',
-                'in_repair' => '🟡 In Repair',
-                'retired' => '⚫ Retired',
+                'available' => 'Available (Stockroom)',
+                'assigned' => 'Assigned',
+                'in_repair' => 'In Repair',
+                'retired' => 'Retired',
                 default => ucfirst($d['status']),
             };
 
@@ -903,7 +903,7 @@ INSTRUCTION;
                 $assignedTo = $d['assigned_employee'] ? "{$d['assigned_employee']['name']} ({$d['assigned_employee']['department']})" : 'In Stockroom';
                 $answer .= "| `{$d['asset_tag']}` | **{$d['full_name']}** | {$d['storage_gb']}GB {$d['storage_type']} | {$d['status']} | {$assignedTo} |\n";
             }
-            $answer .= "\n> 💡 **Recommendation**: Upgrade legacy HDD systems to high-speed NVMe/SATA SSDs to boost read/write performance.";
+            $answer .= "\n> **Recommendation**: Upgrade legacy HDD systems to high-speed NVMe/SATA SSDs to boost read/write performance.";
 
             return [
                 'success' => true,
@@ -928,10 +928,10 @@ INSTRUCTION;
 
             foreach ($matching as $d) {
                 $statusLabel = match ($d['status']) {
-                    'available' => '🔵 Available',
-                    'assigned' => '🟢 Assigned',
-                    'in_repair' => '🟡 In Repair',
-                    'retired' => '⚫ Retired',
+                    'available' => 'Available',
+                    'assigned' => 'Assigned',
+                    'in_repair' => 'In Repair',
+                    'retired' => 'Retired',
                     default => ucfirst($d['status']),
                 };
                 $assignedTo = $d['assigned_employee']
@@ -983,8 +983,8 @@ INSTRUCTION;
             $empRole = $emp['role_profile'] ?? 'Standard Role';
 
             $statusText = $item['is_mismatch']
-                ? '⚠️ **Under-provisioned Mismatch**'
-                : '🟢 **Acceptable Fit (98%)**';
+                ? '**Under-provisioned Mismatch**'
+                : '**Acceptable Fit (98%)**';
 
             $answer .= "| **{$empName}** | {$empDept} | {$empRole} | {$item['name']} | `{$item['asset_tag']}` | {$item['ram_gb']}GB RAM • {$item['cpu']} | {$statusText} |\n";
 
@@ -998,7 +998,7 @@ INSTRUCTION;
                 'status' => 'assigned',
                 'action_url' => "/devices/{$item['id']}",
                 'image_url' => $item['image_url'],
-                'meta' => $item['is_mismatch'] ? '⚠️ Under-provisioned' : '🟢 Acceptable Fit',
+                'meta' => $item['is_mismatch'] ? 'Under-provisioned' : 'Acceptable Fit',
             ];
         }
 
@@ -1127,7 +1127,7 @@ INSTRUCTION;
             ."- **Role Profile**: **{$empRole}**\n"
             ."- **Machine**: **{$highEndDesktop['name']}** (`{$highEndDesktop['asset_tag']}`)\n"
             ."- **Hardware Specs**: **{$highEndDesktop['ram_gb']}GB RAM • {$highEndDesktop['storage_gb']}GB SSD • {$highEndDesktop['cpu']} • {$highEndDesktop['gpu']}**\n\n"
-            ."> ⚠️ **ITAM Governance Alert (Active Mismatch)**:\n"
+            ."> **ITAM Governance Alert (Active Mismatch)**:\n"
             ."> SpecMatch's AI engine has flagged this assignment as an **Over-provisioning Mismatch** (Match Score: **45%**). A 128GB RAM workstation tower vastly exceeds the computational requirements of general operational tasks, representing locked-up compute capital that could be redeployed to data engineering, 3D CAD, or AI modeling workloads.\n\n"
             ."### Available High-End Desktops in Stockroom\n"
             ."If you need high-performance desktops for deployment, the following workstation units are currently **idle in inventory**:\n";
@@ -1150,7 +1150,7 @@ INSTRUCTION;
                 'status' => 'assigned',
                 'action_url' => "/devices/{$highEndDesktop['id']}",
                 'image_url' => $highEndDesktop['image_url'],
-                'meta' => '⚠️ Over-provisioned Mismatch (45%)',
+                'meta' => 'Over-provisioned Mismatch (45%)',
             ];
         }
 
@@ -1165,7 +1165,7 @@ INSTRUCTION;
                 'status' => 'available',
                 'action_url' => "/devices/{$idle['id']}",
                 'image_url' => $idle['image_url'],
-                'meta' => '🟢 Idle in Stockroom',
+                'meta' => 'Idle in Stockroom',
             ];
         }
 
@@ -1209,8 +1209,8 @@ INSTRUCTION;
             $empRole = $emp['role_profile'] ?? 'Standard Role';
 
             $statusBadge = ($item['asset_tag'] === 'DSK-001')
-                ? '⚠️ **Over-provisioned Mismatch**'
-                : '🟢 **Optimal Fit**';
+                ? '**Over-provisioned Mismatch**'
+                : '**Optimal Fit**';
 
             $answer .= "| **{$empName}** | {$empDept} | {$empRole} | {$item['name']} | `{$item['asset_tag']}` | {$item['ram_gb']}GB RAM • {$item['cpu']} | {$statusBadge} |\n";
 
@@ -1224,7 +1224,7 @@ INSTRUCTION;
                 'status' => 'assigned',
                 'action_url' => "/devices/{$item['id']}",
                 'image_url' => $item['image_url'],
-                'meta' => $item['asset_tag'] === 'DSK-001' ? '⚠️ Over-provisioned' : '🟢 Active Assignment',
+                'meta' => $item['asset_tag'] === 'DSK-001' ? 'Over-provisioned' : 'Active Assignment',
             ];
         }
 
@@ -1614,7 +1614,7 @@ INSTRUCTION;
             'status' => 'expiring_soon',
             'action_url' => "/devices/{$d['id']}",
             'image_url' => $d['image_url'],
-            'meta' => "⚠️ {$d['days_left']} days remaining",
+            'meta' => "{$d['days_left']} days remaining",
         ])->values()->all();
 
         if ($count > 0) {

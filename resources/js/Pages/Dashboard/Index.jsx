@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import HardwareImage from '@/Components/HardwareImage';
+import SpecMatchMascot from '@/Components/SpecMatchMascot';
 import { Head, Link, usePage } from '@inertiajs/react';
 
 export default function Dashboard({
@@ -552,15 +553,25 @@ export default function Dashboard({
                 </div>
 
                 {/* Workflow Shortcuts */}
-                <div className="bg-gradient-to-br from-[#031a40] via-[#021230] to-[#031a40] dark:from-zinc-950 dark:via-zinc-900 dark:to-[#031a40] text-white rounded-2xl p-6 shadow-md border border-[#031a40]/40 dark:border-zinc-800 flex flex-col justify-between">
+                <div className="bg-gradient-to-br from-[#05193F] via-[#021230] to-[#031a40] dark:from-zinc-950 dark:via-zinc-900 dark:to-[#031a40] text-white rounded-2xl p-6 shadow-md border border-[#05193F]/40 dark:border-zinc-800 flex flex-col justify-between relative overflow-hidden">
+                    {/* Ambient Glow & Mascot Avatar */}
+                    <div className="absolute top-4 right-4 opacity-90 hover:opacity-100 transition-opacity">
+                        <SpecMatchMascot
+                            pose="active"
+                            variant="avatar"
+                            size={44}
+                            showGlow={true}
+                            isOnline={true}
+                        />
+                    </div>
                     <div>
                         <div className="inline-flex p-2.5 rounded-xl bg-white/10 mb-4 backdrop-blur-xs">
-                            <svg className="w-6 h-6 text-[#0b79ff]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="w-6 h-6 text-[#026EFC]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
                             </svg>
                         </div>
                         <h3 className="text-xl font-bold tracking-tight">TechSpecs & AI Match</h3>
-                        <p className="text-sm text-[#0b79ff]/60 mt-2 leading-relaxed">
+                        <p className="text-sm text-sky-200/70 mt-2 leading-relaxed max-w-sm">
                             Continuous IT asset management with 1-click TechSpecs hardware lookup, straight-line depreciation, lifecycle transitions, and intelligent assignment.
                         </p>
 
