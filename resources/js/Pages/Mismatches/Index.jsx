@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import HardwareImage from '@/Components/HardwareImage';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import {
     RiAlertLine,
@@ -14,6 +14,10 @@ import {
 } from 'react-icons/ri';
 
 export default function MismatchesIndex({ mismatches, threshold }) {
+    const { auth } = usePage().props;
+    const user = auth?.user;
+    const isAdminOrManager = ['admin', 'manager'].includes(user?.role);
+
     const [filterType, setFilterType] = useState('all');
     const [search, setSearch] = useState('');
 
@@ -50,13 +54,15 @@ export default function MismatchesIndex({ mismatches, threshold }) {
                             Continuous fleet audit detecting under-provisioned performance bottlenecks and over-provisioned fleet waste.
                         </p>
                     </div>
-                    <Link
-                        href={route('match.index')}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#026eff] text-sm font-semibold text-white hover:bg-[#0256cc] shadow-sm transition self-start sm:self-auto"
-                    >
-                        <RiFlashlightLine className="w-4 h-4" />
-                        <span>Launch Match Engine</span>
-                    </Link>
+                    {isAdminOrManager && (
+                        <Link
+                            href={route('match.index')}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#026eff] text-sm font-semibold text-white hover:bg-[#0256cc] shadow-sm transition self-start sm:self-auto"
+                        >
+                            <RiFlashlightLine className="w-4 h-4" />
+                            <span>Launch Match Engine</span>
+                        </Link>
+                    )}
                 </div>
             }
         >

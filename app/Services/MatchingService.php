@@ -26,6 +26,44 @@ class MatchingService
         'dedicated-high' => 3,
     ];
 
+    public const WEIGHT_PROFILES = [
+        'balanced' => [
+            'cpu' => 0.30,
+            'ram' => 0.25,
+            'storage' => 0.15,
+            'gpu' => 0.20,
+            'portability' => 0.10,
+        ],
+        'creative' => [
+            'gpu' => 0.35,
+            'cpu' => 0.25,
+            'ram' => 0.20,
+            'storage' => 0.10,
+            'portability' => 0.10,
+        ],
+        'developer' => [
+            'cpu' => 0.35,
+            'ram' => 0.30,
+            'storage' => 0.15,
+            'gpu' => 0.10,
+            'portability' => 0.10,
+        ],
+        'mobile_sales' => [
+            'portability' => 0.30,
+            'cpu' => 0.25,
+            'ram' => 0.25,
+            'storage' => 0.10,
+            'gpu' => 0.10,
+        ],
+        'data_analyst' => [
+            'cpu' => 0.30,
+            'ram' => 0.35,
+            'storage' => 0.15,
+            'gpu' => 0.10,
+            'portability' => 0.10,
+        ],
+    ];
+
     /**
      * Estimate new replacement procurement value of a device in Philippine Peso (₱).
      */
@@ -55,6 +93,30 @@ class MatchingService
      */
     public function rankDevices(array $requirements, ?int $excludeDeviceId = null, bool $availableOnly = true): array
     {
+        // Guard against empty or unspecified requirements (A1)
+        if (empty($requirements) || (
+            ! isset($requirements['min_cpu_tier']) &&
+            ! isset($requirements['min_ram_gb']) &&
+            ! isset($requirements['min_storage_gb']) &&
+            ! isset($requirements['requires_gpu']) &&
+            ! isset($requirements['portability_required'])
+        )) {
+            return [
+                'results' => [],
+                'top_candidate' => null,
+                'alternative_comparisons' => [],
+                'procurement_recommended' => false,
+                'total_capex_savings_php' => 0.0,
+                'threshold' => self::MATCH_THRESHOLD,
+                'procurement_advisory' => [
+                    'action' => 'awaiting_specifications',
+                    'inventory_status' => 'Pending Specification',
+                    'existing_inventory_prioritized' => true,
+                    'recommendation_summary' => 'No hardware specification requirements were provided. Please specify employee role requirements before matching.',
+                ],
+            ];
+        }
+
         $query = Device::query();
 
         if ($excludeDeviceId) {
@@ -76,13 +138,60 @@ class MatchingService
             }
         }
 
-        // Sort descending by score; qualified devices first
+        // Sort descending by score; qualified devices first with deterministic multi-tier tiebreaker (A6)
         usort($ranked, function ($a, $b) {
+            // 1. Qualified before disqualified
             if ($a['disqualified'] !== $b['disqualified']) {
                 return $a['disqualified'] ? 1 : -1;
             }
 
-            return $b['score'] <=> $a['score'];
+            // 2. Score comparison (tolerance 0.001)
+            if (abs($b['score'] - $a['score']) >= 0.001) {
+                return $b['score'] <=> $a['score'];
+            }
+
+            $devA = $a['device'];
+            $devB = $b['device'];
+
+            // 3. Tiebreaker 1: Availability in stockroom
+            $availA = $devA->status === 'available' ? 1 : 0;
+            $availB = $devB->status === 'available' ? 1 : 0;
+            if ($availA !== $availB) {
+                return $availB <=> $availA;
+            }
+
+            // 4. Tiebreaker 2: Physical condition (excellent > good > fair)
+            $condRanks = ['new' => 4, 'excellent' => 3, 'good' => 2, 'fair' => 1];
+            $condA = $condRanks[strtolower($devA->condition ?? '')] ?? 0;
+            $condB = $condRanks[strtolower($devB->condition ?? '')] ?? 0;
+            if ($condA !== $condB) {
+                return $condB <=> $condA;
+            }
+
+            // 5. Tiebreaker 3: Generation / Age (non-aging before aging)
+            $agingA = $devA->isAging() ? 1 : 0;
+            $agingB = $devB->isAging() ? 1 : 0;
+            if ($agingA !== $agingB) {
+                return $agingA <=> $agingB;
+            }
+
+            // 6. Tiebreaker 4: Warranty status (active > expiring_soon > expired)
+            $warrRanks = ['active' => 3, 'expiring_soon' => 2, 'expired' => 1, 'none' => 0];
+            $warrA = $warrRanks[$devA->warranty_status] ?? 0;
+            $warrB = $warrRanks[$devB->warranty_status] ?? 0;
+            if ($warrA !== $warrB) {
+                return $warrB <=> $warrA;
+            }
+
+            // 7. Tiebreaker 5: Capital preservation - lower replacement cost preserves flagship units
+            $costA = $devA->purchase_cost ?? $this->estimateDeviceValuePhp($devA);
+            $costB = $devB->purchase_cost ?? $this->estimateDeviceValuePhp($devB);
+            if ($costA != $costB) {
+                return $costA <=> $costB;
+            }
+
+            // 8. Deterministic fallback: asset tag ascending
+            return strcmp($devA->asset_tag, $devB->asset_tag);
         });
 
         $topCandidate = null;
@@ -168,6 +277,15 @@ class MatchingService
             unset($cand);
         }
 
+        $procurementAdvisory = [
+            'action' => $hasEligibleAboveThreshold ? 'deploy_internal_asset' : 'evaluate_bridge_swap_or_procurement',
+            'inventory_status' => $hasEligibleAboveThreshold ? 'Inventory Sufficient' : 'Inventory Depleted for Specification',
+            'existing_inventory_prioritized' => true,
+            'recommendation_summary' => $hasEligibleAboveThreshold
+                ? "Immediate internal deployment recommended: Stockroom unit {$topCandidate['device']->asset_tag} satisfies operational criteria and saves ₱".number_format($totalCapexSavings, 2).' in avoided CapEx.'
+                : 'No existing idle device directly satisfies the operational threshold (0.65). ITAM policy requires reviewing internal Bridge Swaps before requesting external CapEx purchase authorization.',
+        ];
+
         return [
             'results' => $ranked,
             'top_candidate' => $topCandidate,
@@ -175,6 +293,7 @@ class MatchingService
             'procurement_recommended' => ! $hasEligibleAboveThreshold,
             'total_capex_savings_php' => $totalCapexSavings,
             'threshold' => self::MATCH_THRESHOLD,
+            'procurement_advisory' => $procurementAdvisory,
         ];
     }
 
@@ -183,11 +302,42 @@ class MatchingService
      */
     public function evaluateDevice(Device $device, array $requirements, bool $availableOnly = false): array
     {
+        // Guard against empty or unspecified requirements (A1)
+        if (empty($requirements) || (
+            ! isset($requirements['min_cpu_tier']) &&
+            ! isset($requirements['min_ram_gb']) &&
+            ! isset($requirements['min_storage_gb']) &&
+            ! isset($requirements['requires_gpu']) &&
+            ! isset($requirements['portability_required'])
+        )) {
+            return [
+                'device' => $device,
+                'score' => 0.0,
+                'base_score' => 0.0,
+                'subscores' => ['cpu' => 0.0, 'ram' => 0.0, 'storage' => 0.0, 'gpu' => 0.0, 'portability' => 0.0],
+                'subscore_audit' => [],
+                'component_meters' => ['cpu' => 0, 'ram' => 0, 'storage' => 0, 'gpu' => 0, 'portability' => 0, 'condition' => 0],
+                'capex_saved_php' => 0.0,
+                'procurement_avoidance_audit' => [],
+                'confidence_score' => 0,
+                'confidence_level' => 'Unconstrained Request',
+                'confidence_explanation' => 'No hardware specification requirements were provided in match request.',
+                'fit_grade' => 'Unspecified',
+                'overprovisioning_risk' => false,
+                'rationale' => 'No hardware requirements provided to evaluate this device against.',
+                'disqualified' => true,
+                'disqualification_reason' => 'Empty or unspecified hardware requirements.',
+                'passes_threshold' => false,
+                'is_available_for_deployment' => ($device->status === 'available'),
+                'deployment_readiness' => 'Pending Specification',
+            ];
+        }
+
         $requiresGpu = ! empty($requirements['requires_gpu']);
         $reqGpuTier = $requirements['min_gpu_tier'] ?? 'none';
         $portabilityRequired = ! empty($requirements['portability_required']);
 
-        // Hard eligibility filter (doc.md §8.3)
+        // Hard eligibility filter (doc.md §8.3 & A3)
         $disqualified = false;
         $disqualificationReason = null;
 
@@ -197,21 +347,27 @@ class MatchingService
         } elseif ($requiresGpu && $device->gpu_tier === 'none') {
             $disqualified = true;
             $disqualificationReason = 'Workload requires dedicated or integrated GPU, but device has no GPU.';
+        } elseif (in_array(strtolower($device->condition ?? ''), ['poor', 'needs_repair', 'retired', 'degraded'], true)) {
+            $disqualified = true;
+            $disqualificationReason = "Device physical condition is '{$device->condition}' (requires fair, good, or excellent for deployment).";
         }
 
-        // Calculate sub-scores (0.0 to 1.0)
-        $cpuScore = $this->scoreCpuTier($device->cpu_tier, $requirements['min_cpu_tier'] ?? 'entry');
+        // Dynamic workload-tailored weights (A4)
+        $weights = $this->resolveWeights($requirements);
+
+        // Calculate sub-scores (0.0 to 1.0) with generation awareness (A2)
+        $cpuScore = $this->scoreCpuTier($device->cpu_tier, $requirements['min_cpu_tier'] ?? 'entry', $device);
         $ramScore = $this->scoreRam($device->ram_gb, (int) ($requirements['min_ram_gb'] ?? 8));
         $storageScore = $this->scoreStorage($device->storage_gb, (int) ($requirements['min_storage_gb'] ?? 256));
         $gpuScore = $this->scoreGpu($device->gpu_tier, $requiresGpu, $reqGpuTier);
         $portabilityScore = $this->scorePortability($device->device_type, $portabilityRequired);
 
-        // Weighted base total (doc.md §8.4)
-        $baseScore = ($cpuScore * 0.30)
-               + ($ramScore * 0.25)
-               + ($storageScore * 0.15)
-               + ($gpuScore * 0.20)
-               + ($portabilityScore * 0.10);
+        // Weighted base total using resolved weights
+        $baseScore = ($cpuScore * $weights['cpu'])
+               + ($ramScore * $weights['ram'])
+               + ($storageScore * $weights['storage'])
+               + ($gpuScore * $weights['gpu'])
+               + ($portabilityScore * $weights['portability']);
 
         // Refined ITAM Modifiers:
         // 1. Condition adjustment (+0.02 for excellent/good, -0.05 for fair, -0.15 for poor)
@@ -288,17 +444,19 @@ class MatchingService
         $subscoreAudit = [
             'cpu' => [
                 'score' => round($cpuScore, 3),
-                'weight' => 0.30,
-                'weighted_score' => round($cpuScore * 0.30, 3),
+                'weight' => $weights['cpu'],
+                'weighted_score' => round($cpuScore * $weights['cpu'], 3),
                 'provided' => $device->cpu.' ('.ucfirst($device->cpu_tier).' Tier)',
                 'required' => ucfirst($requirements['min_cpu_tier'] ?? 'entry').' Tier',
-                'status' => $cpuScore >= 1.0 ? 'Met' : ($cpuScore >= 0.8 ? 'Exceeded' : 'Deficit'),
+                'status' => ((self::CPU_TIERS[$device->cpu_tier] ?? 1) - (self::CPU_TIERS[$requirements['min_cpu_tier'] ?? 'entry'] ?? 1)) === 0
+                    ? 'Met'
+                    : (((self::CPU_TIERS[$device->cpu_tier] ?? 1) > (self::CPU_TIERS[$requirements['min_cpu_tier'] ?? 'entry'] ?? 1)) ? 'Exceeded' : 'Deficit'),
                 'delta' => (self::CPU_TIERS[$device->cpu_tier] ?? 1) - (self::CPU_TIERS[$requirements['min_cpu_tier'] ?? 'entry'] ?? 1),
             ],
             'ram' => [
                 'score' => round($ramScore, 3),
-                'weight' => 0.25,
-                'weighted_score' => round($ramScore * 0.25, 3),
+                'weight' => $weights['ram'],
+                'weighted_score' => round($ramScore * $weights['ram'], 3),
                 'provided' => "{$device->ram_gb} GB",
                 'required' => ($requirements['min_ram_gb'] ?? 8).' GB',
                 'status' => $ramScore >= 1.0 ? 'Met' : ($ramScore >= 0.85 ? 'Headroom' : 'Deficit'),
@@ -306,8 +464,8 @@ class MatchingService
             ],
             'storage' => [
                 'score' => round($storageScore, 3),
-                'weight' => 0.15,
-                'weighted_score' => round($storageScore * 0.15, 3),
+                'weight' => $weights['storage'],
+                'weighted_score' => round($storageScore * $weights['storage'], 3),
                 'provided' => "{$device->storage_gb} GB {$device->storage_type}",
                 'required' => ($requirements['min_storage_gb'] ?? 256).' GB',
                 'status' => $storageScore >= 1.0 ? 'Met' : ($storageScore >= 0.85 ? 'Headroom' : 'Deficit'),
@@ -315,20 +473,21 @@ class MatchingService
             ],
             'gpu' => [
                 'score' => round($gpuScore, 3),
-                'weight' => 0.20,
-                'weighted_score' => round($gpuScore * 0.20, 3),
+                'weight' => $weights['gpu'],
+                'weighted_score' => round($gpuScore * $weights['gpu'], 3),
                 'provided' => $device->gpu ? "{$device->gpu} ({$device->gpu_tier})" : ($device->gpu_tier !== 'none' ? ucfirst($device->gpu_tier) : 'Integrated/None'),
                 'required' => $requiresGpu ? ucfirst($reqGpuTier) : 'None / Optional',
                 'status' => $gpuScore >= 1.0 ? 'Met' : ($gpuScore >= 0.7 ? 'Exceeded' : ($gpuScore == 0.3 ? 'Overkill' : 'Deficit')),
             ],
             'portability' => [
                 'score' => round($portabilityScore, 3),
-                'weight' => 0.10,
-                'weighted_score' => round($portabilityScore * 0.10, 3),
+                'weight' => $weights['portability'],
+                'weighted_score' => round($portabilityScore * $weights['portability'], 3),
                 'provided' => ucfirst($device->device_type),
                 'required' => $portabilityRequired ? 'Laptop (Mobile)' : 'Any / Desktop Preferred',
                 'status' => $portabilityScore >= 1.0 ? 'Met' : 'Suboptimal',
             ],
+            'weight_profile' => $weights['profile_name'] ?? 'balanced',
             'modifiers' => [
                 'condition' => [
                     'adjustment' => $conditionMod,
@@ -407,26 +566,78 @@ class MatchingService
         ];
     }
 
-    private function scoreCpuTier(string $deviceTier, string $requiredTier): float
+    /**
+     * Resolve dynamic workload-tailored scoring weights (A4).
+     */
+    public function resolveWeights(array $requirements): array
+    {
+        // 1. Explicit custom weights array
+        if (! empty($requirements['weights']) && is_array($requirements['weights'])) {
+            $w = $requirements['weights'];
+            $cpu = (float) ($w['cpu'] ?? 0.30);
+            $ram = (float) ($w['ram'] ?? 0.25);
+            $storage = (float) ($w['storage'] ?? 0.15);
+            $gpu = (float) ($w['gpu'] ?? 0.20);
+            $portability = (float) ($w['portability'] ?? 0.10);
+            $total = $cpu + $ram + $storage + $gpu + $portability;
+            if ($total > 0) {
+                return [
+                    'cpu' => round($cpu / $total, 3),
+                    'ram' => round($ram / $total, 3),
+                    'storage' => round($storage / $total, 3),
+                    'gpu' => round($gpu / $total, 3),
+                    'portability' => round($portability / $total, 3),
+                    'profile_name' => 'custom',
+                ];
+            }
+        }
+
+        // 2. Explicit weight profile or workload type
+        $profileName = $requirements['weight_profile'] ?? $requirements['workload_type'] ?? null;
+        if ($profileName && isset(self::WEIGHT_PROFILES[$profileName])) {
+            $profile = self::WEIGHT_PROFILES[$profileName];
+            $profile['profile_name'] = $profileName;
+
+            return $profile;
+        }
+
+        // 3. Balanced default profile
+        $default = self::WEIGHT_PROFILES['balanced'];
+        $default['profile_name'] = 'balanced';
+
+        return $default;
+    }
+
+    private function scoreCpuTier(string $deviceTier, string $requiredTier, ?Device $device = null): float
     {
         $devVal = self::CPU_TIERS[$deviceTier] ?? 1;
         $reqVal = self::CPU_TIERS[$requiredTier] ?? 1;
         $diff = $devVal - $reqVal;
 
         if ($diff === 0) {
-            return 1.0;
-        }
-        if ($diff === 1) {
-            return 0.8; // One tier above (discourages over-provisioning)
-        }
-        if ($diff === 2) {
-            return 0.4;
-        }
-        if ($diff > 2) {
-            return 0.2;
+            $rawScore = 1.0;
+        } elseif ($diff === 1) {
+            $rawScore = 0.8; // One tier above (discourages over-provisioning)
+        } elseif ($diff === 2) {
+            $rawScore = 0.4;
+        } elseif ($diff > 2) {
+            $rawScore = 0.2;
+        } else {
+            return 0.0; // Below requirement
         }
 
-        return 0.0; // Below requirement
+        // Generation / Aging awareness (A2)
+        // If device processor is aging (>= 3 years in service or older architecture),
+        // apply architectural generation discount so an old i7 from 2012 cannot score identical to a modern i7.
+        if ($device && $device->isAging()) {
+            $currentYear = (int) date('Y');
+            $year = $device->year_acquired ?: ($currentYear - 3);
+            $ageInYears = max(3, $currentYear - $year);
+            $agePenalty = min(0.20, max(0.05, ($ageInYears - 2) * 0.04));
+            $rawScore = max(0.1, round($rawScore - $agePenalty, 3));
+        }
+
+        return $rawScore;
     }
 
     private function scoreRam(int $deviceRam, int $requiredRam): float
