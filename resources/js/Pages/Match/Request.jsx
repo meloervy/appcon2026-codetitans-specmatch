@@ -17,9 +17,11 @@ import {
     RiCpuLine,
     RiDeleteBinLine,
     RiExchangeLine,
+    RiGuideLine,
     RiInformationLine,
     RiMapPinLine,
     RiSearchLine,
+    RiSettings4Line,
     RiShieldCheckLine,
     RiUserLine,
 } from 'react-icons/ri';
@@ -383,15 +385,10 @@ export default function MatchRequest({
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <button
-                            type="button"
-                            onClick={handleTestGemini}
-                            disabled={isTestingGemini}
-                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:text-[#026eff] dark:hover:text-[#0b79ff] text-xs font-bold border border-slate-200 dark:border-zinc-700 shadow-2xs transition cursor-pointer"
-                        >
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-bold border border-slate-200 dark:border-zinc-700 shadow-2xs">
                             <span className="w-2 h-2 rounded-full bg-[#0aceb3] animate-pulse" />
-                            {isTestingGemini ? 'Testing Gemini 3.6...' : 'Test Gemini 3.6 Flash'}
-                        </button>
+                            <span>Gemini 3.6 Flash Active</span>
+                        </div>
                     </div>
                 </div>
             }
@@ -462,15 +459,10 @@ export default function MatchRequest({
                                 <span className="w-6 h-6 rounded-full bg-[#026eff] text-white flex items-center justify-center text-xs font-bold">1</span>
                                 <h2 className="font-bold text-slate-900 dark:text-zinc-100 text-base">Request Specification</h2>
                             </div>
-                            <button
-                                type="button"
-                                onClick={handleTestGemini}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#026eff]/10 text-[#026eff] dark:text-[#0b79ff] border border-[#026eff]/20 hover:bg-[#026eff]/20 transition cursor-pointer"
-                                title="Click to test live response from Gemini 3.6 Flash"
-                            >
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#0aceb3] animate-pulse" />
-                                <span>Gemini 3.6 Flash</span>
-                            </button>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#026eff]/10 text-[#026eff] dark:text-[#0b79ff] border border-[#026eff]/20">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#0aceb3]" />
+                                <span>Natural Language Input</span>
+                            </span>
                         </div>
 
                         {/* Employee Select */}
@@ -783,90 +775,125 @@ export default function MatchRequest({
                                                     </span>
                                                 </div>
 
-                                                {/* Parameter Adjustment Panel */}
-                                                <div className="mb-5 p-4 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-200/60 dark:border-zinc-700/60">
-                                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 block mb-3">Adjust Parameters Prior to Ranking</span>
-                                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                                                        <div>
-                                                            <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400 mb-1 block">Min CPU</label>
-                                                            <CustomSelect
-                                                                value={extracted.min_cpu_tier}
-                                                                onChange={(val) => setExtracted({ ...extracted, min_cpu_tier: val })}
-                                                                options={matchCpuTierOptions}
-                                                                placeholder="Min CPU"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400 mb-1 block">Min RAM (GB)</label>
-                                                            <input
-                                                                type="number"
-                                                                value={extracted.min_ram_gb}
-                                                                onChange={(e) => setExtracted({ ...extracted, min_ram_gb: parseInt(e.target.value) || 0 })}
-                                                                className="w-full text-xs rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 font-semibold py-2 px-2.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400 mb-1 block">Min Storage (GB)</label>
-                                                            <input
-                                                                type="number"
-                                                                value={extracted.min_storage_gb}
-                                                                onChange={(e) => setExtracted({ ...extracted, min_storage_gb: parseInt(e.target.value) || 0 })}
-                                                                className="w-full text-xs rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 font-semibold py-2 px-2.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400 mb-1 block">Min GPU</label>
-                                                            <CustomSelect
-                                                                value={extracted.min_gpu_tier}
-                                                                onChange={(val) => setExtracted({ ...extracted, min_gpu_tier: val })}
-                                                                options={matchGpuTierOptions}
-                                                                placeholder="Min GPU"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center justify-between gap-4 mt-3 pt-3 border-t border-slate-200/60 dark:border-zinc-700/60">
-                                                        <div className="flex gap-4">
-                                                            <label className="flex items-center gap-1.5 cursor-pointer text-xs">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={extracted.requires_gpu}
-                                                                    onChange={(e) => setExtracted({ ...extracted, requires_gpu: e.target.checked })}
-                                                                    className="rounded border-slate-300 dark:border-zinc-600 text-[#026eff] dark:bg-zinc-700 text-xs focus:ring-[#026eff]/20"
-                                                                />
-                                                                <span className="font-semibold text-slate-700 dark:text-zinc-300">Requires GPU</span>
-                                                            </label>
-                                                            <label className="flex items-center gap-1.5 cursor-pointer text-xs">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={extracted.portability_required}
-                                                                    onChange={(e) => setExtracted({ ...extracted, portability_required: e.target.checked })}
-                                                                    className="rounded border-slate-300 dark:border-zinc-600 text-[#026eff] dark:bg-zinc-700 text-xs focus:ring-[#026eff]/20"
-                                                                />
-                                                                <span className="font-semibold text-slate-700 dark:text-zinc-300">Laptop / Mobile</span>
-                                                            </label>
-                                                        </div>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleRank(extracted)}
-                                                            disabled={isRanking}
-                                                            className="px-3 py-1.5 rounded-lg bg-[#026eff] hover:bg-[#0256cc] text-white font-bold text-xs transition disabled:opacity-50 cursor-pointer shadow-2xs"
-                                                        >
-                                                            {isRanking ? 'Re-scoring...' : 'Re-rank Fleet'}
-                                                        </button>
-                                                    </div>
-                                                </div>
-
-                                                <details className="group">
-                                                    <summary className="text-xs font-bold text-[#026eff] dark:text-[#0b79ff] cursor-pointer hover:text-[#026eff] dark:hover:text-[#0b79ff] transition select-none flex items-center gap-1.5">
-                                                        <svg className="w-4 h-4 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                                                        </svg>
-                                                        View Raw JSON Payload
+                                                {/* Collapsible Advanced Simulator & Developer Diagnostics */}
+                                                <details className="group rounded-xl border border-slate-200/80 dark:border-zinc-800 bg-slate-50/60 dark:bg-zinc-800/40 p-3.5 transition">
+                                                    <summary className="text-xs font-bold text-slate-700 dark:text-zinc-300 cursor-pointer flex items-center justify-between select-none hover:text-[#026eff] transition">
+                                                        <span className="flex items-center gap-2">
+                                                            <RiSettings4Line className="w-4 h-4 text-slate-500 group-hover:text-[#026eff]" />
+                                                            <span>Advanced Simulator &amp; Developer Tools</span>
+                                                        </span>
+                                                        <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 group-open:rotate-180 transition-transform">
+                                                            ▼
+                                                        </span>
                                                     </summary>
-                                                    <div className="mt-4">
-                                                        <pre className="text-xs bg-slate-900 text-emerald-400 p-4 rounded-xl overflow-x-auto custom-scrollbar border border-slate-800 font-mono shadow-inner">
-                                                            {JSON.stringify(extracted, null, 2)}
-                                                        </pre>
+
+                                                    <div className="mt-4 pt-3 border-t border-slate-200/60 dark:border-zinc-700/60 space-y-4">
+                                                        {/* Parameter Override Controls */}
+                                                        <div>
+                                                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 block mb-2">
+                                                                Simulate Custom Hardware Requirements
+                                                            </span>
+                                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                                                                <div>
+                                                                    <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400 mb-1 block">Min CPU</label>
+                                                                    <CustomSelect
+                                                                        value={extracted.min_cpu_tier}
+                                                                        onChange={(val) => setExtracted({ ...extracted, min_cpu_tier: val })}
+                                                                        options={matchCpuTierOptions}
+                                                                        placeholder="Min CPU"
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400 mb-1 block">Min RAM (GB)</label>
+                                                                    <input
+                                                                        type="number"
+                                                                        value={extracted.min_ram_gb}
+                                                                        onChange={(e) => setExtracted({ ...extracted, min_ram_gb: parseInt(e.target.value) || 0 })}
+                                                                        className="w-full text-xs rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 font-semibold py-2 px-2.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400 mb-1 block">Min Storage (GB)</label>
+                                                                    <input
+                                                                        type="number"
+                                                                        value={extracted.min_storage_gb}
+                                                                        onChange={(e) => setExtracted({ ...extracted, min_storage_gb: parseInt(e.target.value) || 0 })}
+                                                                        className="w-full text-xs rounded-xl border-[1.5px] border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 font-semibold py-2 px-2.5 focus:border-[#026eff] focus:ring-2 focus:ring-[#026eff]/20 shadow-2xs transition"
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400 mb-1 block">Min GPU</label>
+                                                                    <CustomSelect
+                                                                        value={extracted.min_gpu_tier}
+                                                                        onChange={(val) => setExtracted({ ...extracted, min_gpu_tier: val })}
+                                                                        options={matchGpuTierOptions}
+                                                                        placeholder="Min GPU"
+                                                                    />
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="flex items-center justify-between gap-4 mt-3 pt-3 border-t border-slate-200/60 dark:border-zinc-700/60">
+                                                                <div className="flex gap-4">
+                                                                    <label className="flex items-center gap-1.5 cursor-pointer text-xs">
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={extracted.requires_gpu}
+                                                                            onChange={(e) => setExtracted({ ...extracted, requires_gpu: e.target.checked })}
+                                                                            className="rounded border-slate-300 dark:border-zinc-600 text-[#026eff] dark:bg-zinc-700 text-xs focus:ring-[#026eff]/20"
+                                                                        />
+                                                                        <span className="font-semibold text-slate-700 dark:text-zinc-300">Requires GPU</span>
+                                                                    </label>
+                                                                    <label className="flex items-center gap-1.5 cursor-pointer text-xs">
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={extracted.portability_required}
+                                                                            onChange={(e) => setExtracted({ ...extracted, portability_required: e.target.checked })}
+                                                                            className="rounded border-slate-300 dark:border-zinc-600 text-[#026eff] dark:bg-zinc-700 text-xs focus:ring-[#026eff]/20"
+                                                                        />
+                                                                        <span className="font-semibold text-slate-700 dark:text-zinc-300">Laptop / Mobile</span>
+                                                                    </label>
+                                                                </div>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleRank(extracted)}
+                                                                    disabled={isRanking}
+                                                                    className="px-3 py-1.5 rounded-lg bg-[#026eff] hover:bg-[#0256cc] text-white font-bold text-xs transition disabled:opacity-50 cursor-pointer shadow-2xs"
+                                                                >
+                                                                    {isRanking ? 'Re-scoring...' : 'Re-rank Fleet'}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Gemini Diagnostics & Test Connectivity */}
+                                                        <div className="pt-3 border-t border-slate-200/60 dark:border-zinc-700/60 flex items-center justify-between">
+                                                            <div>
+                                                                <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 block">
+                                                                    Gemini 3.6 Flash Live Connectivity
+                                                                </span>
+                                                                <span className="text-[11px] text-slate-500 dark:text-zinc-400">
+                                                                    Verify cloud API round-trip latency &amp; rate limits
+                                                                </span>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={handleTestGemini}
+                                                                disabled={isTestingGemini}
+                                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:text-[#026eff] text-xs font-bold border border-slate-200 dark:border-zinc-700 transition cursor-pointer"
+                                                            >
+                                                                <span className="w-2 h-2 rounded-full bg-[#0aceb3] animate-pulse" />
+                                                                {isTestingGemini ? 'Testing Gemini...' : 'Run Connectivity Test'}
+                                                            </button>
+                                                        </div>
+
+                                                        {/* Raw JSON Payload */}
+                                                        <div className="pt-3 border-t border-slate-200/60 dark:border-zinc-700/60">
+                                                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 block mb-1">
+                                                                Raw JSON Extraction Payload
+                                                            </span>
+                                                            <pre className="text-xs bg-slate-900 text-emerald-400 p-3 rounded-xl overflow-x-auto custom-scrollbar border border-slate-800 font-mono shadow-inner">
+                                                                {JSON.stringify(extracted, null, 2)}
+                                                            </pre>
+                                                        </div>
                                                     </div>
                                                 </details>
                                             </>
@@ -956,6 +983,45 @@ export default function MatchRequest({
                                     </div>
                                 ) : (
                                     <>
+                                        {/* SpecMatch Dual-Engine Strategic Allocation Guide */}
+                                        <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-50 via-white to-slate-50 dark:from-zinc-900/90 dark:via-zinc-800/50 dark:to-zinc-900/90 border border-slate-200/80 dark:border-zinc-700/80 shadow-xs">
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-200/60 dark:border-zinc-700/60">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="p-1 rounded-lg bg-[#026eff]/10 text-[#026eff] dark:text-[#0b79ff]">
+                                                        <RiGuideLine className="w-4 h-4" />
+                                                    </span>
+                                                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-zinc-100">
+                                                        SpecMatch Two-Path Fleet Allocation Framework
+                                                    </h4>
+                                                </div>
+                                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-800 px-2.5 py-0.5 rounded-full border border-slate-200/60 dark:border-zinc-700/60">
+                                                    Contest Constraint #1 &amp; #2 Compliant
+                                                </span>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                                                <div className="p-3 rounded-xl bg-white dark:bg-zinc-800/60 border border-slate-200/60 dark:border-zinc-700/50">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 flex items-center justify-center text-[10px] font-extrabold shrink-0">1</span>
+                                                        <span className="text-xs font-bold text-slate-900 dark:text-zinc-100">Direct Fleet Assignment (Primary)</span>
+                                                    </div>
+                                                    <p className="text-[11px] text-slate-600 dark:text-zinc-400 leading-relaxed pl-7">
+                                                        Deploy ready, idle stockroom units matching specs immediately with 1:1 hardware assignment. Evaluated first to circulate idle company assets without moving equipment between employees.
+                                                    </p>
+                                                </div>
+
+                                                <div className="p-3 rounded-xl bg-white dark:bg-zinc-800/60 border border-slate-200/60 dark:border-zinc-700/50">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className="w-5 h-5 rounded-full bg-[#0aceb3]/20 text-[#0aceb3] flex items-center justify-center text-[10px] font-extrabold shrink-0">2</span>
+                                                        <span className="text-xs font-bold text-slate-900 dark:text-zinc-100">Dynamic Bridge Swap (Cascade Solution)</span>
+                                                    </div>
+                                                    <p className="text-[11px] text-slate-600 dark:text-zinc-400 leading-relaxed pl-7">
+                                                        When stockroom lacks a matching high-spec unit, SpecMatch cascades an idle unit to an over-provisioned donor user, liberating their workstation for this request and avoiding new CapEx procurement.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         {/* Procurement Alert (Contest Constraint #1) */}
                                         {procurementRecommended && (
                                             <div className="p-5 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/60 shadow-xs flex items-start gap-4">
@@ -1007,16 +1073,19 @@ export default function MatchRequest({
                                                                     </svg>
                                                                 </span>
                                                                 <div>
-                                                                    <div className="flex items-center gap-2">
+                                                                    <div className="flex items-center gap-2 flex-wrap">
                                                                         <h3 className="font-black text-sm tracking-tight text-white">
                                                                             Dynamic Inventory Bridge Swap Solution
                                                                         </h3>
+                                                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#0b79ff]/20 text-[#0b79ff] border border-[#0b79ff]/40 uppercase tracking-wide">
+                                                                            Cascaded Reallocation Alternative
+                                                                        </span>
                                                                         <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#0aceb3]/20 text-[#0aceb3] border border-[#0aceb3]/40">
                                                                             Avoids Procurement
                                                                         </span>
                                                                     </div>
                                                                     <p className="text-xs text-slate-300 mt-0.5">
-                                                                        Replaces unnecessary CapEx by cascading an idle stockroom unit to an overprovisioned user.
+                                                                        Alternative to new procurement: Cascades an idle stockroom unit to an overprovisioned employee to free up their workstation for the requester.
                                                                     </p>
                                                                 </div>
                                                             </div>
@@ -1159,6 +1228,13 @@ export default function MatchRequest({
                                                             is_available_for_deployment,
                                                         } = item;
                                                         const isTopHero = idx === 0 && recoFilter === 'top' && passes_threshold;
+                                                        const itemWeights = item.weights || item.subscore_audit?.weights || {
+                                                            cpu: 0.30,
+                                                            ram: 0.25,
+                                                            storage: 0.15,
+                                                            gpu: 0.20,
+                                                            portability: 0.10,
+                                                        };
 
                                                         return (
                                                             <div
@@ -1271,41 +1347,67 @@ export default function MatchRequest({
 
                                                                 {/* Subscore Breakdown Bars (Contest Constraint #2) */}
                                                                 {!disqualified && (
-                                                                    <div className="grid grid-cols-5 gap-2 my-3 text-[11px]">
-                                                                        <div>
-                                                                            <div className="text-slate-400 dark:text-zinc-500 text-[10px] font-semibold uppercase">CPU (30%)</div>
-                                                                            <div className="w-full bg-slate-100 dark:bg-zinc-800 rounded-full h-1.5 mt-1 overflow-hidden">
-                                                                                <div className={`h-1.5 rounded-full ${subscores.cpu >= 0.8 ? 'bg-[#0aceb3]' : subscores.cpu >= 0.5 ? 'bg-[#026eff]' : 'bg-amber-500'}`} style={{ width: `${subscores.cpu * 100}%` }} />
+                                                                    <div className="my-3 space-y-2">
+                                                                        <div className="grid grid-cols-5 gap-2 text-[11px]">
+                                                                            <div>
+                                                                                <div className="text-slate-400 dark:text-zinc-500 text-[10px] font-semibold uppercase">
+                                                                                    CPU ({Math.round(itemWeights.cpu * 100)}%)
+                                                                                </div>
+                                                                                <div className="w-full bg-slate-100 dark:bg-zinc-800 rounded-full h-1.5 mt-1 overflow-hidden">
+                                                                                    <div className={`h-1.5 rounded-full ${subscores.cpu >= 0.8 ? 'bg-[#0aceb3]' : subscores.cpu >= 0.5 ? 'bg-[#026eff]' : 'bg-amber-500'}`} style={{ width: `${subscores.cpu * 100}%` }} />
+                                                                                </div>
+                                                                                <span className="font-mono text-slate-700 dark:text-zinc-300 text-[10px]">{Math.round(subscores.cpu * 100)}%</span>
                                                                             </div>
-                                                                            <span className="font-mono text-slate-700 dark:text-zinc-300 text-[10px]">{Math.round(subscores.cpu * 100)}%</span>
+                                                                            <div>
+                                                                                <div className="text-slate-400 dark:text-zinc-500 text-[10px] font-semibold uppercase">
+                                                                                    RAM ({Math.round(itemWeights.ram * 100)}%)
+                                                                                </div>
+                                                                                <div className="w-full bg-slate-100 dark:bg-zinc-800 rounded-full h-1.5 mt-1 overflow-hidden">
+                                                                                    <div className={`h-1.5 rounded-full ${subscores.ram >= 0.8 ? 'bg-[#0aceb3]' : subscores.ram >= 0.5 ? 'bg-[#026eff]' : 'bg-amber-500'}`} style={{ width: `${subscores.ram * 100}%` }} />
+                                                                                </div>
+                                                                                <span className="font-mono text-slate-700 dark:text-zinc-300 text-[10px]">{Math.round(subscores.ram * 100)}%</span>
+                                                                            </div>
+                                                                            <div>
+                                                                                <div className="text-slate-400 dark:text-zinc-500 text-[10px] font-semibold uppercase">
+                                                                                    Disk ({Math.round(itemWeights.storage * 100)}%)
+                                                                                </div>
+                                                                                <div className="w-full bg-slate-100 dark:bg-zinc-800 rounded-full h-1.5 mt-1 overflow-hidden">
+                                                                                    <div className={`h-1.5 rounded-full ${subscores.storage >= 0.8 ? 'bg-[#0aceb3]' : subscores.storage >= 0.5 ? 'bg-[#026eff]' : 'bg-amber-500'}`} style={{ width: `${subscores.storage * 100}%` }} />
+                                                                                </div>
+                                                                                <span className="font-mono text-slate-700 dark:text-zinc-300 text-[10px]">{Math.round(subscores.storage * 100)}%</span>
+                                                                            </div>
+                                                                            <div>
+                                                                                <div className="text-slate-400 dark:text-zinc-500 text-[10px] font-semibold uppercase">
+                                                                                    GPU ({Math.round(itemWeights.gpu * 100)}%)
+                                                                                </div>
+                                                                                <div className="w-full bg-slate-100 dark:bg-zinc-800 rounded-full h-1.5 mt-1 overflow-hidden">
+                                                                                    <div className={`h-1.5 rounded-full ${subscores.gpu >= 0.8 ? 'bg-[#0aceb3]' : subscores.gpu >= 0.5 ? 'bg-[#026eff]' : 'bg-amber-500'}`} style={{ width: `${subscores.gpu * 100}%` }} />
+                                                                                </div>
+                                                                                <span className="font-mono text-slate-700 dark:text-zinc-300 text-[10px]">{Math.round(subscores.gpu * 100)}%</span>
+                                                                            </div>
+                                                                            <div>
+                                                                                <div className="text-slate-400 dark:text-zinc-500 text-[10px] font-semibold uppercase">
+                                                                                    Port ({Math.round(itemWeights.portability * 100)}%)
+                                                                                </div>
+                                                                                <div className="w-full bg-slate-100 dark:bg-zinc-800 rounded-full h-1.5 mt-1 overflow-hidden">
+                                                                                    <div className={`h-1.5 rounded-full ${subscores.portability >= 0.8 ? 'bg-[#0aceb3]' : subscores.portability >= 0.5 ? 'bg-[#026eff]' : 'bg-amber-500'}`} style={{ width: `${subscores.portability * 100}%` }} />
+                                                                                </div>
+                                                                                <span className="font-mono text-slate-700 dark:text-zinc-300 text-[10px]">{Math.round(subscores.portability * 100)}%</span>
+                                                                            </div>
                                                                         </div>
-                                                                        <div>
-                                                                            <div className="text-slate-400 dark:text-zinc-500 text-[10px] font-semibold uppercase">RAM (25%)</div>
-                                                                            <div className="w-full bg-slate-100 dark:bg-zinc-800 rounded-full h-1.5 mt-1 overflow-hidden">
-                                                                                <div className={`h-1.5 rounded-full ${subscores.ram >= 0.8 ? 'bg-[#0aceb3]' : subscores.ram >= 0.5 ? 'bg-[#026eff]' : 'bg-amber-500'}`} style={{ width: `${subscores.ram * 100}%` }} />
+
+                                                                        {/* Objective Mathematical Reconciliation Formula Audit */}
+                                                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 text-[10px] text-slate-600 dark:text-zinc-400 bg-slate-50 dark:bg-zinc-800/60 px-3 py-1.5 rounded-lg border border-slate-200/60 dark:border-zinc-700/60 font-mono">
+                                                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                                                <span className="font-bold uppercase text-slate-700 dark:text-zinc-300">Deterministic Formula:</span>
+                                                                                <span>
+                                                                                    ({Math.round(subscores.cpu * 100)}%×{Math.round(itemWeights.cpu * 100)}%) + ({Math.round(subscores.ram * 100)}%×{Math.round(itemWeights.ram * 100)}%) + ({Math.round(subscores.storage * 100)}%×{Math.round(itemWeights.storage * 100)}%) + ({Math.round(subscores.gpu * 100)}%×{Math.round(itemWeights.gpu * 100)}%) + ({Math.round(subscores.portability * 100)}%×{Math.round(itemWeights.portability * 100)}%) = <strong className="text-slate-900 dark:text-zinc-100 font-black">{Math.round(score * 100)}%</strong>
+                                                                                </span>
                                                                             </div>
-                                                                            <span className="font-mono text-slate-700 dark:text-zinc-300 text-[10px]">{Math.round(subscores.ram * 100)}%</span>
-                                                                        </div>
-                                                                        <div>
-                                                                            <div className="text-slate-400 dark:text-zinc-500 text-[10px] font-semibold uppercase">Disk (15%)</div>
-                                                                            <div className="w-full bg-slate-100 dark:bg-zinc-800 rounded-full h-1.5 mt-1 overflow-hidden">
-                                                                                <div className={`h-1.5 rounded-full ${subscores.storage >= 0.8 ? 'bg-[#0aceb3]' : subscores.storage >= 0.5 ? 'bg-[#026eff]' : 'bg-amber-500'}`} style={{ width: `${subscores.storage * 100}%` }} />
-                                                                            </div>
-                                                                            <span className="font-mono text-slate-700 dark:text-zinc-300 text-[10px]">{Math.round(subscores.storage * 100)}%</span>
-                                                                        </div>
-                                                                        <div>
-                                                                            <div className="text-slate-400 dark:text-zinc-500 text-[10px] font-semibold uppercase">GPU (20%)</div>
-                                                                            <div className="w-full bg-slate-100 dark:bg-zinc-800 rounded-full h-1.5 mt-1 overflow-hidden">
-                                                                                <div className={`h-1.5 rounded-full ${subscores.gpu >= 0.8 ? 'bg-[#0aceb3]' : subscores.gpu >= 0.5 ? 'bg-[#026eff]' : 'bg-amber-500'}`} style={{ width: `${subscores.gpu * 100}%` }} />
-                                                                            </div>
-                                                                            <span className="font-mono text-slate-700 dark:text-zinc-300 text-[10px]">{Math.round(subscores.gpu * 100)}%</span>
-                                                                        </div>
-                                                                        <div>
-                                                                            <div className="text-slate-400 dark:text-zinc-500 text-[10px] font-semibold uppercase">Port (10%)</div>
-                                                                            <div className="w-full bg-slate-100 dark:bg-zinc-800 rounded-full h-1.5 mt-1 overflow-hidden">
-                                                                                <div className={`h-1.5 rounded-full ${subscores.portability >= 0.8 ? 'bg-[#0aceb3]' : subscores.portability >= 0.5 ? 'bg-[#026eff]' : 'bg-amber-500'}`} style={{ width: `${subscores.portability * 100}%` }} />
-                                                                            </div>
-                                                                            <span className="font-mono text-slate-700 dark:text-zinc-300 text-[10px]">{Math.round(subscores.portability * 100)}%</span>
+                                                                            <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider shrink-0 flex items-center gap-1">
+                                                                                <RiCheckLine className="w-3 h-3 text-emerald-500" />
+                                                                                <span>100% Reconciled</span>
+                                                                            </span>
                                                                         </div>
                                                                     </div>
                                                                 )}

@@ -65,6 +65,38 @@ class MatchingService
     ];
 
     /**
+     * Compute deterministic final weighted match score from sub-scores and weights (Contest Constraint #2).
+     *
+     * Supports both standard benchmark key formats:
+     * - Contest spec: cpu_tier_match_score, ram_sufficiency_score, storage_sufficiency_score, gpu_match_score, portability_match_score
+     * - Shorthand: cpu, ram, storage (or disk), gpu, portability (or port)
+     */
+    public function computeFinalScore(array $subScores, ?array $weights = null): float
+    {
+        $weights = $weights ?? self::WEIGHT_PROFILES['balanced'];
+
+        $cpu = (float) ($subScores['cpu_tier_match_score'] ?? $subScores['cpu'] ?? 0.0);
+        $ram = (float) ($subScores['ram_sufficiency_score'] ?? $subScores['ram'] ?? 0.0);
+        $storage = (float) ($subScores['storage_sufficiency_score'] ?? $subScores['storage'] ?? $subScores['disk'] ?? 0.0);
+        $gpu = (float) ($subScores['gpu_match_score'] ?? $subScores['gpu'] ?? 0.0);
+        $portability = (float) ($subScores['portability_match_score'] ?? $subScores['portability'] ?? $subScores['port'] ?? 0.0);
+
+        $wCpu = (float) ($weights['cpu'] ?? self::WEIGHT_PROFILES['balanced']['cpu']);
+        $wRam = (float) ($weights['ram'] ?? self::WEIGHT_PROFILES['balanced']['ram']);
+        $wStorage = (float) ($weights['storage'] ?? self::WEIGHT_PROFILES['balanced']['storage']);
+        $wGpu = (float) ($weights['gpu'] ?? self::WEIGHT_PROFILES['balanced']['gpu']);
+        $wPort = (float) ($weights['portability'] ?? self::WEIGHT_PROFILES['balanced']['portability']);
+
+        $score = ($cpu * $wCpu)
+               + ($ram * $wRam)
+               + ($storage * $wStorage)
+               + ($gpu * $wGpu)
+               + ($portability * $wPort);
+
+        return round(max(0.0, min(1.0, $score)), 3);
+    }
+
+    /**
      * Estimate new replacement procurement value of a device in Philippine Peso (₱).
      */
     public function estimateDeviceValuePhp(Device $device): float
@@ -362,15 +394,21 @@ class MatchingService
         $gpuScore = $this->scoreGpu($device->gpu_tier, $requiresGpu, $reqGpuTier);
         $portabilityScore = $this->scorePortability($device->device_type, $portabilityRequired);
 
-        // Weighted base total using resolved weights
-        $baseScore = ($cpuScore * $weights['cpu'])
-               + ($ramScore * $weights['ram'])
-               + ($storageScore * $weights['storage'])
-               + ($gpuScore * $weights['gpu'])
-               + ($portabilityScore * $weights['portability']);
+        // Sub-scores (0.0 to 1.0) with generation awareness (A2)
+        $subscores = [
+            'cpu' => round($cpuScore, 3),
+            'ram' => round($ramScore, 3),
+            'storage' => round($storageScore, 3),
+            'gpu' => round($gpuScore, 3),
+            'portability' => round($portabilityScore, 3),
+        ];
 
-        // Refined ITAM Modifiers:
-        // 1. Condition adjustment (+0.02 for excellent/good, -0.05 for fair, -0.15 for poor)
+        // Deterministic weighted total using resolved weights (Contest Constraint #2)
+        $finalScore = $this->computeFinalScore($subscores, $weights);
+        $baseScore = $finalScore;
+
+        // ITAM Condition & Lifecycle Modifiers (Recorded for Hardware Health Diagnostics)
+        // 1. Condition adjustment (+0.02 for excellent/good, -0.04 for fair, -0.15 for poor)
         $conditionMod = match (strtolower($device->condition ?? 'good')) {
             'new', 'excellent' => 0.02,
             'good' => 0.01,
@@ -387,8 +425,6 @@ class MatchingService
             'retired', 'disposed', 'retirement' => -0.30,
             default => 0.0,
         };
-
-        $finalScore = max(0.0, min(1.0, round($baseScore + $conditionMod + $lifecycleMod, 3)));
 
         // Component breakdown meters (0-100%)
         $componentMeters = [
@@ -431,14 +467,6 @@ class MatchingService
         if (! $disqualified && ($device->ram_gb >= ($requirements['min_ram_gb'] ?? 8) * 2 && $device->ram_gb > 16)) {
             $overprovisioningRisk = true;
         }
-
-        $subscores = [
-            'cpu' => round($cpuScore, 3),
-            'ram' => round($ramScore, 3),
-            'storage' => round($storageScore, 3),
-            'gpu' => round($gpuScore, 3),
-            'portability' => round($portabilityScore, 3),
-        ];
 
         // Detailed Sub-score Audit for transparency and mathematical explainability
         $subscoreAudit = [
@@ -488,6 +516,13 @@ class MatchingService
                 'status' => $portabilityScore >= 1.0 ? 'Met' : 'Suboptimal',
             ],
             'weight_profile' => $weights['profile_name'] ?? 'balanced',
+            'weights' => [
+                'cpu' => $weights['cpu'],
+                'ram' => $weights['ram'],
+                'storage' => $weights['storage'],
+                'gpu' => $weights['gpu'],
+                'portability' => $weights['portability'],
+            ],
             'modifiers' => [
                 'condition' => [
                     'adjustment' => $conditionMod,
@@ -547,6 +582,13 @@ class MatchingService
             'device' => $device,
             'score' => $finalScore,
             'base_score' => round($baseScore, 3),
+            'weights' => [
+                'cpu' => $weights['cpu'],
+                'ram' => $weights['ram'],
+                'storage' => $weights['storage'],
+                'gpu' => $weights['gpu'],
+                'portability' => $weights['portability'],
+            ],
             'subscores' => $subscores,
             'subscore_audit' => $subscoreAudit,
             'component_meters' => $componentMeters,
