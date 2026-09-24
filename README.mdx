@@ -1,0 +1,618 @@
+{/* README.mdx — SpecMatch */}
+{/* AppCon 2026 Hackathon · Team 10 · Code Titans */}
+
+# SpecMatch
+
+> **Intelligent Internal Device Asset Optimization**
+> AppCon 2026 Hackathon · Team 10 — Code Titans
+> Theme: *Intelligent Internal Device Asset Optimization*
+
+---
+
+## What Is SpecMatch?
+
+SpecMatch is a full-stack web application that acts as a **single source of truth** for a company's IT hardware inventory, and uses **AI to objectively match idle devices to employee needs** — before anyone considers buying new equipment.
+
+It answers the question every IT department struggles with:
+
+> *"Do we already own something that fits this person's workload — and can we prove it?"*
+
+The system ensures that existing inventory is always evaluated first, that every recommendation carries visible, per-criterion reasoning, and that procurement is only ever suggested when the fleet genuinely has nothing suitable.
+
+---
+
+## Hackathon Context
+
+| | |
+|---|---|
+| **Event** | AppCon 2026 |
+| **Team** | Team 10 — Code Titans |
+| **Theme** | Intelligent Internal Device Asset Optimization |
+| **Problem** | IT departments manage heterogeneous fleets without objective selection criteria, causing mismatches between employee needs and assigned devices while usable inventory sits idle. |
+| **Constraints** | (1) Existing inventory considered before new purchases. (2) Recommendations include understandable, objective reasoning. (3) Different hardware specs and work requirements all considered. |
+
+### How SpecMatch Satisfies Each Constraint
+
+| Constraint | Where it lives in SpecMatch |
+|---|---|
+| **Existing inventory first** | Procurement is suggested only when zero devices clear the match threshold |
+| **Objective, understandable reasoning** | Per-criterion breakdown bars (CPU / RAM / Storage / GPU / Portability) + plain-language rationale under each ranked result |
+| **Different specs & requirements** | Full device schema (CPU tier, RAM GB, storage type/GB, GPU tier, portability) paired with role profiles and free-text AI extraction |
+
+---
+
+## The Core Loop
+
+```
+IT describes a need (role profile or free text)
+         │
+         ▼
+  Gemini 3.1 Flash-Lite extracts structured requirements
+  { cpu_tier, ram_gb, storage_gb, gpu_tier, portability }
+         │
+         ▼
+  Matching engine scores every idle device
+  Score = (CPU×0.30) + (RAM×0.25) + (Storage×0.15) + (GPU×0.20) + (Portability×0.10)
+         │
+         ▼
+  Ranked results with per-criterion bars & plain-language reason
+         │
+      ┌──┴──┐
+      │     │
+   Match  No match above threshold
+  found      │
+      │      ▼
+      │  Suggest procurement (new purchase)
+      ▼
+  IT assigns the top pick (or overrides)
+  Device status → assigned, assignment logged
+         │
+         ▼
+  Mismatch Radar runs continuously
+  Flags under-provisioned staff & over-provisioned waste
+```
+
+---
+
+## Feature Overview
+
+### 🖥️ Device Inventory Management
+- Register devices with full hardware specs: brand, model, CPU tier, RAM (GB), storage type/GB, GPU tier, device type (laptop/desktop), condition, and lifecycle status.
+- Lifecycle stages: `available` → `assigned` → `maintenance` → `retired` → `reclaimed`.
+- Maintenance log with cost tracking, technician name, and notes.
+- Lifecycle event trail (every status change is recorded with timestamp and actor).
+- Export device list to PDF.
+- TechSpecs API integration: search the global hardware database and auto-populate specs when registering a device.
+
+### 👥 Employee Management
+- Register employees with department, position, and profile picture.
+- Assign/reassign/unassign devices with full assignment history.
+- CSV import for bulk employee onboarding.
+- Export employee roster to CSV or PDF.
+- Offboarding workflow: unassigns device and archives the employee.
+
+### 🎯 AI Matching Engine (Two-Layer Architecture)
+
+**Layer 1 — AI Requirement Extraction (Gemini)**
+
+Converts free-text workload descriptions into a structured requirement schema:
+```json
+{
+  "min_cpu_tier": "high",
+  "min_ram_gb": 32,
+  "min_storage_gb": 512,
+  "requires_gpu": true,
+  "min_gpu_tier": "dedicated-entry",
+  "portability_required": false,
+  "reasoning": "Adobe Premiere requires hardware-accelerated export..."
+}
+```
+
+**Layer 2 — Deterministic Weighted Scoring**
+
+Every idle device is scored against extracted requirements:
+
+| Criterion | Weight |
+|-----------|--------|
+| CPU tier match | 30% |
+| RAM adequacy | 25% |
+| GPU tier match | 20% |
+| Storage adequacy | 15% |
+| Portability fit | 10% |
+
+Results are ranked with:
+- A **match percentage** (0–100%)
+- Individual **sub-score bars** for each criterion
+- A **plain-language explanation** of why the device scored as it did
+
+**Role Profiles**: Pre-defined workload templates (e.g. "Software Developer", "Video Editor", "Data Analyst") provide one-click requirement seeding without writing a description.
+
+**Dynamic Inventory Bridge Swap**: A single-hop cascade reallocation — if no idle device fits, the engine finds an overprovisioned active assignment and proposes: swap that person to a smaller idle unit and redirect their current device to the requester.
+
+### 🔍 Mismatch Radar
+Continuously scans active assignments and flags:
+- **Under-provisioned**: Device doesn't meet the assigned employee's role requirements (performance bottleneck risk).
+- **Over-provisioned**: High-spec device assigned to a low-demand role (fleet waste).
+- Displays CapEx impact estimates.
+
+### 💬 Fleet AI Assistant (Gemini-powered Chat)
+A contextual chat assistant with live fleet awareness:
+- Answers questions like "How many devices are available in stockroom?" or "Which employees have mismatched hardware?"
+- Backed by a deterministic heuristic fallback when Gemini is unavailable.
+- Circuit breaker prevents quota exhaustion.
+
+### 📊 Dashboard
+- Summary cards: total devices, available, assigned, in maintenance, retired.
+- Assignment distribution chart.
+- Recent activity feed.
+- Quick-access to mismatch alerts.
+
+---
+
+## Technology Stack
+
+| Layer | Technology | Version |
+|-------|-----------|---------|
+| Backend framework | Laravel | 13.x |
+| PHP | PHP | 8.4+ |
+| Frontend framework | React | 18.x |
+| SPA bridge | Inertia.js | v2.x |
+| Styling | Tailwind CSS | v4.x |
+| Build tool | Vite | 8.x |
+| Database (dev) | MySQL | 8.0+ |
+| Database (container) | SQLite | 3.x |
+| AI model | Google Gemini | 3.1 Flash-Lite |
+| AI SDK | Laravel AI | 0.11.x |
+| Hardware DB | TechSpecs API | v5 |
+| PDF generation | DomPDF (barryvdh) | 3.x |
+| Animation | Framer Motion | 13.x |
+| Icons | React Icons | 5.x |
+| Auth scaffolding | Laravel Breeze | 2.x |
+| Container runtime | Docker | multi-stage build |
+| Edge deployment | Wasmer Edge | WASI |
+
+---
+
+## Project Structure
+
+```
+specmatch/
+├── app/
+│   ├── Ai/Agents/
+│   │   └── SpecMatchExtractionAgent.php   # Laravel AI SDK agent (Gemini extraction)
+│   ├── Http/Controllers/
+│   │   ├── DashboardController.php
+│   │   ├── DeviceController.php            # Device CRUD + lifecycle + PDF export
+│   │   ├── EmployeeController.php          # Employee CRUD + CSV import/export
+│   │   ├── FleetAssistantController.php    # AI chat endpoint
+│   │   ├── MatchingController.php          # Match extract / rank / assign / bridge-swap
+│   │   ├── MismatchController.php          # Mismatch radar view
+│   │   ├── MaintenanceController.php       # Maintenance log CRUD
+│   │   ├── RoleProfileController.php       # Role profile CRUD
+│   │   └── TechSpecsController.php         # TechSpecs search/detail proxy
+│   ├── Models/
+│   │   ├── Device.php
+│   │   ├── Employee.php
+│   │   ├── Assignment.php
+│   │   ├── MatchRequest.php
+│   │   ├── MaintenanceLog.php
+│   │   ├── LifecycleEvent.php
+│   │   └── RoleProfile.php
+│   └── Services/
+│       ├── GeminiService.php               # Gemini API + heuristic fallback
+│       ├── FleetAiAssistantService.php     # Fleet-aware AI chat + deterministic engine
+│       ├── MatchingService.php             # Weighted scoring engine
+│       ├── TechSpecsService.php            # TechSpecs hardware DB client
+│       ├── HardwareImageService.php        # Device image resolution
+│       └── ItamTrackingService.php         # ITAM event tracking
+├── resources/js/
+│   ├── Pages/
+│   │   ├── Welcome.jsx                     # Landing page
+│   │   ├── Dashboard/                      # Dashboard view
+│   │   ├── Devices/                        # Device management pages
+│   │   ├── Employees/                      # Employee management pages
+│   │   ├── Match/                          # AI matching flow (Request + Results)
+│   │   ├── Mismatches/                     # Mismatch radar
+│   │   ├── Maintenance/                    # Maintenance log
+│   │   └── RoleProfiles/                   # Role profile management
+│   └── Components/
+│       └── GeminiFleetAssistant.jsx        # Floating AI chat widget
+├── database/
+│   ├── migrations/                         # 17 migration files
+│   ├── factories/                          # Model factories for seeding/testing
+│   └── seeders/                            # Demo data seeders
+├── tests/
+│   └── Feature/                            # 134 passing PHPUnit tests
+├── Dockerfile                              # Multi-stage production container
+├── docker-entrypoint.sh                   # Container startup + auto-migrate
+├── wasmer.toml                             # Wasmer Edge WASI manifest
+└── app.yaml                                # Wasmer Edge app config (instaboot)
+```
+
+---
+
+## Database Schema
+
+```
+users                    ← IT staff / admin accounts
+role_profiles            ← Workload templates (e.g. "Video Editor", "Data Analyst")
+devices                  ← Hardware inventory
+  ├── brand, model, device_type
+  ├── cpu, cpu_tier, ram_gb
+  ├── storage_type, storage_gb
+  ├── gpu, gpu_tier
+  ├── condition, status (available/assigned/maintenance/retired/reclaimed)
+  ├── year_acquired, purchase_price, location, serial_number
+  └── techspecs_id, image_url
+employees                ← Staff records (not logins)
+  ├── name, department, position
+  └── profile_picture
+assignments              ← Device ↔ Employee link (with history)
+  └── assigned_at, notes
+match_requests           ← Logged matching sessions
+  ├── requirements (JSON)
+  └── selected_device_id
+maintenance_logs         ← Per-device maintenance history
+lifecycle_events         ← Full audit trail of status changes
+```
+
+---
+
+## AI Architecture
+
+### Gemini Extraction Pipeline
+
+```
+extractRequirements(text)
+  │
+  ├─ 1. Query cache check (md5 of input) → return cached if hit
+  ├─ 2. Demo template check (config-driven exact matches)
+  ├─ 3. Offline / circuit-breaker check
+  │       GEMINI_DEMO_OFFLINE=true  →  source: offline_heuristic
+  │       circuit breaker tripped   →  source: heuristic_fallback
+  ├─ 4. SpecMatchExtractionAgent (Laravel AI SDK + Gemini 3.1 Flash-Lite)
+  │       429 → set circuit breaker (30 min) → heuristic fallback
+  ├─ 5. callGeminiApi() REST fallback (single model, no retry loop)
+  │       429/401/403 → set circuit breaker
+  └─ 6. Heuristic keyword extraction (always available)
+```
+
+### Circuit Breaker Cache Keys
+
+| Key | TTL | Trigger |
+|-----|-----|---------|
+| `gemini_rate_limited` | 30 min | Any 429 response |
+| `gemini_assistant_quota_exceeded` | 30 min (60 min on auth error) | Fleet assistant 429/401/403 |
+| `gemini_assistant_service_error` | 5 min | 503 / connection errors |
+
+### Source Field Values
+
+| `source` | Meaning |
+|----------|---------|
+| `laravel_ai_gemini` | Extracted via Laravel AI SDK + Gemini (live) |
+| `gemini_api_direct` | Extracted via direct REST API fallback |
+| `offline_heuristic` | `GEMINI_DEMO_OFFLINE=true` in env |
+| `heuristic_fallback` | Circuit breaker tripped at runtime |
+| `demo_template` | Matched a pre-configured demo template |
+| `cache` | Returned from query cache (no API call) |
+
+---
+
+## API Reference
+
+### Match / AI Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/match/extract` | Extract structured requirements from free text via Gemini |
+| `POST` | `/match/rank` | Score and rank idle devices against extracted requirements |
+| `POST` | `/match/assign` | Assign a device to an employee and record the match |
+| `POST` | `/match/simulate` | Simulate a match without committing an assignment |
+| `POST` | `/match/bridge-swap` | Execute a Dynamic Inventory Bridge Swap |
+| `POST` | `/match/test-gemini` | Connectivity test for the Gemini API |
+| `POST` | `/fleet-assistant/query` | Send a message to the Fleet AI Assistant |
+| `GET`  | `/fleet-assistant/context` | Retrieve current fleet context snapshot |
+
+### TechSpecs Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/techspecs/search` | Search the TechSpecs hardware database |
+| `POST` | `/techspecs/details` | Fetch full specs for a TechSpecs product ID |
+
+### Device Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET`  | `/devices` | List all devices with filters |
+| `POST` | `/devices` | Register a new device |
+| `GET`  | `/devices/{id}` | View device detail + history |
+| `PUT`  | `/devices/{id}` | Update device record |
+| `DELETE` | `/devices/{id}` | Delete device |
+| `POST` | `/devices/{id}/lifecycle` | Update lifecycle stage |
+| `POST` | `/devices/{id}/maintenance` | Log a maintenance event |
+| `POST` | `/devices/{id}/reclaim` | Reclaim device from employee |
+| `POST` | `/devices/{id}/retire` | Retire a device |
+| `GET`  | `/devices/export/pdf` | Export device list as PDF |
+
+### Employee Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET`  | `/employees` | List all employees |
+| `POST` | `/employees` | Register a new employee |
+| `PUT`  | `/employees/{id}` | Update employee record |
+| `POST` | `/employees/{id}/offboard` | Offboard employee (unassigns device) |
+| `POST` | `/employees/{id}/unassign` | Unassign current device |
+| `GET`  | `/employees/export/csv` | Export employee list as CSV |
+| `GET`  | `/employees/export/pdf` | Export employee list as PDF |
+| `POST` | `/employees/import/csv` | Bulk-import employees from CSV |
+
+---
+
+## Local Development Setup
+
+### Prerequisites
+
+| Requirement | Version |
+|---|---|
+| PHP | ≥ 8.4 (with `pdo_mysql`, `pdo_sqlite`, `mbstring`, `openssl`, `bcmath`, `gd`) |
+| Composer | ≥ 2.x |
+| Node.js | 22.x (required for Vite 8 / Rolldown) |
+| npm | ≥ 10.x |
+| MySQL | 8.0+ (or SQLite for local quick-start) |
+
+> **Node version note**: Vite 8 uses Rolldown/OXC, which requires Node ≥ 20.19 or Node 22.
+> Use `nvm use 22` if your system has an older default.
+
+### Installation
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/meloervy/appcon2026-codetitans-specmatch.git
+cd appcon2026-codetitans-specmatch
+
+# 2. Install PHP dependencies
+composer install
+
+# 3. Install JS dependencies (requires Node 22)
+nvm use 22   # if using nvm
+npm install
+
+# 4. Copy environment file and configure
+cp .env.example .env
+php artisan key:generate
+
+# 5. Configure your database in .env
+#    For MySQL:
+#      DB_CONNECTION=mysql
+#      DB_DATABASE=specmatch
+#      DB_USERNAME=your_user
+#      DB_PASSWORD=your_password
+#    For SQLite (quick-start):
+#      DB_CONNECTION=sqlite
+#      DB_DATABASE=/absolute/path/to/database/database.sqlite
+
+# 6. Set your API keys in .env
+#    GEMINI_API_KEY=your_google_gemini_api_key
+#    TECHSPECS_API_ID=your_techspecs_id
+#    TECHSPECS_API_KEY=your_techspecs_key
+
+# 7. Run migrations and seed demo data
+php artisan migrate --seed
+
+# 8. Create the storage symlink
+php artisan storage:link
+
+# 9. Build frontend assets
+npm run build
+
+# 10. Start the development server
+composer run dev
+# — or — php artisan serve (without hot-reload)
+```
+
+### Environment Variables Reference
+
+```ini
+# Application
+APP_NAME=SpecMatch
+APP_ENV=local          # local | production
+APP_DEBUG=true         # false in production
+APP_URL=http://localhost:8000
+
+# Database
+DB_CONNECTION=mysql    # mysql | sqlite
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=specmatch
+DB_USERNAME=root
+DB_PASSWORD=
+
+# AI Integration
+GEMINI_API_KEY=        # Google Gemini API key (required for AI features)
+GEMINI_MODEL=gemini-3.1-flash-lite
+AI_DEFAULT_PROVIDER=gemini
+
+# Hardware Database
+TECHSPECS_API_ID=      # TechSpecs account ID
+TECHSPECS_API_KEY=     # TechSpecs API key
+
+# Offline / Demo Mode
+GEMINI_DEMO_OFFLINE=false   # Set true to use heuristic fallback only (no API calls)
+```
+
+---
+
+## Running Tests
+
+```bash
+# Run the full test suite (134 tests)
+php artisan test --compact
+
+# Run a specific test file
+php artisan test tests/Feature/MatchingPipelineTest.php --compact
+
+# Run with a filter
+php artisan test --filter=test_scoring_engine_weights --compact
+```
+
+> All tests run with `GEMINI_DEMO_OFFLINE=true` and `GEMINI_API_KEY=""` so no real API calls are made during CI/testing.
+
+**Current status: ✅ 134/134 tests passing — 655 assertions.**
+
+---
+
+## Production Deployment
+
+### Option A — Docker (Recommended)
+
+The included `Dockerfile` uses a three-stage build:
+1. **Frontend builder** (Node 22 Alpine) — compiles Vite assets.
+2. **Vendor builder** (Composer 2) — installs production PHP dependencies.
+3. **Runtime** (PHP 8.4 CLI Alpine) — lean final image with `pdo_sqlite`, `gd`, `intl`, `zip`, `bcmath`, `pcntl`, `opcache`.
+
+```bash
+# Build the image
+docker build -t specmatch:latest .
+
+# Run the container
+docker run -p 8080:8080 \
+  -e APP_KEY=base64:... \
+  -e GEMINI_API_KEY=your_key \
+  -e TECHSPECS_API_ID=your_id \
+  -e TECHSPECS_API_KEY=your_key \
+  specmatch:latest
+```
+
+The `docker-entrypoint.sh` automatically:
+- Creates and migrates the SQLite database on first boot.
+- Seeds demo data if the database is empty.
+- Caches config, routes, and Blade views.
+- Starts the PHP built-in server on `$PORT` (default 8080).
+
+### Option B — Wasmer Edge
+
+```bash
+# Install Wasmer CLI
+curl https://get.wasmer.io -sSfL | sh
+
+# Login to Wasmer
+wasmer login
+
+# Deploy to Wasmer Edge
+wasmer deploy
+```
+
+The `wasmer.toml` and `app.yaml` are pre-configured:
+- WASI runtime with PHP 8.3.
+- SQLite database at `/app/database/database.sqlite`.
+- Instaboot enabled for fast cold-starts.
+- Port 8080.
+
+### Option C — Traditional Server (VPS / Shared Hosting)
+
+```bash
+# After configuring .env for production:
+composer install --no-dev --optimize-autoloader
+npm ci && npm run build
+php artisan migrate --force
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan storage:link
+```
+
+Set your web server document root to `/public`. Ensure `storage/` and `bootstrap/cache/` are writable.
+
+---
+
+## Production Checklist
+
+| Item | Status |
+|------|--------|
+| `APP_ENV=production` | Required |
+| `APP_DEBUG=false` | Required |
+| `APP_KEY` set | Required |
+| `GEMINI_API_KEY` set | Required for AI features |
+| `TECHSPECS_API_KEY` set | Required for hardware search |
+| `php artisan config:cache` run | Recommended |
+| `php artisan route:cache` run | Recommended |
+| `php artisan view:cache` run | Recommended |
+| `npm run build` run | Required (frontend assets) |
+| `php artisan storage:link` run | Required (file uploads) |
+| HTTPS configured | Strongly recommended |
+| `php artisan migrate --force` run | Required |
+
+---
+
+## Scoring Formula
+
+The weighted match score is computed deterministically:
+
+```
+score = (cpu_score  × 0.30)
+      + (ram_score  × 0.25)
+      + (gpu_score  × 0.20)
+      + (disk_score × 0.15)
+      + (port_score × 0.10)
+```
+
+Each sub-score is a value from 0–100 based on how well the device meets or exceeds the extracted requirement for that criterion. The final percentage displayed in the UI is this weighted sum, and each individual bar reflects its raw sub-score (not the weighted contribution) — making the reasoning fully auditable.
+
+---
+
+## Gemini Integration Notes
+
+- **Model**: `gemini-3.1-flash-lite` — chosen for free-tier availability, low latency (~3 s P50), and sufficient instruction-following for structured JSON extraction.
+- **Circuit breaker**: A 429 response sets a 30-minute cache lock. During this window, the system falls back to heuristic keyword extraction so the app remains fully functional.
+- **Offline mode**: Set `GEMINI_DEMO_OFFLINE=true` to disable all Gemini calls (useful for demos without internet or when quota is exhausted).
+- **Free tier**: ~20 requests/day on the free tier. For sustained usage, set a paid Gemini API key.
+- **Test isolation**: `phpunit.xml` injects `GEMINI_DEMO_OFFLINE=true` and `GEMINI_API_KEY=""` so tests never consume quota.
+
+---
+
+## TechSpecs API Notes
+
+- **Base URL**: `https://api.techspecs.io/v5`
+- **Auth**: `x-api-id` and `x-api-key` headers.
+- **`/products/search`**: Minimum `size=10` required by the API.
+- **`/products/{id}`**: Returns full nested spec JSON; `TechSpecsService::mapToDeviceAttributes()` normalizes it to the SpecMatch device schema.
+- The TechSpecs integration is entirely optional — devices can be registered manually without it.
+
+---
+
+## Contributing
+
+```bash
+# Create a feature branch
+git checkout -b feature/your-feature-name
+
+# Make changes, then format PHP code
+vendor/bin/pint --dirty
+
+# Run tests before committing
+php artisan test --compact
+
+# Commit and push
+git add .
+git commit -m "feat: describe your change"
+git push origin feature/your-feature-name
+```
+
+---
+
+## License
+
+MIT License — see [LICENSE](./LICENSE) for details.
+
+---
+
+## Team
+
+**Team 10 — Code Titans**
+AppCon 2026 Hackathon
+
+---
+
+*SpecMatch — Because "we already own something that fits" should be provable.*
