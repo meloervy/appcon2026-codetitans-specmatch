@@ -452,16 +452,23 @@ export default function GeminiFleetAssistant({ isOpen = false, onClose, onOpen }
             setMessages((prev) => [...prev, assistantMsg]);
             // Do not drag all the way to bottom - stays anchored on question so user can read top-down
         } catch (error) {
+            const status = error.response?.status;
+            const isAuth = status === 401 || status === 419;
             const errorMsg = {
                 id: 'err_' + Date.now(),
                 sender: 'assistant',
                 category: 'error',
                 source: 'system',
-                answer:
-                    'Unable to process query. The server or network encountered an issue: ' +
-                    (error.response?.data?.message || error.message),
+                isAuth,
+                loginUrl: error.response?.data?.login_url || '/login',
+                answer: isAuth
+                    ? 'Your session has expired (this occurs after an idle period or recent server redeployment). Please log in again to resume.'
+                    : 'Unable to process query. The server or network encountered an issue: ' +
+                      (error.response?.data?.message || error.message),
                 data_cards: [],
-                suggested_followups: ['Which employees are using low end specs?', 'How many idle devices do we currently have in inventory?'],
+                suggested_followups: isAuth
+                    ? []
+                    : ['Which employees are using low end specs?', 'How many idle devices do we currently have in inventory?'],
             };
             setMessages((prev) => [...prev, errorMsg]);
         } finally {
@@ -782,6 +789,18 @@ export default function GeminiFleetAssistant({ isOpen = false, onClose, onOpen }
                                                         <>
                                                             {/* Text Answer with Markdown & Tables */}
                                                             <MarkdownRenderer content={msg.answer} />
+
+                                                            {/* Auth Session Expired Action Button */}
+                                                            {msg.isAuth && (
+                                                                <div className="mt-3 pt-2.5 border-t border-slate-200/60 dark:border-zinc-700/60 flex items-center gap-2">
+                                                                    <a
+                                                                        href={msg.loginUrl || '/login'}
+                                                                        className="px-3.5 py-1.5 rounded-xl bg-[#026eff] hover:bg-[#0256cc] text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+                                                                    >
+                                                                        Log In to Resume
+                                                                    </a>
+                                                                </div>
+                                                            )}
 
                                                             {/* Render Actionable Data Cards */}
                                                             {msg.data_cards && msg.data_cards.length > 0 && (
