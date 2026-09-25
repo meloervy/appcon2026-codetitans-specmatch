@@ -92,7 +92,13 @@ export default function MatchRequest({
     deployable_summary,
 }) {
     const [employeeId, setEmployeeId] = useState(selected_employee_id || '');
-    const [rawInput, setRawInput] = useState('');
+    const [rawInput, setRawInput] = useState(() => {
+        try {
+            return sessionStorage.getItem('specmatch_draft_requirements') || '';
+        } catch (e) {
+            return '';
+        }
+    });
     const [isExtracting, setIsExtracting] = useState(false);
     const [isRanking, setIsRanking] = useState(false);
     const [isAssigning, setIsAssigning] = useState(false);
@@ -107,6 +113,15 @@ export default function MatchRequest({
     const [showAlternativeCascade, setShowAlternativeCascade] = useState(false);
     const [showSecondarySwaps, setShowSecondarySwaps] = useState(false);
     const [errorMsg, setErrorMsg] = useState(null);
+
+    // Keep draft requirements cached in case session expires
+    useEffect(() => {
+        try {
+            if (rawInput) {
+                sessionStorage.setItem('specmatch_draft_requirements', rawInput);
+            }
+        } catch (e) {}
+    }, [rawInput]);
 
     // Fleet Recommendations Filtering & Progressive Disclosure
     const [recoFilter, setRecoFilter] = useState('top'); // 'top', 'stockroom', 'all', 'disqualified'
@@ -234,12 +249,15 @@ export default function MatchRequest({
             setGeminiTestResult(res.data);
             setShowGeminiModal(true);
         } catch (err) {
+            const status = err.response?.status;
             setGeminiTestResult({
-                status: 'error',
+                status: status === 401 ? 'unauthenticated' : 'error',
                 success: false,
-                http_status: 500,
+                http_status: status || 500,
                 model: 'gemini-3.1-flash-lite',
-                message: err.response?.data?.message || 'Failed to ping Gemini endpoint.',
+                message: status === 401
+                    ? 'Session expired or unauthenticated. Please re-login to test connectivity.'
+                    : (err.response?.data?.message || 'Failed to ping Gemini endpoint.'),
                 latency_ms: 0,
                 fallback_active: true,
             });
@@ -264,7 +282,27 @@ export default function MatchRequest({
                 await handleRank(res.data.requirements);
             }
         } catch (err) {
-            setErrorMsg(err.response?.data?.message || 'Requirement extraction failed. Please review your input.');
+            const status = err.response?.status;
+            if (status === 401 || status === 419) {
+                setErrorMsg({
+                    isAuth: true,
+                    title: 'Session Expired',
+                    message: err.response?.data?.message || 'Your session timed out while drafting requirements. Your text has been safely saved.',
+                    loginUrl: err.response?.data?.login_url || '/login',
+                });
+            } else if (status === 429) {
+                setErrorMsg({
+                    isRateLimit: true,
+                    title: 'AI Quota Limit Reached',
+                    message: 'Google Gemini API quota reached. The intelligent deterministic engine is actively handling matches.',
+                });
+            } else {
+                setErrorMsg({
+                    isError: true,
+                    title: 'Extraction Issue',
+                    message: err.response?.data?.message || 'Requirement extraction failed. Please review your input.',
+                });
+            }
         } finally {
             setIsExtracting(false);
         }
@@ -286,7 +324,21 @@ export default function MatchRequest({
             setRecoFilter('top');
             setShowAllInTop(false);
         } catch (err) {
-            setErrorMsg(err.response?.data?.message || 'Device ranking failed.');
+            const status = err.response?.status;
+            if (status === 401 || status === 419) {
+                setErrorMsg({
+                    isAuth: true,
+                    title: 'Session Expired',
+                    message: err.response?.data?.message || 'Your session has expired. Please log in again to continue matching.',
+                    loginUrl: err.response?.data?.login_url || '/login',
+                });
+            } else {
+                setErrorMsg({
+                    isError: true,
+                    title: 'Device Ranking Notice',
+                    message: err.response?.data?.message || 'Device ranking failed.',
+                });
+            }
         } finally {
             setIsRanking(false);
         }
@@ -488,9 +540,44 @@ export default function MatchRequest({
             <Head title="Match Engine - SpecMatch" />
 
             {errorMsg && (
-                <div className="mb-6 p-4 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 text-sm text-rose-700 dark:text-rose-300">
-                    {errorMsg}
-                </div>
+                typeof errorMsg === 'object' && errorMsg.isAuth ? (
+                    <div className="mb-6 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/80 text-amber-900 dark:text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                        <div className="flex items-start gap-3">
+                            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 mt-1 shrink-0 animate-pulse" />
+                            <div>
+                                <h4 className="font-bold text-xs uppercase tracking-wider">{errorMsg.title}</h4>
+                                <p className="text-xs text-amber-800 dark:text-amber-300 mt-0.5 leading-relaxed">{errorMsg.message}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+                            <a
+                                href={errorMsg.loginUrl || '/login'}
+                                className="px-3.5 py-1.5 rounded-xl bg-[#026eff] hover:bg-[#0256cc] text-white text-xs font-bold transition shadow-xs"
+                            >
+                                Log In to Resume
+                            </a>
+                            <button
+                                type="button"
+                                onClick={() => handleExtract()}
+                                className="px-3.5 py-1.5 rounded-xl border border-amber-300 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-xs font-semibold transition"
+                            >
+                                Retry
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setErrorMsg(null)}
+                                className="p-1 rounded-lg text-amber-600 hover:text-amber-800 transition"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="mb-6 p-4 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 text-sm text-rose-700 dark:text-rose-300 flex items-center justify-between">
+                        <span>{typeof errorMsg === 'object' ? errorMsg.message : errorMsg}</span>
+                        <button type="button" onClick={() => setErrorMsg(null)} className="text-rose-500 hover:text-rose-700 font-bold p-1">✕</button>
+                    </div>
+                )
             )}
 
             {/* Fleet Inventory Deployment Status Bar */}

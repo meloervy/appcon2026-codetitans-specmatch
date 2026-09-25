@@ -439,6 +439,97 @@ const calculateWorkloadFit = (deviceData) => {
     return { dev, design, admin };
 };
 
+const fallbackClientDeviceSpecs = (query) => {
+    if (!query || typeof query !== 'string') return null;
+    const lower = query.toLowerCase();
+
+    let brand = 'Lenovo';
+    if (lower.includes('apple') || lower.includes('macbook') || lower.includes('mac mini') || lower.includes('imac')) brand = 'Apple';
+    else if (lower.includes('microsoft') || lower.includes('surface')) brand = 'Microsoft';
+    else if (lower.includes('dell') || lower.includes('xps') || lower.includes('latitude') || lower.includes('optiplex') || lower.includes('precision')) brand = 'Dell';
+    else if (lower.includes('hp') || lower.includes('elitebook') || lower.includes('probook') || lower.includes('zbook') || lower.includes('omnibook')) brand = 'HP';
+    else if (lower.includes('asus') || lower.includes('zenbook') || lower.includes('vivobook') || lower.includes('rog') || lower.includes('nuc')) brand = 'ASUS';
+    else if (lower.includes('acer') || lower.includes('swift') || lower.includes('aspire') || lower.includes('predator')) brand = 'Acer';
+    else if (lower.includes('samsung') || lower.includes('galaxy book')) brand = 'Samsung';
+    else if (lower.includes('minisforum') || lower.includes('beelink')) brand = lower.includes('minisforum') ? 'Minisforum' : 'Beelink';
+    else if (lower.includes('framework')) brand = 'Framework';
+    else if (lower.includes('razer')) brand = 'Razer';
+
+    const isDesktop = lower.includes('desktop') || lower.includes('tower') || lower.includes('optiplex') || lower.includes('mac mini') || lower.includes('mac studio') || lower.includes('imac') || lower.includes('nuc') || lower.includes('tiny') || lower.includes('mini pc');
+    const device_type = isDesktop ? 'desktop' : 'laptop';
+
+    let cpu = 'Intel Core i5-1335U';
+    let cpu_tier = 'mid';
+    let ram_gb = 16;
+    const storage_type = 'SSD';
+    let storage_gb = 512;
+    let gpu = 'Integrated Graphics';
+    let gpu_tier = 'integrated';
+
+    if (lower.includes('snapdragon') || lower.includes('x elite') || lower.includes('x plus') || lower.includes('copilot+')) {
+        cpu = lower.includes('x plus') ? 'Qualcomm Snapdragon X Plus X1P-64-100' : 'Qualcomm Snapdragon X Elite X1E-80-100';
+        cpu_tier = lower.includes('x plus') ? 'mid' : 'high';
+        gpu = 'Qualcomm Adreno X1-85 GPU';
+        gpu_tier = 'integrated';
+        ram_gb = 16;
+    } else if (lower.includes('chromebook')) {
+        cpu = lower.includes('plus') ? 'Intel Core i3-N305' : 'Intel Processor N100';
+        cpu_tier = lower.includes('plus') ? 'mid' : 'entry';
+        ram_gb = lower.includes('plus') ? 16 : 8;
+        storage_gb = 256;
+        gpu = 'Intel UHD Graphics';
+        gpu_tier = 'integrated';
+    } else if (brand === 'Apple') {
+        cpu = lower.includes('m4') ? 'Apple M4' : (lower.includes('m3') ? 'Apple M3' : (lower.includes('m2') ? 'Apple M2' : 'Apple M1'));
+        cpu_tier = 'high';
+        gpu = `${cpu} 10-core GPU`;
+        gpu_tier = 'integrated';
+        ram_gb = 16;
+    } else if (lower.includes('core ultra') || lower.includes('lunar lake') || lower.includes('meteor lake')) {
+        cpu = lower.includes('ultra 9') ? 'Intel Core Ultra 9 185H' : (lower.includes('258v') ? 'Intel Core Ultra 7 258V' : 'Intel Core Ultra 7 155H');
+        cpu_tier = 'high';
+        gpu = 'Intel Arc 140V GPU';
+        gpu_tier = 'integrated';
+    } else if (lower.includes('ryzen ai') || lower.includes('hx 370')) {
+        cpu = 'AMD Ryzen AI 9 HX 370';
+        cpu_tier = 'high';
+        gpu = 'AMD Radeon 890M';
+        gpu_tier = 'integrated';
+        ram_gb = 32;
+    }
+
+    if (lower.includes('64gb')) ram_gb = 64;
+    else if (lower.includes('32gb')) ram_gb = 32;
+    else if (lower.includes('8gb')) ram_gb = 8;
+
+    if (lower.includes('2tb')) storage_gb = 2048;
+    else if (lower.includes('1tb')) storage_gb = 1024;
+    else if (lower.includes('256gb')) storage_gb = 256;
+
+    if (lower.includes('rtx 4090') || lower.includes('rtx 4080') || lower.includes('rtx 4070')) {
+        gpu = 'NVIDIA GeForce RTX 4070';
+        gpu_tier = 'dedicated-high';
+    } else if (lower.includes('rtx 4060') || lower.includes('rtx 4050') || lower.includes('rtx 3050')) {
+        gpu = 'NVIDIA GeForce RTX 4050';
+        gpu_tier = 'dedicated-entry';
+    }
+
+    return {
+        brand,
+        model: query.trim(),
+        device_type,
+        cpu,
+        cpu_tier,
+        ram_gb,
+        storage_type,
+        storage_gb,
+        gpu,
+        gpu_tier,
+        year_acquired: new Date().getFullYear(),
+        vendor: brand,
+    };
+};
+
 export default function DevicesCreate() {
     const { data, setData, post, processing, errors } = useForm({
         // Identification

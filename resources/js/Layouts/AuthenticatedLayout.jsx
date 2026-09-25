@@ -4,6 +4,7 @@ import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
 import SpecMatchLogo from '@/Components/SpecMatchLogo';
 import { Link, usePage } from '@inertiajs/react';
+import axios from 'axios';
 import { useEffect, useState } from 'react';
 import {
     RiDashboard3Line,
@@ -18,6 +19,8 @@ import {
     RiUserLine,
     RiLogoutBoxRLine,
     RiArrowDownSLine,
+    RiLoginBoxLine,
+    RiRefreshLine,
 } from 'react-icons/ri';
 
 export default function AuthenticatedLayout({ header, children, maxWidth = 'max-w-[1600px]' }) {
@@ -28,6 +31,7 @@ export default function AuthenticatedLayout({ header, children, maxWidth = 'max-
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
     const [isDark, setIsDark] = useState(false);
     const [isAssistantOpen, setIsAssistantOpen] = useState(false);
+    const [sessionExpiredNotice, setSessionExpiredNotice] = useState(null);
 
     useEffect(() => {
         const handleGlobalKeyDown = (e) => {
@@ -52,6 +56,50 @@ export default function AuthenticatedLayout({ header, children, maxWidth = 'max-
             document.documentElement.classList.remove('dark');
             setIsDark(false);
         }
+    }, []);
+
+    useEffect(() => {
+        // Keep-alive heartbeat every 10 minutes while tab is active
+        let lastPing = Date.now();
+        const pingSession = async () => {
+            if (document.visibilityState === 'visible') {
+                try {
+                    const res = await axios.get(route('session.keepalive'));
+                    lastPing = Date.now();
+                    if (res.data?.authenticated === false) {
+                        setSessionExpiredNotice({
+                            message: 'Your session has expired due to inactivity. Please log in again to continue.',
+                            loginUrl: '/login',
+                        });
+                    } else if (sessionExpiredNotice) {
+                        setSessionExpiredNotice(null);
+                    }
+                } catch (e) {}
+            }
+        };
+
+        const interval = setInterval(pingSession, 10 * 60 * 1000);
+
+        const onFocus = () => {
+            if (Date.now() - lastPing > 5 * 60 * 1000) {
+                pingSession();
+            }
+        };
+        window.addEventListener('focus', onFocus);
+
+        const onSessionExpired = (e) => {
+            setSessionExpiredNotice({
+                message: e.detail?.message || 'Your session has expired due to inactivity. Please log in again to continue.',
+                loginUrl: e.detail?.loginUrl || '/login',
+            });
+        };
+        window.addEventListener('specmatch:session-expired', onSessionExpired);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('focus', onFocus);
+            window.removeEventListener('specmatch:session-expired', onSessionExpired);
+        };
     }, []);
 
     const setThemeMode = (mode) => {
@@ -400,6 +448,65 @@ export default function AuthenticatedLayout({ header, children, maxWidth = 'max-
                 onClose={() => setIsAssistantOpen(false)}
                 onOpen={() => setIsAssistantOpen(true)}
             />
+
+            {/* Session Expiry Recovery Modal */}
+            {sessionExpiredNotice && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-fadeIn">
+                    <div className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl border border-amber-300/80 dark:border-amber-700/80 shadow-2xl p-6 relative overflow-hidden">
+                        <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20">
+                                <RiShieldUserLine className="w-6 h-6" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-base font-bold text-slate-900 dark:text-zinc-100">
+                                        Session Timed Out
+                                    </h3>
+                                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-semibold border border-amber-300 dark:border-amber-700">
+                                        Action Paused
+                                    </span>
+                                </div>
+                                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1.5 leading-relaxed">
+                                    {sessionExpiredNotice.message}
+                                </p>
+                                <div className="mt-3 p-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200/80 dark:border-zinc-700/60 text-[11px] text-slate-600 dark:text-zinc-300 flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
+                                    <span>Any pending forms and prompts are preserved in browser cache.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-6 flex flex-col sm:flex-row gap-2.5">
+                            <a
+                                href={sessionExpiredNotice.loginUrl}
+                                className="flex-1 py-2.5 px-4 rounded-xl bg-[#026eff] hover:bg-[#0256cc] text-white font-bold text-center text-xs shadow-sm transition flex items-center justify-center gap-2"
+                            >
+                                <RiLoginBoxLine className="w-4 h-4" />
+                                <span>Log In to Reconnect</span>
+                            </a>
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    try {
+                                        const res = await axios.get(route('session.keepalive'));
+                                        if (res.data?.authenticated) {
+                                            setSessionExpiredNotice(null);
+                                        } else {
+                                            window.location.href = sessionExpiredNotice.loginUrl;
+                                        }
+                                    } catch (e) {
+                                        window.location.href = sessionExpiredNotice.loginUrl;
+                                    }
+                                }}
+                                className="py-2.5 px-4 rounded-xl border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-semibold text-center text-xs transition flex items-center justify-center gap-1.5"
+                            >
+                                <RiRefreshLine className="w-3.5 h-3.5" />
+                                <span>Verify Reconnection</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

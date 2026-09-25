@@ -28,4 +28,26 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Your session has expired. Please log in again to continue.',
+                    'error' => 'Unauthenticated',
+                    'session_expired' => true,
+                    'login_url' => route('login'),
+                ], 401);
+            }
+        });
+
+        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Your security session has expired. Please refresh the page or log in again.',
+                    'error' => 'CSRF token mismatch',
+                    'session_expired' => true,
+                    'login_url' => route('login'),
+                ], 419);
+            }
+        });
     })->create();

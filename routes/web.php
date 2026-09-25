@@ -20,6 +20,19 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// Session Keep-Alive & Auth Health Heartbeat
+Route::get('/session-keepalive', function () {
+    return response()->json([
+        'authenticated' => auth()->check(),
+        'user' => auth()->user() ? [
+            'id' => auth()->id(),
+            'name' => auth()->user()->name,
+            'role' => auth()->user()->role?->value ?? auth()->user()->role,
+        ] : null,
+        'csrf_token' => csrf_token(),
+    ]);
+})->name('session.keepalive');
+
 Route::middleware('auth')->group(function () {
     // ------------------------------------------------------------------------
     // Read-Only & Universal Staff Routes (All Authenticated Roles)

@@ -202,6 +202,10 @@ PROMPT;
             if ($status === 429) {
                 Cache::put('gemini_rate_limited', true, now()->addMinutes(30));
                 Cache::put('gemini_assistant_quota_exceeded', true, now()->addMinutes(30));
+            } elseif ($status === 503) {
+                Cache::put('gemini_temporary_overload', true, now()->addSeconds(60));
+            } elseif ($status === 401 || $status === 403) {
+                Cache::put('gemini_auth_invalid', true, now()->addMinutes(10));
             }
 
             return [
@@ -780,8 +784,8 @@ PROMPT;
                 }
             }
 
-            // 5. Direct Gemini REST endpoint fallback (only if not rate limited)
-            if (! Cache::has('gemini_rate_limited')) {
+            // 5. Direct Gemini REST endpoint fallback (only if not rate limited or service broken)
+            if (! Cache::has('gemini_rate_limited') && ! Cache::has('gemini_auth_invalid') && ! Cache::has('gemini_temporary_overload')) {
                 try {
                     $extracted = $this->callGeminiApi($cleanInput, $apiKey);
 
@@ -879,6 +883,36 @@ PROMPT;
                     'http_status' => 429,
                     'model' => $targetModel,
                     'message' => 'Google Gemini API quota reached (20 requests/day limit on free tier). The intelligent deterministic fallback engine is actively handling requests with zero downtime.',
+                    'details' => $errorMessage,
+                    'latency_ms' => $latencyMs,
+                    'fallback_active' => true,
+                ];
+            }
+
+            if ($statusCode === 401 || $statusCode === 403) {
+                Cache::put('gemini_auth_invalid', true, now()->addMinutes(10));
+
+                return [
+                    'status' => 'unauthenticated',
+                    'success' => false,
+                    'http_status' => $statusCode,
+                    'model' => $targetModel,
+                    'message' => "Gemini API authentication failed (HTTP {$statusCode}). Your GEMINI_API_KEY may be missing or unauthorized. The intelligent deterministic fallback engine is actively handling requests with zero downtime.",
+                    'details' => $errorMessage,
+                    'latency_ms' => $latencyMs,
+                    'fallback_active' => true,
+                ];
+            }
+
+            if ($statusCode === 503) {
+                Cache::put('gemini_temporary_overload', true, now()->addSeconds(60));
+
+                return [
+                    'status' => 'service_unavailable',
+                    'success' => false,
+                    'http_status' => 503,
+                    'model' => $targetModel,
+                    'message' => 'Google Gemini API is currently experiencing a high-demand spike (HTTP 503). The intelligent deterministic fallback engine is actively handling requests with zero downtime.',
                     'details' => $errorMessage,
                     'latency_ms' => $latencyMs,
                     'fallback_active' => true,
@@ -992,11 +1026,16 @@ INSTRUCTIONS;
                     }
                 }
             } else {
-                Log::warning("Gemini model {$primaryModel} returned status {$response->status()}: ".$response->body());
+                $status = $response->status();
+                Log::warning("Gemini model {$primaryModel} returned status {$status}: ".$response->body());
 
-                if ($response->status() === 429) {
+                if ($status === 429) {
                     Cache::put('gemini_rate_limited', true, now()->addMinutes(30));
                     Cache::put('gemini_assistant_quota_exceeded', true, now()->addMinutes(30));
+                } elseif ($status === 503) {
+                    Cache::put('gemini_temporary_overload', true, now()->addSeconds(60));
+                } elseif ($status === 401 || $status === 403) {
+                    Cache::put('gemini_auth_invalid', true, now()->addMinutes(10));
                 }
             }
         } catch (\Throwable $e) {

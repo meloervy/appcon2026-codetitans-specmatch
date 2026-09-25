@@ -48,14 +48,26 @@ class FleetAiAssistantService
             ];
         }
 
-        // Circuit breaker 2: Temporary Service Outage
-        if (Cache::has('gemini_assistant_service_error')) {
+        // Circuit breaker 2: Temporary Service Outage / 503 High Demand
+        if (Cache::has('gemini_temporary_overload') || Cache::has('gemini_assistant_service_error')) {
             return [
                 'state' => 'service_unavailable',
                 'model' => $targetModel,
-                'label' => 'Gemini 3.1 Flash-Lite: High Demand',
+                'label' => 'Gemini: High Demand Spike',
                 'sublabel' => 'Local DB Engine Active',
-                'tooltip' => 'Gemini service is temporarily unavailable. Real-time Local MySQL DB Engine is active.',
+                'tooltip' => 'Google Gemini API returned 503 (High Demand). Real-time Local MySQL DB Engine is processing queries with zero delay.',
+                'is_fallback' => true,
+            ];
+        }
+
+        // Circuit breaker 3: Authentication / API Key Issue
+        if (Cache::has('gemini_auth_invalid')) {
+            return [
+                'state' => 'auth_invalid',
+                'model' => $targetModel,
+                'label' => 'Gemini: Auth Error (Local DB Active)',
+                'sublabel' => 'Local DB Engine Active',
+                'tooltip' => 'Gemini API returned 401 Unauthenticated. Real-time Local MySQL DB Engine is active.',
                 'is_fallback' => true,
             ];
         }
@@ -226,7 +238,10 @@ class FleetAiAssistantService
         // 2. Attempt Google Gemini inference with multi-turn history if API key is configured
         $apiKey = config('services.gemini.api_key', env('GEMINI_API_KEY'));
         $forceOffline = env('GEMINI_DEMO_OFFLINE', false);
-        $circuitBreakerTripped = Cache::has('gemini_rate_limited') || Cache::has('gemini_assistant_quota_exceeded');
+        $circuitBreakerTripped = Cache::has('gemini_rate_limited')
+            || Cache::has('gemini_assistant_quota_exceeded')
+            || Cache::has('gemini_temporary_overload')
+            || Cache::has('gemini_auth_invalid');
 
         if (! empty($apiKey) && ! $forceOffline && ! $circuitBreakerTripped) {
             try {
@@ -554,13 +569,12 @@ INSTRUCTION;
             $primaryModel = 'gemini-3.1-flash-lite';
         }
 
-        // Ordered candidates to ensure high resilience against Google free-tier 503 high-demand spikes
+        // Ordered candidates: Primary model first, followed ONLY by valid Google Gemini API endpoints
         $modelsToTry = array_unique(array_filter([
             $primaryModel,
-            'gemini-flash-lite-latest',
-            'gemini-3-flash-preview',
-            'gemini-3.5-flash-lite',
-            'gemini-3.1-flash-lite',
+            'gemini-2.5-flash',
+            'gemini-2.0-flash',
+            'gemini-1.5-flash',
         ]));
 
         // Build multi-turn contents array with history
@@ -591,7 +605,7 @@ INSTRUCTION;
             try {
                 $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$candidateModel}:generateContent?key={$apiKey}";
 
-                $response = Http::timeout(10)->post($endpoint, [
+                $response = Http::timeout(8)->post($endpoint, [
                     'system_instruction' => [
                         'parts' => [
                             ['text' => $systemInstruction],
@@ -613,6 +627,7 @@ INSTRUCTION;
                         if (is_array($decoded) && ! empty($decoded['answer'])) {
                             // Clear any temporary service error breakers on success
                             Cache::forget('gemini_assistant_service_error');
+                            Cache::forget('gemini_temporary_overload');
 
                             // Enrich data cards with canonical database image URLs and action URLs
                             if (! empty($decoded['data_cards']) && is_array($decoded['data_cards'])) {
@@ -637,15 +652,37 @@ INSTRUCTION;
                     }
                 }
 
+                $status = $response->status();
+
+                // If 401 or 403 (Invalid API key or unauthorized):
+                if ($status === 401 || $status === 403) {
+                    Log::warning("Gemini API key is unauthenticated or invalid (HTTP {$status}). Engaging local database engine.");
+                    Cache::put('gemini_auth_invalid', true, now()->addMinutes(10));
+                    break;
+                }
+
                 // If 429 quota reached, record quota breaker and break
-                if ($response->status() === 429) {
-                    Log::warning("Gemini model {$candidateModel} quota reached (429).");
+                if ($status === 429) {
+                    Log::warning("Gemini model {$candidateModel} quota reached (429). Engaging local database engine.");
                     Cache::put('gemini_assistant_quota_exceeded', true, now()->addMinutes(15));
                     Cache::put('gemini_rate_limited', true, now()->addMinutes(15));
                     break;
                 }
 
-                Log::warning("Gemini model {$candidateModel} returned status {$response->status()}, attempting next model.");
+                // If 503 (High Demand / Overloaded):
+                if ($status === 503) {
+                    Log::warning("Gemini API returned 503 Service Unavailable (High Demand). Engaging local database engine.");
+                    Cache::put('gemini_temporary_overload', true, now()->addSeconds(60));
+                    break;
+                }
+
+                // If 404 (Model endpoint not found), don't retry invalid model
+                if ($status === 404) {
+                    Log::warning("Gemini model {$candidateModel} endpoint returned 404 Not Found.");
+                    continue;
+                }
+
+                Log::warning("Gemini model {$candidateModel} returned status {$status}, attempting next model.");
             } catch (\Throwable $e) {
                 Log::warning("Gemini candidate {$candidateModel} encountered error: {$e->getMessage()}");
             }
