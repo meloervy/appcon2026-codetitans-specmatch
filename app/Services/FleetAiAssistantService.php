@@ -569,12 +569,11 @@ INSTRUCTION;
             $primaryModel = 'gemini-3.1-flash-lite';
         }
 
-        // Ordered candidates: Primary model first, followed ONLY by valid Google Gemini API endpoints
+        // Ordered candidates: Primary model first, followed ONLY by active Google Gemini API endpoints
         $modelsToTry = array_unique(array_filter([
             $primaryModel,
-            'gemini-2.5-flash',
-            'gemini-2.0-flash',
-            'gemini-1.5-flash',
+            'gemini-3.5-flash-lite',
+            'gemini-3.1-flash-lite',
         ]));
 
         // Build multi-turn contents array with history
@@ -628,6 +627,9 @@ INSTRUCTION;
                             // Clear any temporary service error breakers on success
                             Cache::forget('gemini_assistant_service_error');
                             Cache::forget('gemini_temporary_overload');
+                            Cache::forget('gemini_rate_limited');
+                            Cache::forget('gemini_assistant_quota_exceeded');
+                            Cache::forget('gemini_auth_invalid');
 
                             // Enrich data cards with canonical database image URLs and action URLs
                             if (! empty($decoded['data_cards']) && is_array($decoded['data_cards'])) {
@@ -671,14 +673,16 @@ INSTRUCTION;
 
                 // If 503 (High Demand / Overloaded):
                 if ($status === 503) {
-                    Log::warning("Gemini API returned 503 Service Unavailable (High Demand). Engaging local database engine.");
+                    Log::warning("Gemini model {$candidateModel} returned 503 Service Unavailable (High Demand), attempting next model.");
                     Cache::put('gemini_temporary_overload', true, now()->addSeconds(60));
-                    break;
+
+                    continue;
                 }
 
                 // If 404 (Model endpoint not found), don't retry invalid model
                 if ($status === 404) {
                     Log::warning("Gemini model {$candidateModel} endpoint returned 404 Not Found.");
+
                     continue;
                 }
 
